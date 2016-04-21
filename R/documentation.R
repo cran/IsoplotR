@@ -1,0 +1,19 @@
+#' An example U-Pb dataset
+#'
+#' An example U-Pb dataset provided with Ludwig's Isoplot add-in
+#'
+#' \code{UPb} is an object of class \code{UPb}, i.e. a list with two items
+#'
+#' \code{x}: a matrix formatted according to \code{format}
+#'
+#' \code{format}: an integer defining the format of \code{x}. Options are:
+#'
+#' 1: Pb207/Pb206, s.e.[Pb207Pb206], Pb206/U238, s.e.[Pb206/U238], Pb207/U235, s.e.[Pb207U235]
+#' 
+#' @name UPb
+#' @docType data
+#' @examples
+#' data(UPb)
+#' concordia.plot(UPb)
+#' @author Ken Ludwig and Pieter Vermeesch
+NULL
