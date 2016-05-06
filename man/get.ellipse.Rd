@@ -2,7 +2,7 @@
 % Please edit documentation in R/errorellipse.R
 \name{get.ellipse}
 \alias{get.ellipse}
-\title{Get error ellipse plot coordinates}
+\title{Get coordinates of error ellipse for plotting}
 \usage{
 get.ellipse(x, y, covmat, alpha = 0.05)
 }
@@ -15,16 +15,19 @@ get.ellipse(x, y, covmat, alpha = 0.05)
 
 \item{alpha}{the probability cutoff for the error ellipses}
 }
+\value{
+a [50x2] matrix of plot coordinates
+}
 \description{
-Get error ellipse plot coordinates
+Construct an error ellipse age a given confidence level from its
+centre and covariance matrix
 }
 \examples{
-plot(c(90,110),c(90,110),type='l')
 x = 99; y = 101;
 covmat <- matrix(c(1,0.9,0.9,1),nrow=2)
 ell <- get.ellipse(x,y,covmat)
+plot(c(90,110),c(90,110),type='l')
 polygon(ell,col=rgb(0,1,0,0.5))
-lines(ell)
 points(x,y,pch=21,bg='black')
 }
 

@@ -2,16 +2,14 @@
 % Please edit documentation in R/concordia.R
 \name{concordia.plot}
 \alias{concordia.plot}
-\title{Plot concordia diagrams}
+\title{Concordia diagram}
 \usage{
-concordia.plot(X, limits = NA, alpha = 0.05, wetherill = TRUE,
-  show.labels = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
-  concordia.col = rgb(1, 0, 0, 0.5))
+concordia.plot(x, limits = NULL, alpha = 0.05, wetherill = TRUE,
+  show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
+  concordia.col = "darksalmon", dcu = TRUE)
 }
 \arguments{
-\item{X}{a U-Pb dataset, i.e. a matrix with the following columns:
-ID, Pb207Pb206, sePb207Pb206, Pb206U238, sePb206U238,
-Pb207U235, sePb207U235}
+\item{x}{an object of class \code{UPb}}
 
 \item{limits}{age limits of the concordia line}
 
@@ -19,11 +17,13 @@ Pb207U235, sePb207U235}
 
 \item{wetherill}{boolean flag (FALSE for Tera-Wasserburg)}
 
-\item{show.labels}{boolean flag (TRUE to show grain numbers)}
+\item{show.numbers}{boolean flag (TRUE to show grain numbers)}
 
 \item{ellipse.col}{background colour of the error ellipses}
 
 \item{concordia.col}{colour of the concordia line}
+
+\item{dcu}{show decay constant uncertainty?}
 }
 \description{
 Wetherill and Tera-Wasserburg concordia diagrams

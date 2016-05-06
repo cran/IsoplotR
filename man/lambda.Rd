@@ -10,7 +10,11 @@ lambda(nuclide)
 \item{nuclide}{the nuclide name}
 }
 \value{
-the decay constant  [in Ma-1]
+a two-item list containing:
+
+\code{x}: the decay constant  [in Ma-1]
+
+\code{e}: the standard error of the decay constant
 }
 \description{
 Returns the decay constants of radioactive istopes

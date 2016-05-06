@@ -14,7 +14,7 @@ An example U-Pb dataset provided with Ludwig's Isoplot add-in
 
 \code{format}: an integer defining the format of \code{x}. Options are:
 
-1: Pb207/Pb206, s.e.[Pb207Pb206], Pb206/U238, s.e.[Pb206/U238], Pb207/U235, s.e.[Pb207U235]
+\code{1}: 7/6, s[7/6], 6/8, s[6/8], 7/5, s[7/5]
 }
 \examples{
 data(UPb)

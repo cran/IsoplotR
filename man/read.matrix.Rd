@@ -2,24 +2,27 @@
 % Please edit documentation in R/io.R
 \name{read.matrix}
 \alias{read.matrix}
-\title{Create a geochronological data object}
+\title{Read geochronology data}
 \usage{
-read.matrix(x, method, format)
+read.matrix(x, method = "U-Pb", format = 1)
 }
 \arguments{
-\item{x}{matrix with U-Pb data}
+\item{x}{a matrix}
 
-\item{method}{one of 'U-Pb', 'Ar-Ar', 'Rb-Sr', 'Sm-Nd', 'Re-Os', 'U-Th-He'
-'fission tracks', 'cosmogenic nuclides' or 'other'}
+\item{method}{see \code{read.data} for details}
 
-\item{format}{formatting option [integer]}
+\item{format}{see \code{read.data} for details}
+}
+\value{
+see \code{read.data} for details
 }
 \description{
-Cast a matrix of data into one of IsoplotR's input formats
+Cast a matrix into one of \code{IsoplotR}'s data classes
 }
 \examples{
+# load one of the built-in .csv files:
 fname <- system.file("UPb.csv",package="IsoplotR")
-dat <- read.csv(fname,row.names=1,header=TRUE)
+dat <- read.csv(fname,header=TRUE)
 UPb <- read.matrix(dat,method='U-Pb',format=1)
 concordia.plot(UPb)
 }

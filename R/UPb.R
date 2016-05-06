@@ -1,70 +1,8 @@
-#' Extract a group of samples from a U/Pb dataset
-#'
-#' Returns a subset of U/Pb data matching a certain prefix
-#'
-#' @param x a dataset of class 'UPb'
-#' @param subset logical expression indicating elements or rows to
-#'     keep: missing values are taken as false.
-#' @param select a vector of sample names
-#' @param ... optional arguments for the generic subset function
-#' @return an object of class 'UPb'
-#' @examples
-#' fname <- system.file("UPb.csv",package="IsoplotR")
-#' UPb <- read.UPb(fname)
-#' #data(UPb)
-#' ABC <- subset(UPb,select=c('A','B','C','D','E','F','G','H','I'))
-#' concordia.plot(ABC,wetherill=TRUE)
-#' @export
-subset.UPb <- function(x,subset=NULL,select=NULL,...){
-    out <- x
-    if (!is.null(subset)){
-        i <- which(subset,arr.ind=TRUE)
-    } else if (!is.null(select)){
-        i <- which(select %in% names(x))
-    } else {
-        return(out)
-    }
-    out$x <- x$x[i,]
-    out
-}
-
-#' Get the names of the samples contained in a U/Pb dataset
-#'
-#' Returns the rownames of a U/Pb dataset
-#'
-#' @param x an object of class 'UPb'
-#' @return an object of class 'UPb'
-#' @examples
-#' data(UPb)
-#' names(UPb)
-#' @export
-names.UPb <- function(x){
-    rownames(x$x)
-}
-
-# Get the predicted parent daughter ratio
-get.DP <- function(age,P){
-    out <- list()
-    out$x <- exp(lambda(P)*age)-1
-    out$e <- abs(lambda.err(P)*(exp(lambda(P)*age)*age))
-    out
-}
-
-#' Get the covariance matrix of a U/Pb samples
-#'
-#' Returns the covariance matrix of the U/Pb and Pb/Pb ratios of the ith sample
-#'
-#' @param X an object of class 'UPb'
-#' @param i the index of the sample of interest
-#' @return a 3x3 covariance matrix
-#' @examples
-#' data(UPb)
-#' get.covmat.UPb(UPb,2)
-#' @export
 get.covmat.UPb <- function(X,i){
     covmat <- matrix(rep(0,9),nrow=3)
     if (X$format == 1){
         rownames(covmat) <- c('Pb207Pb206','Pb206U238','Pb207U235')
+        colnames(covmat) <- c('Pb207Pb206','Pb206U238','Pb207U235')
         relvar207 <- 0.5 * ((X$x[i,'errPb207Pb206']/X$x[i,'Pb207Pb206'])^2 +
                             (X$x[i,'errPb207U235']/X$x[i,'Pb207U235'])^2 -
                             (X$x[i,'errPb206U238']/X$x[i,'Pb206U238'])^2)
@@ -88,86 +26,64 @@ get.covmat.UPb <- function(X,i){
     covmat
 }
 
-#' Calculate a Pb207/U235 age
-#'
-#' Returns the U/Pb age for a given Pb207/U235 ratio
-#'
-#' @param Pb207U235 a scalar
-#' @return the Pb207/U235 age [in Ma]
-#' @examples
-#' get.Pb207U235age(88.8)
-#' @export
+get.ratios.UPb <- function(age){
+    if (age == 0){ age <- 1e-10 }
+    out <- list()
+    l8 <- lambda('U238')$x
+    l5 <- lambda('U235')$x
+    R.x <- 1/R238235()$x
+    R.e <- R.x*R238235()$e/R238235()$x
+    Pb206U238 <- (exp(l8*age)-1)
+    U238Pb206 <- 1/(exp(l8*age)-1)
+    Pb207U235 <- (exp(l5*age)-1)
+    Pb207Pb206 <- R.x*Pb207U235/Pb206U238
+    out$x <- c(Pb207Pb206,Pb206U238,Pb207U235,U238Pb206)
+    E <- matrix(0,nrow=3,ncol=3)
+    E[1,1] <- R.e^2
+    E[2,2] <- lambda('U238')$e^2
+    E[3,3] <- lambda('U235')$e^2
+    J <- matrix(0,nrow=4,ncol=3)
+    J[1,1] <- (exp(l5*age)-1)/(exp(l8*age)-1)
+    J[1,2] <- R.x*age*exp(l5*age)/(exp(l8*age)-1)
+    J[1,3] <- -R.x*(exp(l5*age)-1)*age*exp(l8*age)/(exp(l8*age)-1)^2
+    J[2,2] <- age*exp(l8*age)
+    J[3,3] <- age*exp(l5*age)
+    J[4,2] <- age*exp(l8*age)/(exp(l8*age)-1)^2
+    out$cov <- J %*% E %*% t(J)
+    names(out$x) <- c('Pb207Pb206','Pb206U238','Pb207U235','U238Pb206')
+    rownames(out$cov) <- names(out$x)
+    colnames(out$cov) <- names(out$x)
+    out
+}
+
+get.ages.UPb <- function(x){
+    
+}
+
+# returns a five item list containing \code{x}: the geometric mean
+# isotopic composition, \code{cov}: the covariance matrix of the
+# geometric mean isotopic composition, \code{mswd}: the reduced
+# chi-square statistic for the geometric mean composition,
+# \code{age}: the 206Pb/238U-207Pb/235U concordia age, and
+# \code{err}: its standard error
+concordia.age <- function(x){
+
+}
+
+discordia.age <- function(x){
+
+}
+
 get.Pb207U235age <- function(Pb207U235){
-    log(1+Pb207U235)/lambda('U235')
+    log(1+Pb207U235)/lambda('U235')$x
 }
 
-#' Calculate a Pb206/U238 age
-#'
-#' Returns the U/Pb age for a given Pb206/U238 ratio
-#'
-#' @param Pb206U238 a scalar
-#' @return the Pb206/U238 age [in Ma]
-#' @examples
-#' get.Pb206U238age(1.03)
-#' @export
 get.Pb206U238age <- function(Pb206U238){
-    log(1+Pb206U238)/lambda('U238')
+    log(1+Pb206U238)/lambda('U238')$x
 }
 
-#' Calculate a Pb207/Pb206 age
-#'
-#' Numerically solves the Pb207/Pb206 age equation
-#' @param Pb207Pb206 the Pb207/Pb206 ratio
-#' @return the Pb207/Pb206 age [in Ma]
-#' @examples
-#' get.Pb207Pb206age(0.625)
-#' @export
-get.Pb207Pb206age <- function( Pb207Pb206){
-    Pb207Pb206.misfit <- function(x,y) { (get.Pb207Pb206(x)$x - y)^2 }
+get.Pb207Pb206age <- function(Pb207Pb206){
+    Pb207Pb206.misfit <- function(x,y) { (get.ratios.UPb(x)$x[1] - y)^2 }
     out <- stats::optimize(Pb207Pb206.misfit,c(0,4600),y=Pb207Pb206)
     out$minimum
-}
-
-#' Calculate a Pb206/U238 ratio
-#'
-#' Returns the expected Pb206/U238 ratio for a given age
-#'
-#' @param age a U/Pb age [in Ma]
-#' @return a Pb206/U238 ratio
-#' @examples
-#' get.Pb206U238(4567)
-#' @export
-get.Pb206U238 <- function(age){
-    get.DP(age,'U238')
-}
-
-#' Calculate a Pb207/U235 ratio
-#'
-#' Returns the expected Pb207/U235 ratio for a given age
-#'
-#' @param age a U/Pb age [in Ma]
-#' @return a Pb207/U235 ratio
-#' @examples
-#' get.Pb207U235(4567)
-#' @export
-get.Pb207U235 <- function(age){
-    get.DP(age,'U235')
-}
-
-#' Calculate a Pb207/Pb206 ratio
-#'
-#' Returns the expected Pb207/Pb206 ratio for a given age
-#'
-#' @param age a Pb/Pb age [in Ma]
-#' @return a Pb207/Pb206 ratio
-#' @examples
-#' get.Pb207Pb206(4567)
-#' @export
-get.Pb207Pb206 <- function(age){
-    Pb206U238 <- get.Pb206U238(age)
-    Pb207U235 <- get.Pb207U235(age)
-    out <- list()
-    out$x <- (I.A('U235')*Pb207U235$x)/(I.A('U238')*Pb206U238$x)
-    out$e <- out$x * sqrt((Pb207U235$e/Pb207U235$x)^2 + (Pb207U235$e/Pb207U235$x)^2)
-    out
 }

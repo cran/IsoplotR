@@ -7,10 +7,22 @@
 I.A(nuclide)
 }
 \arguments{
-\item{nuclide}{the nuclide name}
+\item{nuclide}{one of either \code{'U'}, \code{'U238'},
+\code{'U235'}, or \code{'Th232'}}
 }
 \value{
-a number between 0 (absent) and 1 (dominant)
+a two element list containing:
+
+\code{x}: a number or a vector of numbers between 0 (absent) and 1 (dominant)
+
+and
+
+\code{e}: the standard error or covariance matrix of x
+
+or, if \code{nuclide} = \code{'U'}:
+
+\code{cov}: the covariance matrix of all naturally occurring
+isotopes
 }
 \description{
 Returns the natural abundance of isotopes
