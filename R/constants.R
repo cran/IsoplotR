@@ -1,87 +1,94 @@
+.IsoplotR <- new.env(parent = emptyenv())
+
+#' Load settings to and from json
+#'
+#' Get and set preferred values for decay constants and isotopic
+#' abundances from and to a \code{.json} file format
+#'
+#' @param fname the path of a \code{.json} file
+#' @return if fname==NULL, returns a \code{.json} string
+#' @examples
+#' json <- system.file("defaults.json",package="IsoplotR")
+#' settings(json)
+#' print(settings())
+#' @export
+settings <- function(fname=NULL){
+    if (is.null(fname)){
+        preferences <- as.list(.IsoplotR)
+        return(toJSON(preferences))
+    } else {
+        prefs <- fromJSON(file=fname)
+        .IsoplotR$lambda <- prefs$lambda
+        .IsoplotR$I.R <- prefs$I.R
+    }
+}
+
 #' Decay constants
 #'
-#' Returns the decay constants of radioactive istopes
+#' Gets or sets the decay constants of radioactive istopes
 #'
 #' @param nuclide the nuclide name
-#' @return a two-item list containing:
-#'
-#' \code{x}: the decay constant  [in Ma-1]
-#'
-#' \code{e}: the standard error of the decay constant
+#' @param x new value for the decay constant
+#' @param e new value for the decay constant uncertainty
+#' @return if x == e == NULL, returns a two-item vector containing the
+#'     decay constant [in Ma-1] and its standard error, respectively.
 #' @examples
-#' lambda('U238')
+#' print(lambda('U238'))
+#' # use the decay constant of Kovarik and Adams (1932)
+#' lambda('U238',0.0001537,0.0000068)
+#' print(lambda('U238'))
 #' @export
-lambda <- function(nuclide){
-    out <- list()
-    if (nuclide == 'U238'){
-        out$x <- 1.55125e-4
-        out$e <- out$x*0.0008
-    }
-    if (nuclide == 'U235'){
-        out$x <- 9.8485e-4
-        out$e <- out$x*0.0010
-    }
-    if (nuclide == 'Th232'){
-        out$x <- 4.9475e-5
-        out$e <- 0
-    }
-    out
+lambda <- function(nuclide,x=NULL,e=NULL){
+    if (is.null(x) & is.null(e)) return(.IsoplotR$lambda[[nuclide]])
+    if (is.numeric(x)) .IsoplotR$lambda[[nuclide]][1] <- x
+    if (is.numeric(e)) .IsoplotR$lambda[[nuclide]][2] <- e
 }
 
-R238235 <- function(){
-    out <- list()
-    out$x <- 137.818
-    out$e <- 0.0225
-    out
-}
-
-#' Isotope abundance
+#' Isotopic ratios
 #'
-#' Returns the natural abundance of isotopes
+#' Gets or sets natural isotopic ratios.
 #'
-#' @param nuclide one of either \code{'U'}, \code{'U238'},
-#'     \code{'U235'}, or \code{'Th232'}
-#' @return a two element list containing:
-#'
-#' \code{x}: a number or a vector of numbers between 0 (absent) and 1 (dominant)
-#'
-#' and
-#'
-#' \code{e}: the standard error or covariance matrix of x
-#'
-#' or, if \code{nuclide} = \code{'U'}:
-#'
-#' \code{cov}: the covariance matrix of all naturally occurring
-#' isotopes
-#'
+#' @param ratio one of either \code{'U238U235'}, \code{'Ar40Ar36'},
+#'     \code{'Ar38Ar36'}, \code{'Rb85Rb87'}, \code{'Sr88Sr86'},
+#'     \code{'Sr87Sr86'}, \code{'Sr84Sr86'}, \code{'Re185Re187'},
+#'     \code{'Os184Os192'}, \code{'Os186Os192'}, \code{'Os187Os192'},
+#'     \code{'Os188Os192'}, \code{'Os189Os192'}
+#' @param x new value for ratio
+#' @param e new value for its standard error
+#' @return if x == e == NULL, returns a two-item vector containing the
+#'     mean value of the requested ratio and its standard error,
+#'     respectively.
 #' @examples
-#' I.A('U238')
+#' # returns the 238U/235U ratio of Hiess et al. (2012):
+#' print(I.R('U238U235'))
+#' # use the 238U/235U ratio of Steiger and Jaeger (1977):
+#' I.R('U238U235',138.88,0)
+#' print(I.R('U238U235'))
+#' @references
+#' Ar: Lee, Jee-Yon, et al. "A redetermination of the isotopic abundances
+#' of atmospheric Ar." Geochimica et Cosmochimica Acta 70.17 (2006): 4507-4512.
+#'
+#' Rb: Catanzaro, E. J., et al. "Absolute isotopic abundance ratio and
+#' atomic weight of terrestrial rubidium." J. Res. Natl. Bur. Stand. A 73
+#' (1969): 511-516.
+#'
+#' Sr: Moore, L. J., et al. "Absolute isotopic abundance ratios and atomic
+#' weight of a reference sample of strontium." J. Res. Natl.Bur. Stand.
+#' 87.1 (1982): 1-8.
+#'
+#' Re: Gramlich, John W., et al. "Absolute isotopic abundance ratio and
+#' atomic weight of a reference sample of rhenium." J. Res. Natl. Bur.
+#' Stand. A 77 (1973): 691-698.
+#'
+#' Os: Voelkening, Joachim, Thomas Walczyk, and Klaus G. Heumann.
+#' "Osmium isotope ratio determinations by negative thermal ionization
+#' mass spectrometry." Int. J. Mass Spect. Ion Proc. 105.2 (1991): 147-159.
+#' 
+#' U: Hiess, Joe, et al. "238U/235U systematics in terrestrial
+#' uranium-bearing minerals." Science 335.6076 (2012): 1610-1614.
 #' @export
-I.A <- function(nuclide){
-    out <- list()
-    if (nuclide == 'U'){
-        R <- R238235()
-        A238 <- R$x/(1+R$x)
-        A235 <- 1/(1+R$x)
-        out$x <- c(A238,A235)
-        J <- matrix(c(1/(R$x+1)^2,-1/(R$x+1)^2),nrow=2,ncol=1)
-        E <- R$e^2
-        out$cov <- J %*% E %*% t(J)
-        names(out$x) <- c('U238','U235')
-        rownames(out$cov) <- names(out$x)
-        colnames(out$cov) <- names(out$x)
-    }
-    if (nuclide == 'U238'){
-        out$x <- I.A('U')$x[1]
-        out$e <- sqrt(I.A('U')$cov[1,1])
-    }
-    if (nuclide == 'U235'){
-        out$x <- I.A('U')$x[2]
-        out$e <- sqrt(I.A('U')$cov[2,2])
-    }
-    if (nuclide == 'Th232'){
-        out$x <- 1
-        out$e <- 0
-    }
-    out
+I.R <- function(ratio,x=NULL,e=NULL){
+    if (is.null(x) & is.null(e)) return(.IsoplotR$I.R[[ratio]])
+    if (is.numeric(x)) .IsoplotR$I.R[[ratio]][1] <- x
+    if (is.numeric(e)) .IsoplotR$I.R[[ratio]][2] <- e
 }
