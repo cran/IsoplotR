@@ -1,166 +1,11 @@
-#' Calculate U-Pb concordia ages
-#'
-#' Evaluates the equivalence of multiple
-#' (\eqn{^{206}}Pb/\eqn{^{238}}U-\eqn{^{207}}Pb/\eqn{^{235}}U or
-#' \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U)
-#' compositions, computes the weighted mean isotopic composition and
-#' the corresponding concordia age using the method of maximum
-#' likelihood, computes the mswd of equivalence and concordance and
-#' their respective Chi-squared p-values.
-#'
-#' @param x an object of class \code{UPb}
-#' @param wetherill boolean flag to indicate whether the data should
-#'     be evaluated in Wetherill (\code{TRUE}) or Tera-Wasserburg
-#'     (\code{FALSE}) space
-#' @param dcu propagate the decay constant uncertainties?
-#' @return a list with the following items:
-#'
-#' \code{x}: a named vector with the weighted mean U-Pb composition
-#'
-#' \code{x.cov}: the covariance matrix of the mean U-Pb composition
-#'
-#' \code{age}: the concordia age (in Ma)
-#'
-#' \code{age.err}: the standard error of the concordia age
-#'
-#' \code{mswd}: a list with two items (\code{equivalence} and
-#' \code{concordance}) containing the MSWD (Mean of the Squared
-#' Weighted Deviates, a.k.a the reduced Chi-squared statistic outside
-#' of geochronology) of isotopic equivalence and age concordance,
-#' respectively.
-#'
-#' \code{p.value}: a list with two items (\code{equivalence} and
-#' \code{concordance}) containing the p-value of the Chi-square test
-#' for isotopic equivalence and age concordance, respectively.
-#' @importFrom stats optim
-#' @examples
-#' data(UPb)
-#' fit <- concordia.age(UPb)
-#' print(paste('age = ',fit$age,'+/-',fit$age.err,'Ma, MSWD = ',fit$mswd))
-#' @export
-concordia.age <- function(x,wetherill=TRUE,dcu=TRUE){
-    X <- UPb.preprocess(x,wetherill)
-    xy <- initialise.concordant.composition(x,wetherill)
-    fit.comp <- optim(xy, LL.concordia.comp, x=X, method="BFGS", hessian=TRUE)
-    out <- list()
-    out$x <- fit.comp$par
-    out$x.cov <- solve(fit.comp$hessian)
-    selection <- names(X[[1]]$x)
-    names(out$x) <- selection
-    colnames(out$x.cov) <- selection
-    rownames(out$x.cov) <- selection
-    t.init <- initial.concordia.age.guess(out$x,wetherill)
-    fit.age <- optim(t.init, LL.concordia.age, x=out$x, covmat=out$x.cov,
-                     wetherill=wetherill, dcu=dcu, method="BFGS", hessian=TRUE)
-    out$age <- fit.age$par
-    out$age.err <- as.numeric(sqrt(solve(fit.age$hessian)))
-    mswd <- mswd.concordia(X,out$x,out$x.cov,out$age,wetherill)
-    out$mswd <- mswd$mswd
-    out$p.value <- mswd$p.value
-    out
-}
-
-initialise.concordant.composition <- function(x,wetherill=TRUE){
-    selection <- get.UPb.selection(wetherill)
-    colMeans(x$x[,selection])
-}
-
-initial.concordia.age.guess <- function(x,wetherill=TRUE){
-    if (wetherill){
-        Pb207U235age <- get.Pb207U235age(x['Pb207U235'])
-        Pb206U238age <- get.Pb206U238age(x['Pb206U238'])
-        out <- mean(c(Pb207U235age,Pb206U238age))
-    } else {
-        Pb206U238age <- get.Pb206U238age(1/x['U238Pb206'])
-        Pb207Pb206age <- get.Pb207Pb206age(x['Pb207Pb206'])
-        out <- mean(c(Pb206U238age,Pb207Pb206age))
-    }
-    out
-}
-
-get.UPb.selection <- function(wetherill=TRUE){
-    if (wetherill) selection <- c('Pb207U235','Pb206U238')
-    else selection <- c('U238Pb206','Pb207Pb206')
-    selection
-}
-
-mswd.concordia <- function(x,mu,covmat,age,wetherill=TRUE,dcu=TRUE){
-    out <- list()
-    SS.equivalence <- LL.concordia.comp(mu,x,TRUE)
-    SS.concordance <- LL.concordia.age(age,mu,covmat,wetherill,mswd=TRUE,dcu=dcu)
-    df.equivalence <- 2*length(x)-1
-    df.concordance <- 1
-    out$mswd <- list(equivalence = SS.equivalence/df.equivalence,
-                     concordance = SS.concordance/df.concordance)
-    out$p.value <- list(equivalence = 1-pchisq(SS.equivalence,df.equivalence),
-                        concordance = 1-pchisq(SS.concordance,df.concordance))
-    out
-}
-
-LL.concordia.comp <- function(mu,x,mswd=FALSE){
-    out <- 0
-    for (i in 1:length(x)){
-        X <- matrix(x[[i]]$x-mu,1,2)
-        covmat <- x[[i]]$cov
-        if (mswd) out <- out + get.SS(X,covmat)
-        else out <- out + LL.norm(X,covmat)
-    }
-    out
-}
-
-LL.concordia.age <- function(age,x,covmat,wetherill=TRUE,mswd=FALSE,dcu=TRUE){
-    UPbratios <- get.ratios.UPb(age)
-    selection <- get.UPb.labels(wetherill)
-    X <- matrix(x[selection]-UPbratios$x[selection],1,2)
-    COVMAT <- covmat[selection,selection]
-    if (dcu) COVMAT <- COVMAT + UPbratios$cov[selection,selection]
-    if (mswd) out <- get.SS(X,COVMAT)
-    else out <- LL.norm(X,COVMAT)
-    out
-}
-
-get.UPb.labels <- function(wetherill=TRUE){
-    if (wetherill) selection <- c('Pb207U235','Pb206U238')
-    else selection <- c('U238Pb206','Pb207Pb206')
-    selection
-}
-
-#' Linear regression on a U-Pb concordia diagram
-#'
-#' Performs linear regression of U-Pb data on Wetherill and
-#' Tera-Wasserburg concordia diagrams. Computes the upper and lower
-#' intercept ages (for Wetherill) or the lower intercept age and the
-#' \eqn{^{207}}Pb/\eqn{^{206}}Pb intercept (for Tera-Wasserburg),
-#' taking into account error correlations and decay constant
-#' uncertainties.
-#'
-#' @param x an object of class \code{UPb}
-#' @param wetherill boolean flag to indicate whether the data should
-#'     be evaluated in Wetherill (\code{TRUE}) or Tera-Wasserburg
-#'     (\code{FALSE}) space
-#' @param dcu propagate the decay constant uncertainties?
-#' @return a list with the following items:
-#'
-#' \code{x}: a two element vector with the upper and lower intercept
-#' ages (if wetherill==TRUE) or the lower intercept age and
-#' \eqn{^{207}}Pb/\eqn{^{206}}Pb intercept (for Tera-Wasserburg)
-#'
-#' \code{cov}: the covariance matrix of the elements in \code{x}
-#'
-#' @importFrom stats optim optimHess
-#' @examples
-#' data(UPb)
-#' fit <- discordia.age(UPb)
-#' print(paste('lower intercept = ',fit$x[1],'+/-',sqrt(fit$cov[1,1]),'Ma'))
-#' @export
 discordia.age <- function(x,wetherill=TRUE,dcu=TRUE){
     out <- list()
     d <- UPb2york(x,wetherill)
     X <- UPb.preprocess(x,wetherill)
     fit <- yorkfit(d$X,d$Y,d$sX,d$sY,d$rXY)
     itt <- concordia.intersection(fit,wetherill)
-    hess <- optimHess(itt,LL.concordia.intersection,
-                      d=d,X=X,wetherill=wetherill,dcu=dcu)
+    hess <- stats::optimHess(itt,LL.concordia.intersection, d=d,X=X,
+                             wetherill=wetherill,dcu=dcu)
     out$x <- itt
     out$cov <- solve(hess)
     out
@@ -235,7 +80,7 @@ concordia.intersection <- function(fit,wetherill){
 intersection.misfit <- function(age,a,b,wetherill){
     l5 <- lambda('U235')[1]
     l8 <- lambda('U238')[1]
-    R <- I.R('U238U235')[1]
+    R <- iratio('U238U235')[1]
     if (wetherill){
         out <- a-b+1 + b*exp(l5*age) - exp(l8*age)
     } else {
@@ -252,7 +97,7 @@ discordant.composition <- function(d,tl,itu,wetherill=TRUE){
     out <- list()
     l5 <- lambda('U235')[1]
     l8 <- lambda('U238')[1]
-    R <- I.R('U238U235')[1]
+    R <- iratio('U238U235')[1]
     if (wetherill){
         X <- d*(exp(l5*tl)-1) + (1-d)*(exp(l5*itu)-1)
         Y <- d*(exp(l8*tl)-1) + (1-d)*(exp(l8*itu)-1)
@@ -282,7 +127,7 @@ discordant.composition <- function(d,tl,itu,wetherill=TRUE){
     E <- matrix(0,3,3)
     E[1,1] <- lambda('U235')[2]^2
     E[2,2] <- lambda('U238')[2]^2
-    E[3,3] <- I.R('U238U235')[2]^2
+    E[3,3] <- iratio('U238U235')[2]^2
     covmat <- J %*% E %*% t(J)
     out$x <- c(X,Y)
     out$cov <- covmat
