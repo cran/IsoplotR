@@ -10,12 +10,10 @@
 #' @param sX standard errors of \code{X}
 #' @param sY standard errors of \code{Y}
 #' @param rXY correlation coefficients between X and Y
-#' @return a five element list containing
+#' @return a two element list of vectors containing
 #' \describe{
-#' \item{a}{ the intercept of the straight line fit }
-#' \item{b}{ the slope of the fit }
-#' \item{sa}{ the standard error of the intercept }
-#' \item{sb}{ the standard error of the slope }
+#' \item{a}{ the intercept of the straight line fit and its standard error}
+#' \item{b}{ the slope of the fit and its standard error}
 #' }
 #' @references
 #'
@@ -39,7 +37,7 @@
 #'    rXY <- rep(0.8,n)
 #'    fit <- yorkfit(X,Y,sX,sY,rXY)
 #'    covmat <- matrix(0,2,2)
-#'    plot(range(X),fit$a+fit$b*range(X),type='l',ylim=range(Y))
+#'    plot(range(X),fit$a[1]+fit$b[1]*range(X),type='l',ylim=range(Y))
 #'    for (i in 1:n){
 #'        covmat[1,1] <- sX[i]^2
 #'        covmat[2,2] <- sY[i]^2
@@ -74,10 +72,27 @@ yorkfit <- function(X,Y,sX,sY,rXY){
     sb <- sqrt(1/sum(W*u^2))
     sa <- sqrt(1/sum(W)+(xbar*sb)^2)
     out <- list()
-    out$a <- a
-    out$b <- b
-    out$sa <- sa
-    out$sb <- sb
+    out$a <- c(a,sa)
+    out$b <- c(b,sb)
+    mswd <- get.york.mswd(X,Y,sX,sY,rXY,a,b)
+    out$mswd <- mswd$mswd
+    out$p.value <- mswd$p.value
+    out
+}
+
+get.york.mswd <- function(X,Y,sX,sY,rXY,a,b){
+    xy <- get.york.xy(X,Y,sX,sY,rXY,a,b)
+    X2 <- 0
+    nn <- length(X)
+    for (i in 1:nn){
+        E <- cor2cov(sX[i],sY[i],rXY[i])
+        x <- matrix(c(X[i]-xy[i,1],Y[i]-xy[i,2]),1,2)
+        X2 <- X2 + 0.5*x %*% solve(E) %*% t(x)
+    }
+    df <- (2*nn-2)
+    out <- list()
+    out$mswd <- X2/df
+    out$p.value <- 1-pchisq(X2,df)
     out
 }
 
@@ -98,20 +113,44 @@ get.york.xy <- function(X,Y,sX,sY,rXY,a,b){
     out
 }
 
-UPb2york <- function(x,wetherill=TRUE){
-    selection <- get.UPb.selection(wetherill)
+data2york <- function(x,selection=NA){ 
     out <- list()
     nn <- nrow(x$x)
+    if (any(is.na(selection))) selection <- c(1,2)
     out$X <- x$x[,selection[1]]
     out$Y <- x$x[,selection[2]]
     out$sX <- rep(0,nn)
     out$sY <- rep(0,nn)
     out$rXY <- rep(0,nn)
     for (i in 1:nn){
-        covmat <- get.covmat.UPb(x,i)
+        covmat <- get.covmat(x,i)[selection,selection]
         out$sX[i] <- sqrt(covmat[1,1])
         out$sY[i] <- sqrt(covmat[2,2])
-        out$rXY[i] <- covmat[1,2]/(out$sX[i]*out$sY[i])
+        out$rXY[i] <- stats::cov2cor(covmat)[1,2]
     }
     out
+}
+
+# x is a list with numbers
+# x$x = 2n-element vector
+# x$covmat = 2n x 2n covariance matrix
+# where n is the number of aliquots
+mlregression <- function(x,selection=NA){
+    d <- x
+    if (!any(is.na(selection))) {
+        i <- which(names(d$x) %in% selection)
+        d$x <- x$x[i]
+        d$covmat <- x$covmat[i,i]
+    }
+    ns <- length(d$x)/2
+    ix <- seq(from=1,to=2*ns-1,by=2)
+    iy <- seq(from=2,to=2*ns,by=2)
+    X <- d$x[ix]
+    Y <- d$x[iy]
+    sX <- sqrt(diag(d$covmat)[ix])
+    sY <- sqrt(diag(d$covmat)[iy])
+    cormat <- stats::cov2cor(d$covmat)
+    rXY <- cormat[cbind(ix,ix+1)]
+    fit <- yorkfit(X,Y,sX,sY,rXY)
+    fit
 }

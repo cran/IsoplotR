@@ -1,42 +1,63 @@
-get.covmat.UPb <- function(x,i){
-    covmat <- matrix(rep(0,16),nrow=4)
-    rownames(covmat) <- c('Pb207U235','Pb206U238','U238Pb206','Pb207Pb206')
-    colnames(covmat) <- rownames(covmat)
-    if (x$format == 1){
-        covmat[1,1] <- x$x[i,'errPb207U235']^2
-        covmat[2,2] <- x$x[i,'errPb206U238']^2
-        covmat[3,3] <- (x$x[i,'errPb206U238']^2)/(x$x[i,'Pb206U238']^4)
-        covmat[4,4] <- x$x[i,'errPb207Pb206']^2
+get.selection.UPb <- function(x,wetherill=TRUE,...){
+    if (wetherill) selection <- c('Pb207U235','Pb206U238')
+    else selection <- c('U238Pb206','Pb207Pb206')
+    selection
+}
 
-        covmat[1,2] <- 0.5 * x$x[i,'Pb207U235'] * x$x[i,'Pb206U238'] * (
-                            (x$x[i,'errPb207U235']/x$x[i,'Pb207U235'])^2 +
-                            (x$x[i,'errPb206U238']/x$x[i,'Pb206U238'])^2 -
-                            (x$x[i,'errPb207Pb206']/x$x[i,'Pb207Pb206'])^2 )
-        covmat[1,3] <- 0.5 * x$x[i,'Pb207U235'] * x$x[i,'Pb206U238'] * (
-                            (x$x[i,'errPb207Pb206']/x$x[i,'Pb207Pb206'])^2 -
-                            (x$x[i,'errPb207U235']/x$x[i,'Pb207U235'])^2 -
-                            covmat[3,3]*x$x[i,'Pb206U238']^2 )
-        covmat[1,4] <- 0.5 * x$x[i,'Pb207U235']*x$x[i,'Pb207Pb206'] * (
-                            (x$x[i,'errPb207U235']/x$x[i,'Pb207U235'])^2 +
-                            (x$x[i,'errPb207Pb206']/x$x[i,'Pb207Pb206'])^2 -
-                            (x$x[i,'errPb206U238']/x$x[i,'Pb206U238'])^2 )
-        covmat[2,1] <- covmat[1,2]
-        covmat[2,3] <- -1
-        covmat[2,4] <- 0.5 * x$x[i,'Pb207Pb206']*x$x[i,'Pb206U238'] * (
-                            (x$x[i,'errPb207U235']/x$x[i,'Pb207U235'])^2 -
-                            (x$x[i,'errPb207Pb206']/x$x[i,'Pb207Pb206'])^2 -
-                            (x$x[i,'errPb206U238']/x$x[i,'Pb206U238'])^2 )
-        covmat[3,1] <- covmat[1,3]
-        covmat[3,2] <- -1
-        covmat[3,4] <- 0.5 * x$x[i,'Pb207Pb206']/x$x[i,'Pb206U238'] * (
-                            (x$x[i,'errPb207Pb206']/x$x[i,'Pb207Pb206'])^2 +
-                             covmat[3,3]*x$x[i,'Pb206U238']^2 -
-                            (x$x[i,'errPb207U235']/x$x[i,'Pb207U235'])^2 )
-        covmat[4,1] <- covmat[1,4]
-        covmat[4,2] <- covmat[2,4]
-        covmat[4,3] <- covmat[3,4]
+get.covmat.UPb <- function(x,i,...){
+    out <- matrix(rep(0,16),nrow=4)
+    rownames(out) <- c('Pb207U235','Pb206U238','U238Pb206','Pb207Pb206')
+    colnames(out) <- rownames(out)
+    if (x$format == 1){
+        out['Pb207U235','Pb207U235'] <- x$x[i,'errPb207U235']^2
+        out['Pb206U238','Pb206U238'] <- x$x[i,'errPb206U238']^2
+        out['U238Pb206','U238Pb206'] <- x$x[i,'errU238Pb206']^2
+        out['Pb207Pb206','Pb207Pb206'] <- x$x[i,'errPb207Pb206']^2
+
+        Pb207U235 <- x$x[i,'Pb207U235']
+        errPb207U235 <- x$x[i,'errPb207U235']
+        Pb206U238 <- x$x[i,'Pb206U238']
+        errPb206U238 <- x$x[i,'errPb206U238']
+        U238Pb206 <- x$x[i,'U238Pb206']
+        errU238Pb206 <- x$x[i,'errU238Pb206']
+        Pb207Pb206 <- x$x[i,'Pb207Pb206']
+        errPb207Pb206 <- x$x[i,'errPb207Pb206']
+
+        R <- iratio('U238U235')[1]
+        Pb206U235 <- Pb206U238*R
+        errPb206U235 <- errPb206U238*R
+        U235Pb206 <- U238Pb206/R
+        errU235Pb206 <- errU238Pb206/R
+        Pb207U238 <- Pb207U235/R
+        errPb207U238 <- errPb207U235/R
+
+        out.Pb207U235.Pb206U235 <- get.cov.xzyz(
+            Pb207U235,errPb207U235,Pb206U235,errPb206U235,errPb207Pb206
+        )
+        out.Pb207U235.U235Pb206 <- get.cov.xzzy(
+            Pb207U235,errPb207U235,U235Pb206,errU235Pb206,errPb207Pb206
+        )
+
+        out['Pb207U235','Pb206U238'] <- out.Pb207U235.Pb206U235/R
+        out['Pb207U235','U238Pb206'] <- out.Pb207U235.U235Pb206*R
+        out['Pb207U235','Pb207Pb206'] <- get.cov.zxzy(
+            Pb207U235,errPb207U235,Pb207Pb206,errPb207Pb206,errU235Pb206
+        )
+        out['Pb206U238','U238Pb206'] <- -0
+        out['Pb206U238','Pb207Pb206'] <- get.cov.xzzy(
+            Pb207Pb206,errPb207Pb206,Pb206U238,errPb206U238,errPb207U238
+        )
+        out['U238Pb206','Pb207Pb206'] <- get.cov.xzyz(
+            Pb207Pb206,errPb207Pb206,U238Pb206,errU238Pb206,errPb207U238
+        )
+        out['Pb206U238','Pb207U235'] <- out['Pb207U235','Pb206U238']
+        out['U238Pb206','Pb207U235'] <- out['Pb207U235','U238Pb206']
+        out['Pb207Pb206','Pb207U235'] <- out['Pb207U235','Pb207Pb206']
+        out['U238Pb206','Pb206U238'] <- out['Pb206U238','U238Pb206']
+        out['Pb207Pb206','Pb206U238'] <- out['Pb206U238','Pb207Pb206']
+        out['Pb207Pb206','U238Pb206'] <- out['U238Pb206','Pb207Pb206']
     }
-    covmat
+    out
 }
 
 get.ratios.UPb <- function(age){
@@ -134,18 +155,16 @@ get.Pb207Pb206age <- function(r76,sr76=0,dcu=TRUE){
     out
 }
 
-# x an object of class \code{UPb}
-# returns a matrix of 7/5, 6/8, 7/6 and concordia ages
-# and their uncertainties. If i!=NA, returns a list with those
-# same ages of aliquot i and their covariance matrix
-UPb.age <- function(x,i=NA){
+# x an object of class \code{UPb} returns a matrix of 7/5, 6/8, 7/6
+# and concordia ages and their uncertainties.
+UPb.age <- function(x,dcu=TRUE,i=NA){
     labels <- c('t.75','s[t.75]','t.68','s[t.68]',
                 't.76','s[t.76]','t.conc','s[t.conc]')
     if (!is.na(i)){
-        t.conc <- concordia.age.UPb(x,i=i)
-        t.75 <- get.Pb207U235age(x$x[i,'Pb207U235'],x$x[i,'errPb207U235'])
-        t.68 <- get.Pb206U238age(x$x[i,'Pb206U238'],x$x[i,'errPb206U238'])
-        t.76 <- get.Pb207Pb206age(x$x[i,'Pb207Pb206'],x$x[i,'errPb207Pb206'])
+        t.conc <- concordia.age.UPb(x,i=i,dcu=dcu)
+        t.75 <- get.Pb207U235age(x$x[i,'Pb207U235'],x$x[i,'errPb207U235'],dcu=dcu)
+        t.68 <- get.Pb206U238age(x$x[i,'Pb206U238'],x$x[i,'errPb206U238'],dcu=dcu)
+        t.76 <- get.Pb207Pb206age(x$x[i,'Pb207Pb206'],x$x[i,'errPb207Pb206'],dcu=dcu)
         t.75.out <- roundit(t.75[1],t.75[2])
         t.68.out <- roundit(t.68[1],t.68[2])
         t.76.out <- roundit(t.76[1],t.76[2])
@@ -157,7 +176,7 @@ UPb.age <- function(x,i=NA){
         out <- matrix(0,nn,8)
         colnames(out) <- labels
         for (i in 1:nn){
-            out[i,] <- UPb.age(x,i)
+            out[i,] <- UPb.age(x,i=i,dcu=dcu)
         }
     }
     out

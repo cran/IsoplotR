@@ -1,9 +1,10 @@
 discordia.age <- function(x,wetherill=TRUE,dcu=TRUE){
     out <- list()
-    d <- UPb2york(x,wetherill)
-    X <- UPb.preprocess(x,wetherill)
+    selection <- get.selection(x,wetherill)
+    d <- data2york(x,selection)
     fit <- yorkfit(d$X,d$Y,d$sX,d$sY,d$rXY)
     itt <- concordia.intersection(fit,wetherill)
+    X <- UPb.preprocess(x,wetherill)
     hess <- stats::optimHess(itt,LL.concordia.intersection, d=d,X=X,
                              wetherill=wetherill,dcu=dcu)
     out$x <- itt
@@ -31,12 +32,12 @@ LL.concordia.intersection <- function(itt,d,X,wetherill,dcu){
     if (wetherill) disc <- (XYu[1]-xy[,1])/(XYu[1]-XYl[1])
     else disc <- (XYl[1]-xy[,1])/XYl[1]
     for (i in 1:length(X)){
-        COVMAT <- X[[i]]$cov
+        covmat <- X[[i]]$cov
         if (dcu) {
             dcomp <- discordant.composition(disc[i],itt[1],itt[2],wetherill)
-            COVMAT <- COVMAT + dcomp$cov
+            covmat <- covmat + dcomp$cov
         }
-        LL <- LL + LL.norm(matrix(mu[i,],1,2),COVMAT)        
+        LL <- LL + LL.norm(matrix(mu[i,],1,2),covmat)
     }
     LL
 }
@@ -47,28 +48,28 @@ concordia.intersection <- function(fit,wetherill){
     if (wetherill){
         search.range <- c(0,10000)
         midpoint <- stats::optimize(intersection.misfit, search.range,
-                                    a=fit$a, b=fit$b, wetherill=wetherill)$minimum
+                                    a=fit$a[1], b=fit$b[1], wetherill=wetherill)$minimum
         range1 <- c(-1000,midpoint)
         range2 <- c(midpoint,10000)
         tt <- search.range # tl, tu
         tt[1] <- stats::uniroot(intersection.misfit, range1, 
-                                a=fit$a, b=fit$b, wetherill=wetherill)$root
+                                a=fit$a[1], b=fit$b[1], wetherill=wetherill)$root
         tt[2] <- stats::uniroot(intersection.misfit, range2, 
-                                a=fit$a, b=fit$b, wetherill=wetherill)$root
+                                a=fit$a[1], b=fit$b[1], wetherill=wetherill)$root
         out <- tt
     } else {
         search.range <- c(1/10000,10000)
-        it <- c(1,fit$a) # tl, 7/6 intercept
-        if (fit$b<0) { # negative slope => two intersections with concordia line
+        it <- c(1,fit$a[1]) # tl, 7/6 intercept
+        if (fit$b[1]<0) { # negative slope => two intersections with concordia line
             midpoint <- stats::optimize(intersection.misfit, search.range,
-                                        a=fit$a, b=fit$b, wetherill=wetherill)$minimum
+                                        a=fit$a[1], b=fit$b[1], wetherill=wetherill)$minimum
             search.range[2] <- midpoint
             it[1] <- stats::uniroot(intersection.misfit, search.range, 
-                                    a=fit$a, b=fit$b, wetherill=wetherill)$root
+                                    a=fit$a[1], b=fit$b[1], wetherill=wetherill)$root
             out <- it
         } else {
             it[1] <- stats::uniroot(intersection.misfit, search.range,
-                                    a=fit$a, b=fit$b, wetherill=wetherill)$root
+                                    a=fit$a[1], b=fit$b[1], wetherill=wetherill)$root
         }
         out <- it
     }
@@ -158,4 +159,24 @@ discordia.plot <- function(fit,wetherill=TRUE){
     X <- c(comp.l[1],comp.u[1])
     Y <- c(comp.l[2],comp.u[2])
     graphics::lines(X,Y)
+}
+
+discordia.title <- function(fit,wetherill){
+    if (wetherill){
+        lower.age <- roundit(fit$x[1],sqrt(fit$cov[1,1]))
+        upper.age <- roundit(fit$x[2],sqrt(fit$cov[2,2]))
+        line1 <- substitute('lower intercept ='~a%+-%b~'[Ma]',
+                            list(a=lower.age$x, b=lower.age$err))
+        line2 <- substitute('upper intercept ='~a%+-%b~'[Ma]',
+                            list(a=upper.age$x, b=upper.age$err))
+    } else {
+        lower.age <- roundit(fit$x[1],sqrt(fit$cov[1,1]))
+        intercept <- roundit(fit$x[2],sqrt(fit$cov[2,2]))
+        line1 <- substitute('age ='~a%+-%b~'[Ma]',
+                            list(a=lower.age$x, b=lower.age$err))
+        line2 <- substitute('('^207*'Pb/'^206*'Pb)'[0]~'='~a%+-%b,
+                              list(a=intercept$x, b=intercept$err))
+    }
+    graphics::mtext(line1,line=1)
+    graphics::mtext(line2,line=0)
 }
