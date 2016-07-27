@@ -141,10 +141,10 @@ discordant.composition <- function(d,tl,itu,wetherill=TRUE){
 
 # negative multivariate log likelihood to be fed into R's optim function
 LL.norm <- function(x,covmat){
-    log(2*pi) + 0.5*determinant(covmat,logarithmic=TRUE)$modulus + 0.5*get.SS(x,covmat)
+    log(2*pi) + 0.5*determinant(covmat,logarithmic=TRUE)$modulus + 0.5*get.concordia.SS(x,covmat)
 }
 
-get.SS <- function(x,covmat){
+get.concordia.SS <- function(x,covmat){
     x %*% solve(covmat) %*% t(x)
 }
 
@@ -161,17 +161,17 @@ discordia.plot <- function(fit,wetherill=TRUE){
     graphics::lines(X,Y)
 }
 
-discordia.title <- function(fit,wetherill){
+discordia.title <- function(fit,wetherill,sigdig=2){
     if (wetherill){
-        lower.age <- roundit(fit$x[1],sqrt(fit$cov[1,1]))
-        upper.age <- roundit(fit$x[2],sqrt(fit$cov[2,2]))
+        lower.age <- roundit(fit$x[1],sqrt(fit$cov[1,1]),sigdig=sigdig)
+        upper.age <- roundit(fit$x[2],sqrt(fit$cov[2,2]),sigdig=sigdig)
         line1 <- substitute('lower intercept ='~a%+-%b~'[Ma]',
                             list(a=lower.age$x, b=lower.age$err))
         line2 <- substitute('upper intercept ='~a%+-%b~'[Ma]',
                             list(a=upper.age$x, b=upper.age$err))
     } else {
-        lower.age <- roundit(fit$x[1],sqrt(fit$cov[1,1]))
-        intercept <- roundit(fit$x[2],sqrt(fit$cov[2,2]))
+        lower.age <- roundit(fit$x[1],sqrt(fit$cov[1,1]),sigdig=sigdig)
+        intercept <- roundit(fit$x[2],sqrt(fit$cov[2,2]),sigdig=sigdig)
         line1 <- substitute('age ='~a%+-%b~'[Ma]',
                             list(a=lower.age$x, b=lower.age$err))
         line2 <- substitute('('^207*'Pb/'^206*'Pb)'[0]~'='~a%+-%b,

@@ -18,11 +18,20 @@
 #' @param x a scalar containing an isotopic ratio, a two element
 #'     vector containing an isotopic ratio and its standard error, or
 #'     an object of class \code{UPb} or \code{detritals}.
+#' 
 #' @param method one of either \code{'Pb206U238'}, \code{'Pb207U235'},
-#'     or \code{'Pb207Pb206'}
+#'     \code{'Pb207Pb206'} or \code{'Ar40Ar39'}
+#' 
 #' @param dcu propagate the decay constant uncertainties?
+#' 
+#' @param J two element vector with the J-factor and its standard
+#'     error.  This option is only used if \code{method} =
+#'     \code{'Ar40Ar39'}.
+#' 
 #' @param i (optional) index of a particular aliquot
+#' 
 #' @param ... optional arguments
+#' 
 #' @return if \code{x} is a scalar or a vector, returns the age using
 #'     the geochronometer given by \code{method} and its standard
 #'     error.
@@ -31,22 +40,32 @@
 age <- function(x,...){ UseMethod("age",x) }
 #' @rdname age
 #' @export
-age.default <- function(x,method='Pb206U238',dcu=TRUE,...){
+age.default <- function(x,method='Pb206U238',dcu=TRUE,J=c(NA,NA),...){
     if (length(x)==1) X <- c(x,0)
     else X <- x[1:2]
-    if (identical(method,'Pb207U235')) out <- get.Pb207U235age(X[1],X[2],dcu)
-    else if (identical(method,'Pb206U238')) out <- get.Pb206U238age(X[1],X[2],dcu)
-    else if (identical(method,'Pb207Pb206')) out <- get.Pb207Pb206age(X[1],X[2],dcu)
+    if (identical(method,'Pb207U235'))
+        out <- get.Pb207U235age(X[1],X[2],dcu)
+    else if (identical(method,'Pb206U238'))
+        out <- get.Pb206U238age(X[1],X[2],dcu)
+    else if (identical(method,'Pb207Pb206'))
+        out <- get.Pb207Pb206age(X[1],X[2],dcu)
+    else if (identical(method,'Ar40Ar39'))
+        out <- get.ArAr.age(X[1],X[2],J[1],J[2],dcu)
 }
 #' @param concordia scalar flag indicating whether each U-Pb analysis
 #'     should be considered separately (\code{concordia=1}), a
 #'     concordia age should be calculated from all U-Pb analyses
 #'     together (\code{concordia=2}), or a discordia line should be
 #'     fit through all the U-Pb analyses (\code{concordia=2}).
+#' 
 #' @param wetherill boolean flag to indicate whether the data should
 #'     be evaluated in Wetherill (\code{TRUE}) or Tera-Wasserburg
 #'     (\code{FALSE}) space.  This option is only used when
 #'     \code{concordia=2}
+#' 
+#' @param sigdig number of significant digits for the uncertainty
+#'     estimate (only used if \code{concordia=1})
+#' 
 #' @return
 #' if \code{x} has class \code{UPb} and \code{concordia=1}, returns a
 #' table with the following columns: `t.75', `err[t.75]', `t.68',
@@ -97,10 +116,15 @@ age.default <- function(x,method='Pb206U238',dcu=TRUE,...){
 #' print(age(examples$UPb,concordia=2))
 #' @rdname age
 #' @export
-age.UPb <- function(x,concordia=1,wetherill=TRUE,dcu=TRUE,i=NA,...){
-    if (concordia==1) { out <- UPb.age(x,dcu=dcu,i=i,...) }
-    else if (concordia==2) { out <- concordia.age(x,wetherill=TRUE,dcu=TRUE,...) }
-    else if (concordia==3) { out <- discordia.age(x,wetherill=TRUE,dcu=TRUE) }
+age.UPb <- function(x,concordia=1,wetherill=TRUE,
+                    dcu=TRUE,i=NA,sigdig=2,...){
+    if (concordia==1) {
+        out <- UPb.age(x,dcu=dcu,i=i,sigdig=sigdig,...)
+    } else if (concordia==2) {
+        out <- concordia.age(x,wetherill=TRUE,dcu=TRUE,...)
+    } else if (concordia==3) {
+        out <- discordia.age(x,wetherill=TRUE,dcu=TRUE,...)
+    }
     out
 }
 #' @rdname age
@@ -114,11 +138,11 @@ age.detritals <- function(x,...){
 #'     together (\code{isochron=TRUE}).
 #' @rdname age
 #' @export
-age.ArAr <- function(x,isochron=FALSE,dcu=TRUE,i=NA,...){
+age.ArAr <- function(x,isochron=FALSE,dcu=TRUE,i=NA,sigdig=2,...){
     if (isochron){
-        out <- isochron(x,plot=FALSE)
+        out <- isochron(x,plot=FALSE,sigdig=sigdig)
     } else {
-        out <- ArAr.age(x,dcu=dcu,i=i,...)
+        out <- ArAr.age(x,dcu=dcu,i=i,sigdig=sigdig,...)
     }
     out
 }

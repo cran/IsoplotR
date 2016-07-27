@@ -1,7 +1,36 @@
-roundit <- function(age,err){
+select <- function(x,selection){
+    out <- x
+    i <- which(names(x$x) %in% selection)
+    out$x <- x$x[i]
+    out$covmat <- x$covmat[i,i]
+    out
+}
+
+zip.matrix <- function(x){
+    nc <- ncol(x)
+    nr <- nrow(x)
+    out <- rep(0,nr*nc)
+    i <- seq(from=0,to=(nr-1)*nc,by=nc)
+    for (j in 1:nc){
+        out[i+j] <- x[,j]
+    }
+    out
+}
+
+unzip.vector <- function(x,nc=2){
+    nr <- length(x)/nc
+    out <- matrix(0,nr,nc)
+    i <- seq(from=0,to=(nr-1)*nc,by=nc)
+    for (j in 1:nc){
+        out[,j] <- x[i+j]
+    }
+    out
+}
+
+roundit <- function(age,err,sigdig=2){
     out <- list()
-    out$err <- signif(err,2)
-    nd <- log10(trunc(abs(age)/err))+2
+    out$err <- signif(err,sigdig)
+    nd <- log10(trunc(abs(age)/err))+sigdig
     out$x <- signif(age,nd)
     out
 }

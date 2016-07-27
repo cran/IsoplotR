@@ -113,10 +113,11 @@ get.york.xy <- function(X,Y,sX,sY,rXY,a,b){
     out
 }
 
-data2york <- function(x,selection=NA){ 
+data2york <- function(x,selection=NA){
     out <- list()
     nn <- nrow(x$x)
-    if (any(is.na(selection))) selection <- c(1,2)
+    if (any(is.na(selection)))
+        selection <- c(1,2)
     out$X <- x$x[,selection[1]]
     out$Y <- x$x[,selection[2]]
     out$sX <- rep(0,nn)
@@ -129,28 +130,4 @@ data2york <- function(x,selection=NA){
         out$rXY[i] <- stats::cov2cor(covmat)[1,2]
     }
     out
-}
-
-# x is a list with numbers
-# x$x = 2n-element vector
-# x$covmat = 2n x 2n covariance matrix
-# where n is the number of aliquots
-mlregression <- function(x,selection=NA){
-    d <- x
-    if (!any(is.na(selection))) {
-        i <- which(names(d$x) %in% selection)
-        d$x <- x$x[i]
-        d$covmat <- x$covmat[i,i]
-    }
-    ns <- length(d$x)/2
-    ix <- seq(from=1,to=2*ns-1,by=2)
-    iy <- seq(from=2,to=2*ns,by=2)
-    X <- d$x[ix]
-    Y <- d$x[iy]
-    sX <- sqrt(diag(d$covmat)[ix])
-    sY <- sqrt(diag(d$covmat)[iy])
-    cormat <- stats::cov2cor(d$covmat)
-    rXY <- cormat[cbind(ix,ix+1)]
-    fit <- yorkfit(X,Y,sX,sY,rXY)
-    fit
 }

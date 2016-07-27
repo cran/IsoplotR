@@ -23,11 +23,33 @@ ellipse <- function(x,y,covmat,alpha=0.05){
     a <- sqrt(cutoff*e$values[1]) # major axis
     b <- sqrt(cutoff*e$values[2]) # minor axis
     v <- e$vectors[,1] # largest eigenvector
-    alpha <- atan(v[2]/v[1]) # rotation angle of the ellipse
+    beta <- atan(v[2]/v[1]) # rotation angle of the ellipse
     theta <- seq(0, 2 * pi, length=nn)
     out <- matrix(0,nrow=nn,ncol=2)
-    out[,1] <- x + a * cos(theta) * cos(alpha) - b * sin(theta) * sin(alpha)
-    out[,2] <- y + a * cos(theta) * sin(alpha) + b * sin(theta) * cos(alpha)
+    out[,1] <- x + a * cos(theta) * cos(beta) - b * sin(theta) * sin(beta)
+    out[,2] <- y + a * cos(theta) * sin(beta) + b * sin(theta) * cos(beta)
     colnames(out) <- c('x','y')
     out
+}
+
+scatterplot <- function(x,xlim=NA,ylim=NA,alpha=0.05,
+                        show.numbers=FALSE,
+                        ellipse.col=rgb(0,1,0,0.5),
+                        a=NA,b=NA,line.col='red',lwd=2,...){
+    if (any(is.na(xlim))) xlim <- get.limits(x$X,x$sX)
+    if (any(is.na(ylim))) ylim <- get.limits(x$Y,x$sY)
+    graphics::plot(xlim,ylim,type='n',xlab='',ylab='')
+    if (!is.na(a) & !is.na(b)){
+        graphics::lines(xlim,a+b*xlim,col=line.col,lwd=lwd)
+    }
+    ns <- length(x$X)
+    for (i in 1:ns){
+        x0 <- x$X[i]
+        y0 <- x$Y[i]
+        covmat <- cor2cov(x$sX[i],x$sY[i],x$rXY[i])
+        ell <- ellipse(x0,y0,covmat,alpha=alpha)
+        graphics::polygon(ell,col=ellipse.col)
+        graphics::points(x0,y0,pch=19,cex=0.25)
+        if (show.numbers) { text(x0,y0,i) }
+    }
 }

@@ -10,14 +10,16 @@
 \usage{
 age(x, ...)
 
-\method{age}{default}(x, method = "Pb206U238", dcu = TRUE, ...)
+\method{age}{default}(x, method = "Pb206U238", dcu = TRUE, J = c(NA, NA),
+  ...)
 
 \method{age}{UPb}(x, concordia = 1, wetherill = TRUE, dcu = TRUE,
-  i = NA, ...)
+  i = NA, sigdig = 2, ...)
 
 \method{age}{detritals}(x, ...)
 
-\method{age}{ArAr}(x, isochron = FALSE, dcu = TRUE, i = NA, ...)
+\method{age}{ArAr}(x, isochron = FALSE, dcu = TRUE, i = NA, sigdig = 2,
+  ...)
 }
 \arguments{
 \item{x}{a scalar containing an isotopic ratio, a two element
@@ -27,9 +29,13 @@ an object of class \code{UPb} or \code{detritals}.}
 \item{...}{optional arguments}
 
 \item{method}{one of either \code{'Pb206U238'}, \code{'Pb207U235'},
-or \code{'Pb207Pb206'}}
+\code{'Pb207Pb206'} or \code{'Ar40Ar39'}}
 
 \item{dcu}{propagate the decay constant uncertainties?}
+
+\item{J}{two element vector with the J-factor and its standard
+error.  This option is only used if \code{method} =
+\code{'Ar40Ar39'}.}
 
 \item{concordia}{scalar flag indicating whether each U-Pb analysis
 should be considered separately (\code{concordia=1}), a
@@ -43,6 +49,9 @@ be evaluated in Wetherill (\code{TRUE}) or Tera-Wasserburg
 \code{concordia=2}}
 
 \item{i}{(optional) index of a particular aliquot}
+
+\item{sigdig}{number of significant digits for the uncertainty
+estimate (only used if \code{concordia=1})}
 
 \item{isochron}{boolean flag indicating whether each Ar-Ar analysis
 should be considered separately (\code{isochron=FALSE}) or an

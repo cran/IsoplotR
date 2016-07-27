@@ -39,9 +39,11 @@ read.data.matrix <- function(x,method='U-Pb',format=1,...){
     if (identical(method,'U-Pb')){
         out <- as.UPb(x,format)
     } else if (identical(method,'Ar-Ar')){
-        out <- as.ArAr(x)
+        out <- as.ArAr(x,format)
     } else if (identical(method,'detritals')){
         out <- as.detritals(x)
+    } else if (identical(method,'other')){
+        out <- x
     }
     out
 }
@@ -70,7 +72,7 @@ as.UPb <- function(x,format=1){
     }
     out
 }
-as.ArAr <- function(x,format=1){
+as.ArAr <- function(x,format=2){
     out <- list()
     class(out) <- "ArAr"
     out$format <- format
@@ -89,6 +91,20 @@ as.ArAr <- function(x,format=1){
                              'Ar36Ar40','errAr36Ar40',
                              'Ar39Ar36','errAr39Ar36',
                              'Ar40Ar36','errAr40Ar36')
+    } else if (format == 2 & nc == 7){
+        X <- matrix(as.numeric(x[4:nr,]),nr-3,nc)
+        colnames(X) <- c('Ar39',
+                         'Ar39Ar40','errAr39Ar40',
+                         'Ar36Ar40','errAr36Ar40',
+                         'Ar39Ar36','errAr39Ar36')
+        Ar40Ar36 <- 1/X[,'Ar36Ar40']
+        errAr40Ar36 <- X[,'errAr36Ar40']/X[,'Ar36Ar40']^2
+        out$x <- cbind(X,Ar40Ar36,errAr40Ar36)
+        colnames(out$x) <- c('Ar39',
+                             'Ar39Ar40','errAr39Ar40',
+                             'Ar36Ar40','errAr36Ar40',
+                             'Ar39Ar36','errAr39Ar36',
+                             'Ar40Ar36','errAr40Ar36')
     }
     out
 }
@@ -104,4 +120,7 @@ as.detritals <- function(x){
         out[[sname]] = X[!is.na(X[,sname]),sname]
     }
     out
+}
+as.RbSr <- function(x){
+
 }

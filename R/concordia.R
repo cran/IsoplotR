@@ -30,6 +30,7 @@
 #'
 #' \code{3}: fit a discordia line
 #'
+#' @param sigdig number of significant digits for the concordia/discordia age
 #' @importFrom grDevices rgb
 #' @importFrom graphics polygon title points text
 #' @importFrom stats pchisq
@@ -39,12 +40,12 @@
 #' @export
 concordia <- function(x,limits=NULL,alpha=0.05,wetherill=TRUE,show.numbers=FALSE,
                            ellipse.col=rgb(0,1,0,0.5),concordia.col='darksalmon',
-                           dcu=TRUE, show.age=1){
+                           dcu=TRUE,show.age=1,sigdig=2){
     concordia.line(x,limits,wetherill,concordia.col,alpha,dcu)
     if (show.age==3){
         fit <- discordia.age(x,wetherill)
         discordia.plot(fit,wetherill)
-        title(discordia.title(fit,wetherill))
+        title(discordia.title(fit,wetherill,sigdig=sigdig))
     }
     vars <- get.UPb.labels(wetherill)
     for (i in 1:nrow(x$x)){
@@ -60,7 +61,7 @@ concordia <- function(x,limits=NULL,alpha=0.05,wetherill=TRUE,show.numbers=FALSE
         fit <- concordia.age(x,wetherill,dcu)
         ell <- ellipse(fit$x[1],fit$x[2],fit$cov)
         polygon(ell,col='white')
-        title(concordia.title(fit))
+        title(concordia.title(fit,sigdig=sigdig))
     }
 }
 
@@ -177,8 +178,8 @@ get.concordia.limits <- function(X,limits,wetherill){
     out
 }
 
-concordia.title <- function(fit){
-    rounded.age <- roundit(fit$age,fit$age.err)
+concordia.title <- function(fit,sigdig=2){
+    rounded.age <- roundit(fit$age,fit$age.err,sigdig=sigdig)
     line1 <- substitute('concordia age ='~a%+-%b~'[Ma] (1'~sigma~')',
                         list(a=rounded.age$x, b=rounded.age$err))
     line2 <- substitute('MSWD (concordance) ='~a~', p('~chi^2*')='~b,
@@ -288,7 +289,7 @@ LL.concordia.comp <- function(mu,x,mswd=FALSE){
     for (i in 1:length(x)){
         X <- matrix(x[[i]]$x-mu,1,2)
         covmat <- x[[i]]$cov
-        if (mswd) out <- out + get.SS(X,covmat)
+        if (mswd) out <- out + get.concordia.SS(X,covmat)
         else out <- out + LL.norm(X,covmat)
     }
     out
@@ -300,7 +301,7 @@ LL.concordia.age <- function(age,x,covmat,wetherill=TRUE,mswd=FALSE,dcu=TRUE){
     X <- matrix(x[selection]-UPbratios$x[selection],1,2)
     COVMAT <- covmat[selection,selection]
     if (dcu) COVMAT <- COVMAT + UPbratios$cov[selection,selection]
-    if (mswd) out <- get.SS(X,COVMAT)
+    if (mswd) out <- get.concordia.SS(X,COVMAT)
     else out <- LL.norm(X,COVMAT)
     out
 }
