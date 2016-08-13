@@ -13,23 +13,27 @@
 #'     one of either:
 #' 
 #' \code{1}: 7/6, s[7/6], 6/8, s[6/8], 7/5, s[7/5]
-#' 
-#' (other formats will be added later)
+#'
+#' If \code{method = 'Ar-Ar'}, then \code{format} is one of either:
+#'
+#' \code{1}: 39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]
+#'
+#' \code{2}: 39, 39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]
+#'
 #' @param ... optional arguments to the \code{read.csv} function
 #' @return an object of class \code{'UPb'}, \code{'ArAr'},
 #'     \code{'RbSr'}, \code{'SmNd'}, \code{'ReOs'}, \code{'UThHe'},
 #'     \code{'fission'}, \code{'cosmogenics'}, or \code{'other'}
 #' @examples
 #' # load one of the built-in .csv files:
-#' data(examples)#fname <- system.file("UPb.csv",package="IsoplotR")
-#' #UPb <- read.data(fname,'U-Pb')
+#' data(examples)
 #' concordia(examples$UPb)
 #' @rdname read.data
 #' @export
 read.data <- function(x,...){ UseMethod("read.data",x) }
 #' @rdname read.data
 #' @export
-read.data.default <- function(x,method='Pb206U238',format=1,...){
+read.data.default <- function(x,method='U-Pb',format=1,...){
     X <- as.matrix(utils::read.table(x,sep=',',...))
     read.data.matrix(X,method=method,format=format)
 }
@@ -40,10 +44,12 @@ read.data.matrix <- function(x,method='U-Pb',format=1,...){
         out <- as.UPb(x,format)
     } else if (identical(method,'Ar-Ar')){
         out <- as.ArAr(x,format)
+    } else if (identical(method,'U-Th-He')){
+        out <- as.UThHe(x)
     } else if (identical(method,'detritals')){
         out <- as.detritals(x)
     } else if (identical(method,'other')){
-        out <- x
+        out <- as.other(x)
     }
     out
 }
@@ -108,6 +114,23 @@ as.ArAr <- function(x,format=2){
     }
     out
 }
+as.UThHe <- function(x){
+    nc <- ncol(x)
+    nr <- nrow(x)
+    out <- matrix(0,nr-1,nc)
+    out[1:(nr-1),1:nc] <- matrix(as.numeric(x[2:nr,]),nr-1,nc)
+    class(out) <- append(class(out),"UThHe")
+    if (nc==8) {
+        colnames(out) <- c('He','errHe','U','errU','Th','errTh','Sm','errSm')
+    } else if (nc==6) {
+        colnames(out) <- c('He','errHe','U','errU','Th','errTh')
+    } else {
+        stop("Input table must have 6 or 8 columns.")
+    }
+    # replace bad values by small ones:
+    out[is.na(out) | out<=0] <- 1e-10
+    out
+}
 as.detritals <- function(x){
     nr <- nrow(x)
     nc <- ncol(x)
@@ -123,4 +146,10 @@ as.detritals <- function(x){
 }
 as.RbSr <- function(x){
 
+}
+as.other <- function(x){
+    nc <- ncol(x)
+    has.header <- is.na(suppressWarnings(as.numeric(x[1,1])))
+    if (has.header) x <- x[-1,]
+    matrix(as.numeric(x),ncol=nc)
 }

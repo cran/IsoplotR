@@ -83,6 +83,10 @@ get.cov.xzzy <- function(xz,err.xz,zy,err.zy,err.xy){
     0.5*xz*zy*((err.xy/xy)^2 - (err.xz/xz)^2 - (err.zy/zy)^2)
 }
 
+hasClass <- function(x,classname){
+    classname %in% class(x)
+}
+
 get.covmat <- function(x,...){ UseMethod("get.covmat",x) }
 get.covmat.default <- function(x,i,...){ stop('Invalid input into covmat() function') }
 

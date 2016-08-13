@@ -94,7 +94,9 @@ Models the data as a Normal distribution with two sources of
 variance.  Estimates the mean and 'overdispersion' using the method
 of Maximum Likelihood. Computes the MSWD of a Normal fit without
 overdispersion. Implements Chauvenet's Criterion to detect and
-reject outliers.
+reject outliers. Only propagates the analytical uncertainty
+associated with decay constants and J-factors after computing the
+weighted mean isotopic composition.
 }
 \examples{
 ages <- c(251.9,251.59,251.47,251.35,251.1,251.04,250.79,250.73,251.22,228.43)

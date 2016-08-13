@@ -68,10 +68,12 @@ freedom, where n is the number of steps in the plateau.n
 \description{
 Produces a plot of boxes whose widths correspond to the cumulative
 amount of \eqn{^{39}}Ar (or any other volume proxy), and whose
-heights express the analytical uncertainties.
+heights express the analytical uncertainties.  Only propagates the
+analytical uncertainty associated with decay constants and
+J-factors after computing the plateau composition.
 }
 \examples{
 data(examples)
-agespectrum(examples$ArAr)
+agespectrum(examples$ArAr,ylim=c(0,80))
 }
 

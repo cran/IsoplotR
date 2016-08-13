@@ -78,7 +78,7 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
 #' @param dcu propagate the decay constant uncertainties?
 #' @examples
 #' data(examples)
-#' agespectrum(examples$ArAr)
+#' agespectrum(examples$ArAr,ylim=c(0,80))
 #' @rdname agespectrum
 #' @export
 agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
