@@ -4,26 +4,45 @@
 #' data classes
 #'
 #' @param x a file name (\code{.csv} format) or matrix
-#' @param method one of \code{'U-Pb'}, \code{'Ar-Ar'}, \code{'Rb-Sr'},
-#'     \code{'Sm-Nd'}, \code{'Re-Os'}, \code{'U-Th-He'},
-#'     \code{'fission tracks'}, \code{'cosmogenic nuclides'} or
+#' @param method one of \code{'U-Pb'}, \code{'Ar-Ar'},
+#'     \code{'detritals'} \code{'U-Th-He'}, \code{'fissiontracks'} or
 #'     \code{'other'}
 #' @param format formatting option, depends on the value of
-#'     \code{method}. If \code{method = 'U-Pb'}, then \code{format} is
-#'     one of either:
+#'     \code{method}.
+#'
+#' - if \code{method = 'Ar-Ar'}, then \code{format} is one of either:
+#'
+#' \enumerate{
+#' \item{\code{39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]}}
+#' \item{\code{39, 39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]}}
+#' }
+#'
+#' - if \code{method = 'fissiontracks'}, then \code{format} is
+#' one of either:
+#'
+#' \enumerate{
+#' \item{the External Detector Method (EDM), which requires a
+#' \eqn{\zeta}-calibration constant and its uncertainty, the induced
+#' track density in a dosimeter glass, and a table with the
+#' spontaneous and induced track densities.}
+#'
+#' \item{LA-ICP-MS-based fission track data using the
+#' \eqn{\zeta}-calibration method, which requires a 'session
+#' \eqn{\zeta}' and its uncertainty and a table with the number of
+#' spontaneous tracks, the area over which these were counted and one
+#' or more U/Ca- or U-concentration measurements and their analytical
+#' uncertainties.}
+#'
+#' \item{LA-ICP-MS-based fission track data using the 'absolute
+#' dating' method, which only requires a table with the the number of
+#' spontaneous tracks, the area over which these were counted and one
+#' or more U/Ca- or U-concentration measurements and their analytical
+#' uncertainties.}
+#' }
 #' 
-#' \code{1}: 7/6, s[7/6], 6/8, s[6/8], 7/5, s[7/5]
-#'
-#' If \code{method = 'Ar-Ar'}, then \code{format} is one of either:
-#'
-#' \code{1}: 39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]
-#'
-#' \code{2}: 39, 39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]
-#'
 #' @param ... optional arguments to the \code{read.csv} function
-#' @return an object of class \code{'UPb'}, \code{'ArAr'},
-#'     \code{'RbSr'}, \code{'SmNd'}, \code{'ReOs'}, \code{'UThHe'},
-#'     \code{'fission'}, \code{'cosmogenics'}, or \code{'other'}
+#' @return an object of class \code{UPb}, \code{ArAr}, \code{UThHe},
+#'     \code{detritals} \code{fissiontracks} or \code{other}
 #' @examples
 #' # load one of the built-in .csv files:
 #' data(examples)
@@ -46,6 +65,8 @@ read.data.matrix <- function(x,method='U-Pb',format=1,...){
         out <- as.ArAr(x,format)
     } else if (identical(method,'U-Th-He')){
         out <- as.UThHe(x)
+    } else if (identical(method,'fissiontracks')){
+        out <- as.fissiontracks(x,format)
     } else if (identical(method,'detritals')){
         out <- as.detritals(x)
     } else if (identical(method,'other')){
@@ -131,14 +152,51 @@ as.UThHe <- function(x){
     out[is.na(out) | out<=0] <- 1e-10
     out
 }
+as.fissiontracks <- function(x,format=1){
+    nr <- nrow(x)
+    nc <- ncol(x)
+    out <- list()
+    class(out) <- "fissiontracks"
+    out$format <- format
+    if (format==1){
+        out$zeta <- as.numeric(x[2,1:2])
+        out$rhoD <- as.numeric(x[4,1:2])
+        out$x <- matrix(as.numeric(x[6:nr,]),nr-5,2)
+        colnames(out$x) <- c('Ns','Ni')
+    } else {
+        if (format==2){
+            out$zeta <- as.numeric(x[2,1:2])
+            out$spotSize <- as.numeric(x[4,1])
+            si <- 6 # start index
+        } else {
+            out$spotSize <- as.numeric(x[2,1])
+            si <- 4
+        }
+        Ns <- as.numeric(x[si:nr,1])
+        A <- as.numeric(x[si:nr,2])
+        valid <- which(!is.na(Ns))
+        out$Ns <- Ns[valid]
+        out$A <- A[valid]
+        out$U <- list()
+        out$sU <- list()
+        j <- seq(from=3,to=nc-1,by=2)
+        for (i in valid){
+            U <- as.numeric(x[i+si-1,j])
+            out$U[[i]] <- U[!is.na(U)]
+            sU <- as.numeric(x[i+si-1,j+1])
+            out$sU[[i]] <- sU[!is.na(sU)]
+        }
+    }
+    out
+}
 as.detritals <- function(x){
+    out <- list()
+    class(out) <- "detritals"
     nr <- nrow(x)
     nc <- ncol(x)
     snames <- x[1,]
     X <- matrix(as.numeric(x[(2:nr),]),nr-1,nc)
     colnames(X) <- snames
-    out <- list()
-    class(out) <- "detritals"
     for (sname in snames){
         out[[sname]] = X[!is.na(X[,sname]),sname]
     }

@@ -4,7 +4,7 @@
 \alias{agespectrum}
 \alias{agespectrum.ArAr}
 \alias{agespectrum.default}
-\title{Plot a (\eqn{^{40}}Ar/\eqn{^{39}}Ar) release spectrum}
+\title{Plot a (40Ar/39Ar) release spectrum}
 \usage{
 agespectrum(x, ...)
 
@@ -14,25 +14,26 @@ agespectrum(x, ...)
 
 \method{agespectrum}{ArAr}(x, alpha = 0.05, plateau = TRUE,
   plateau.col = rgb(0, 1, 0, 0.5), non.plateau.col = rgb(0, 1, 1, 0.5),
-  sigdig = 2, dcu = TRUE, line.col = "red", lwd = 2, ...)
+  sigdig = 2, exterr = TRUE, line.col = "red", lwd = 2, ...)
 }
 \arguments{
-\item{x}{a three column matrix whose first column gives the amount
+\item{x}{- a three-column matrix whose first column gives the amount
     of \eqn{^{39}}Ar in each aliquot, and whose second and third
     columns give the age and its uncertainty.
 
 OR
 
-an object of class \code{ArAr} with \code{format=2}}
+- an object of class \code{ArAr} with \code{format=2}}
 
-\item{...}{optional parameters to the generic plot function}
+\item{...}{optional parameters to the generic \code{plot} function}
 
 \item{alpha}{the confidence limits of the error bars/boxes.}
 
-\item{plateau}{Boolean flag indicating whether a plateau age should
-be calculated if \code{plateau=TRUE}, the function will compute
-the weighted mean of the largest succession of steps that yield
-values passing the Chi-square test for age homogeneity.}
+\item{plateau}{logical flag indicating whether a plateau age should
+be calculated. If \code{plateau=TRUE}, the function will
+compute the weighted mean of the largest succession of steps
+that yield values passing the Chi-square test for age
+homogeneity.}
 
 \item{plateau.col}{the fill colour of the rectangles used to mark
 the steps belonging to the age plateau.}
@@ -42,7 +43,7 @@ NOT belong to the plateau are given a different colour.}
 
 \item{sigdig}{the number of significant digits of the numerical
 values reported in the title of the graphical output (only used
-if \code{plateau=FALSE}).}
+if \code{plateau=TRUE}).}
 
 \item{line.col}{colour of the isochron line}
 
@@ -51,19 +52,22 @@ if \code{plateau=FALSE}).}
 \item{title}{add a title to the plot? If \code{FALSE}, returns a
 list with plateau parameters.}
 
-\item{dcu}{propagate the decay constant uncertainties?}
+\item{exterr}{propagate the external (decay constant and
+calibration factor) uncertainties?}
 }
 \value{
 if \code{title=FALSE}, a list with the following items:
 
-\code{mean} a 2-element vector with the plateau mean and standard error
+\describe{
+\item{mean}{a 2-element vector with the plateau mean and standard error}
 
-\code{mswd} the mean square of the weighted deviates of the plateau
+\item{mswd}{the mean square of the weighted deviates of the plateau}
 
-\code{p.value} the p-value of a Chi-square test with n-1 degrees of
-freedom, where n is the number of steps in the plateau.n
+\item{p.value}{the p-value of a Chi-square test with n-1 degrees of
+freedom, where n is the number of steps in the plateau.}
 
-\code{fract} the fraction of \eqn{^{39}Ar} contained in the plateau
+\item{fract}{the fraction of \eqn{^{39}}Ar contained in the
+plateau} }
 }
 \description{
 Produces a plot of boxes whose widths correspond to the cumulative

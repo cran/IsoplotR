@@ -13,30 +13,31 @@
 #'     \code{UPb} OR an object of class \code{ArAr}
 #' @param ... optional arguments
 #' @return
-#' if \code{PLOT=FALSE}, returns a list with the follwing items:
+#' if \code{PLOT=FALSE}, returns a list with the following items:
 #'
-#' \code{mean:} a two element vector with the weighted mean and its
-#' standard error.
+#' \describe{
+#' \item{mean}{a two element vector with the weighted mean and its
+#' standard error.}
 #'
-#' \code{disp:} a two element vector with the (over)dispersion and its
-#' standard error.
+#' \item{disp}{a two element vector with the (over)dispersion and its
+#' standard error.}
 #'
-#' \code{mswd:} the Mean Square of the Weighted Deviates
-#' (a.k.a. `reduced Chi-square' statistic)
+#' \item{mswd}{the Mean Square of the Weighted Deviates
+#' (a.k.a. `reduced Chi-square' statistic)}
 #'
-#' \code{p.value:} the p-value of a Chi-square test with n-1 degrees
+#' \item{p.value}{the p-value of a Chi-square test with n-1 degrees
 #' of freedom, testing the null hypothesis that the underlying
-#' population is not overdispersed.
+#' population is not overdispersed.}
 #'
-#' \code{valid:} vector of Boolean flags indicating which steps are
-#' included into the weighted mean calculation
-#' 
+#' \item{valid}{vector of logical flags indicating which steps are
+#' included into the weighted mean calculation}
+#' }
 #' @rdname weightedmean
 #' @export
 weightedmean <- function(x,...){ UseMethod("weightedmean",x) }
-#' @param detect.outliers Boolean flag indicating whether outliers
+#' @param detect.outliers logical flag indicating whether outliers
 #'     should be detected and rejected using Chauvenet's Criterion.
-#' @param plot Boolean flag indicating whether the function should
+#' @param plot logical flag indicating whether the function should
 #'     produce graphical output or return numerical values to the
 #'     user.
 #' @param rect.col the fill colour of the rectangles used to show the
@@ -57,9 +58,9 @@ weightedmean.default <- function(x,detect.outliers=TRUE,plot=TRUE,
     ns <- length(X)
     valid <- rep(TRUE,ns)
     if (detect.outliers){
-        avg <- mean(X)
-        prob <- stats::pnorm(X,mean=avg,sd=sX)
-        valid <- (prob > 0.5/ns)
+        prob <- stats::pnorm(X,mean=mean(X),sd=stats::sd(X))
+        cutoff <- 0.5/ns
+        valid <- (prob > cutoff & (1-prob) > cutoff)
     }
     fit <- get.weightedmean(X,sX,valid)
     if (plot){
@@ -71,11 +72,11 @@ weightedmean.default <- function(x,detect.outliers=TRUE,plot=TRUE,
     }
 }
 #' @param type scalar indicating whether to plot the
-#'     \eqn{^{207}}Pb/\eqn{^{235}}U age (type=1), the
-#'     \eqn{^{206}}Pb/\eqn{^{238}}U age (type=2), the
-#'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (type=3), the
+#'     \eqn{^{207}}Pb/\eqn{^{235}}U age (\code{type}=1), the
+#'     \eqn{^{206}}Pb/\eqn{^{238}}U age (\code{type}=2), the
+#'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (\code{type}=3), the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U age
-#'     (type=4), or the (Wetherill) concordia age (type=5)
+#'     (\code{type}=4), or the (Wetherill) concordia age (\code{type}=5)
 #' @param cutoff.76 the age (in Ma) below which the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U and above which the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
@@ -83,12 +84,12 @@ weightedmean.default <- function(x,detect.outliers=TRUE,plot=TRUE,
 #' @param cutoff.disc two element vector with the maximum and minimum
 #'     percentage discordance allowed between the
 #'     \eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U
-#'     age (if \eqn{^{206}}Pb/\eqn{^{238}}U < cutoff.76) or between
-#'     the \eqn{^{206}}Pb/\eqn{^{238}}U and
+#'     age (if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or
+#'     between the \eqn{^{206}}Pb/\eqn{^{238}}U and
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
-#'     \eqn{^{206}}Pb/\eqn{^{238}}U > cutoff.76).  Set
+#'     \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 #'     \code{cutoff.disc=NA} if you do not want to use this filter.
-#' @param dcu propagate decay constant uncertainty?
+#' @param exterr propagate decay constant uncertainty?
 #' @examples
 #' ages <- c(251.9,251.59,251.47,251.35,251.1,251.04,250.79,250.73,251.22,228.43)
 #' errs <- c(0.28,0.28,0.63,0.34,0.28,0.63,0.28,0.4,0.28,0.33)
@@ -102,18 +103,18 @@ weightedmean.UPb <- function(x,detect.outliers=TRUE,plot=TRUE,
                              outlier.col=rgb(0,1,1,0.5),
                              sigdig=2,type=4,cutoff.76=1100,
                              cutoff.disc=c(-15,5),alpha=0.05,
-                             dcu=TRUE,...){
+                             exterr=TRUE,...){
     # first ignore decay uncertainties
     tt <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
-                          cutoff.disc=cutoff.disc,dcu=FALSE)
+                          cutoff.disc=cutoff.disc,exterr=FALSE)
     # calculate weighted mean age
     fit <- weightedmean.default(tt,detect.outliers=detect.outliers,plot=FALSE,...)
-    if (dcu){
+    if (exterr){
         # get weighted mean U-Pb ratios from the weighted mean age
-        X <- get.ratios.UPb(tt=fit$mean[1],st=fit$mean[2],dcu=TRUE,as.UPb=TRUE)
+        X <- get.ratios.UPb(tt=fit$mean[1],st=fit$mean[2],exterr=TRUE,as.UPb=TRUE)
         # recalculate the age, this time taking into account decay constant uncertainties
         fit$mean <- filter.UPb.ages(X,type=type,cutoff.76=cutoff.76,
-                                    cutoff.disc=cutoff.disc,dcu=TRUE)
+                                    cutoff.disc=cutoff.disc,exterr=TRUE)
     }
     if (plot){
         plot.weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
@@ -128,16 +129,65 @@ weightedmean.UPb <- function(x,detect.outliers=TRUE,plot=TRUE,
 weightedmean.ArAr <- function(x,detect.outliers=TRUE,plot=TRUE,
                               rect.col=rgb(0,1,0,0.5),
                               outlier.col=rgb(0,1,1,0.5),
-                              sigdig=2,alpha=0.05,dcu=TRUE,...){
+                              sigdig=2,alpha=0.05,exterr=TRUE,...){
     # first ignore J-constant uncertainties (systematic error)
-    tt <- ArAr.age(x,jcu=FALSE,dcu=FALSE)
+    tt <- ArAr.age(x,jcu=FALSE,exterr=FALSE)
     # calculated weighted mean age ignoring decay constant and J uncertainties
     fit <- weightedmean.default(tt,detect.outliers=detect.outliers,plot=FALSE,...)
-    if (dcu){
+    if (exterr){
         # calculate the weighted mean Ar40Ar39 ratio from the weighted mean age
-        R <- get.ArAr.ratio(fit$mean[1],fit$mean[2],x$J[1],0,dcu=FALSE)
-        # recalculate the weighted mean age, this time taking into account decay and J uncertainties
-        fit$mean <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],dcu=TRUE)
+        R <- get.ArAr.ratio(fit$mean[1],fit$mean[2],x$J[1],0,exterr=FALSE)
+        # recalculate the weighted mean age, this time taking
+        # into account decay and J uncertainties
+        fit$mean <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=TRUE)
+    }
+    if (plot){
+        plot.weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
+                          outlier.col=outlier.col,sigdig=sigdig,
+                          alpha=alpha)
+    } else {
+        return(fit)
+    }
+}
+#' @rdname weightedmean
+#' @export
+weightedmean.UThHe <- function(x,detect.outliers=TRUE,plot=TRUE,
+                               rect.col=rgb(0,1,0,0.5),
+                               outlier.col=rgb(0,1,1,0.5),
+                               sigdig=2,alpha=0.05,exterr=TRUE,...){
+    tt <- UThHe.age(x)
+    fit <- weightedmean.default(tt,detect.outliers=detect.outliers,plot=FALSE,...)
+    if (plot){
+        plot.weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
+                          outlier.col=outlier.col,sigdig=sigdig,
+                          alpha=alpha)
+    } else {
+        return(fit)
+    }
+}
+#' @rdname weightedmean
+#' @export
+weightedmean.fissiontracks <- function(x,detect.outliers=TRUE,plot=TRUE,
+                                       rect.col=rgb(0,1,0,0.5),
+                                       outlier.col=rgb(0,1,1,0.5),
+                                       sigdig=2,alpha=0.05,exterr=TRUE,...){
+    tt <- fissiontrack.age(x,exterr=FALSE)
+    # calculated weighted mean age ignoring zeta and rhoD uncertainties
+    fit <- weightedmean.default(tt,detect.outliers=detect.outliers,plot=FALSE,...)
+    if (exterr){
+        stt2 <- (fit$mean[2]/fit$mean[1])^2
+        if (x$format==1) {
+            rhoD <- x$rhoD
+            zeta <- x$zeta
+        } else if (x$format==2) {
+            rhoD <- c(1,0)
+            zeta <- x$zeta
+        } else {
+            rhoD <- c(1,0)
+            zeta <- c(1,0)
+        }
+        fit$mean[2] <- fit$mean[1] *
+            sqrt( stt2 + (rhoD[2]/rhoD[1])^2 + (zeta[2]/zeta[1])^2 )
     }
     if (plot){
         plot.weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,

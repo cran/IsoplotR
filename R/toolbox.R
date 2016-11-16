@@ -1,3 +1,12 @@
+numgrains <- function(x,...){ UseMethod("numgrains",x) }
+numgrains.default <- function(x){ length(x[,1]) }
+numgrains.UPb <- function(x){ length(x$x[,1]) }
+numgrains.ArAr <- function(x){ length(x$x[,1]) }
+numgrains.RbSr <- function(x){ length(x$x[,1]) }
+numgrains.SmNd <- function(x){ length(x$x[,1]) }
+numgrains.ReOs <- function(x){ length(x$x[,1]) }
+numgrains.fissiontracks <- function(x){ length(x$x[,1]) }
+
 select <- function(x,selection){
     out <- x
     i <- which(names(x$x) %in% selection)
@@ -29,9 +38,14 @@ unzip.vector <- function(x,nc=2){
 
 roundit <- function(age,err,sigdig=2){
     out <- list()
-    out$err <- signif(err,sigdig)
-    nd <- log10(trunc(abs(age)/err))+sigdig
-    out$x <- signif(age,nd)
+    if (is.na(sigdig)){
+        out$x <- age
+        out$err <- err
+    } else {
+        out$err <- signif(err,sigdig)
+        nd <- log10(trunc(abs(age)/err))+sigdig
+        out$x <- signif(age,nd)
+    }
     out
 }
 
