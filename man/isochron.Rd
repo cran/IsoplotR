@@ -3,6 +3,7 @@
 \name{isochron}
 \alias{isochron}
 \alias{isochron.ArAr}
+\alias{isochron.ReOs}
 \alias{isochron.default}
 \title{Calculate and plot isochrons}
 \usage{
@@ -14,22 +15,26 @@ isochron(x, ...)
 
 \method{isochron}{ArAr}(x, xlim = NA, ylim = NA, alpha = 0.05,
   sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
-  inverse = TRUE, line.col = "red", lwd = 2, plot = TRUE, ...)
+  inverse = TRUE, line.col = "red", lwd = 2, plot = TRUE,
+  exterr = TRUE, ...)
+
+\method{isochron}{ReOs}(x, xlim = NA, ylim = NA, alpha = 0.05,
+  sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
+  line.col = "red", lwd = 2, plot = TRUE, exterr = TRUE, ...)
 }
 \arguments{
-\item{x}{EITHER a list or a matrix with the following vectors:
+\item{x}{EITHER a list or a matrix with the following vectors or
+    columns:
+\describe{
+\item{X}{the x-variable}
+\item{sX}{the standard error of \code{X}}
+\item{Y}{the y-variable}
+\item{sY}{the standard error of \code{Y}}
+\item{rXY}{the correlation coefficient of \code{X} and \code{Y}}
+}
+OR
 
-\code{X:} the x-variable
-
-\code{Y:} the y-variable
-
-\code{sX:} the standard error of X
-
-\code{sY:} the standard error of Y
-
-\code{rXY:} the correlation coefficient of X and Y
-
-OR an object of class \code{ArAr}}
+an object of class \code{ArAr} or \code{ReOs}}
 
 \item{...}{optional arguments}
 
@@ -57,6 +62,8 @@ vs. \eqn{^{39}}Ar/\eqn{^{40}}Ar. If \code{FALSE}, plots
 \eqn{^{40}}Ar/\eqn{^{36}}Ar vs. \eqn{^{39}}Ar/\eqn{^{36}}Ar.}
 
 \item{plot}{if \code{FALSE}, suppresses the graphical output}
+
+\item{exterr}{propagate external sources of uncertainty (J, decay constant)?}
 }
 \value{
 if \code{plot=FALSE}, returns a list with the following items:

@@ -5,16 +5,23 @@
 #' consistent with maximum likelihood estimates of Ludwig and
 #' Titterington (1994)
 #'
-#' @param X vector of measurements
-#' @param Y vector of measurements
-#' @param sX standard errors of \code{X}
-#' @param sY standard errors of \code{Y}
-#' @param rXY correlation coefficients between X and Y
-#' @return a two-element list of vectors containing
-#' \describe{
-#' \item{a}{the intercept of the straight line fit and its standard error}
-#' \item{b}{the slope of the fit and its standard error}
-#' }
+#' @param X EITHER a vector with the X-values OR a 5-column matrix
+#'     with the X-values, the analytical uncertainties of the
+#'     X-values, the Y-values, the analytical uncertainties of the
+#'     Y-values, and the correlation coefficients of the X- and
+#'     Y-values.
+#' @param sX standard errors of \code{X} OR \code{NULL} if X is a
+#'     matrix or data frame
+#' @param Y vector of measurements with the same length as X OR
+#'     \code{NULL} if X is a matrix or data frame
+#' @param sY standard errors of \code{Y} OR \code{NULL} if X is a
+#'     matrix or data frame
+#' @param rXY correlation coefficients between X and Y OR \code{NULL}
+#'     if X is a matrix or data frame
+#' @return a two-element list of vectors containing: \describe{
+#'     \item{a}{the intercept of the straight line fit and its
+#'     standard error} \item{b}{the slope of the fit and its standard
+#'     error} }
 #' @references
 #'
 #' Ludwig, K. R., and D. M. Titterington. "Calculation of \eqn{^{230}}Th/U
@@ -35,7 +42,7 @@
 #'    sX <- X*0.01
 #'    sY <- Y*0.005
 #'    rXY <- rep(0.8,n)
-#'    fit <- yorkfit(X,Y,sX,sY,rXY)
+#'    fit <- yorkfit(X,sX,Y,sY,rXY)
 #'    covmat <- matrix(0,2,2)
 #'    plot(range(X),fit$a[1]+fit$b[1]*range(X),type='l',ylim=range(Y))
 #'    for (i in 1:n){
@@ -46,8 +53,10 @@
 #'        ell <- ellipse(X[i],Y[i],covmat,alpha=0.05)
 #'        polygon(ell)
 #'    }
-#' @export 
-yorkfit <- function(X,Y,sX,sY,rXY){
+#' @export
+yorkfit <- function(X,sX=NULL,Y=NULL,sY=NULL,rXY=NULL){
+    if (hasClass(X,'matrix') | hasClass(X,'data.frame'))
+        return(yorkfit(X[,1],X[,2],X[,3],X[,4],X[,5]))
     ab <- lm(Y ~ X)$coefficients # initial guess
     a <- ab[1]
     b <- ab[2]
@@ -57,37 +66,38 @@ yorkfit <- function(X,Y,sX,sY,rXY){
         bold <- b
         alpha <- sqrt(wX*wY)
         W <- wX*wY/(wX+b*b*wY-2*b*rXY*alpha)
-        Xbar <- sum(W*X)/sum(W)
-        Ybar <- sum(W*Y)/sum(W)
+        Xbar <- sum(W*X,na.rm=TRUE)/sum(W,na.rm=TRUE)
+        Ybar <- sum(W*Y,na.rm=TRUE)/sum(W,na.rm=TRUE)
         U <- X-Xbar
         V <- Y-Ybar
         beta <- W*(U/wY+b*V/wX-(b*U+V)*rXY/alpha)
-        b <- sum(W*beta*V)/sum(W*beta*U)
+        b <- sum(W*beta*V,na.rm=TRUE)/sum(W*beta*U,na.rm=TRUE)
         if ((bold/b-1)^2 < 1e-15) break # convergence reached
     }
     a <- Ybar-b*Xbar
     x <- Xbar + beta
-    xbar <- sum(W*x)/sum(W)
+    xbar <- sum(W*x,na.rm=TRUE)/sum(W,na.rm=TRUE)
     u <- x-xbar
-    sb <- sqrt(1/sum(W*u^2))
-    sa <- sqrt(1/sum(W)+(xbar*sb)^2)
+    sb <- sqrt(1/sum(W*u^2,na.rm=TRUE))
+    sa <- sqrt(1/sum(W,na.rm=TRUE)+(xbar*sb)^2)
     out <- list()
     out$a <- c(a,sa)
     out$b <- c(b,sb)
-    mswd <- get.york.mswd(X,Y,sX,sY,rXY,a,b)
+    mswd <- get.york.mswd(X,sX,Y,sY,rXY,a,b)
     out$mswd <- mswd$mswd
     out$p.value <- mswd$p.value
     out
 }
 
-get.york.mswd <- function(X,Y,sX,sY,rXY,a,b){
-    xy <- get.york.xy(X,Y,sX,sY,rXY,a,b)
+get.york.mswd <- function(X,sX,Y,sY,rXY,a,b){
+    xy <- get.york.xy(X,sX,Y,sY,rXY,a,b)
     X2 <- 0
     nn <- length(X)
     for (i in 1:nn){
         E <- cor2cov(sX[i],sY[i],rXY[i])
         x <- matrix(c(X[i]-xy[i,1],Y[i]-xy[i,2]),1,2)
-        X2 <- X2 + 0.5*x %*% solve(E) %*% t(x)
+        if (!any(is.na(x)))
+            X2 <- X2 + 0.5*x %*% solve(E) %*% t(x)
     }
     df <- (2*nn-2)
     out <- list()
@@ -96,15 +106,15 @@ get.york.mswd <- function(X,Y,sX,sY,rXY,a,b){
     out
 }
 
-# get fitted x and y given a dataset X,Y,sX,sY,rXY,
+# get fitted x and y given a dataset X,sX,Y,sY,rXY,
 # an intercept a and slope b. This function is useful
 # for evaluating log-likelihoods of derived quantities
-get.york.xy <- function(X,Y,sX,sY,rXY,a,b){
+get.york.xy <- function(X,sX,Y,sY,rXY,a,b){
     wX <- 1/sX^2
     wY <- 1/sY^2
     alpha <- sqrt(wX*wY)
     W <- wX*wY/(wX+b*b*wY-2*b*rXY*alpha)
-    Xbar <- sum(W*X)/sum(W)
+    Xbar <- sum(W*X,na.rm=TRUE)/sum(W,na.rm=TRUE)
     Ybar <- a + b*Xbar
     U <- X-Xbar
     V <- Y-Ybar

@@ -5,19 +5,18 @@
 #' \code{yorkfit} function, and computes the corresponding isochron
 #' age, including decay constant uncertainties.
 #'
-#' @param x EITHER a list or a matrix with the following vectors:
+#' @param x EITHER a list or a matrix with the following vectors or
+#'     columns:
+#' \describe{
+#' \item{X}{the x-variable}
+#' \item{sX}{the standard error of \code{X}}
+#' \item{Y}{the y-variable}
+#' \item{sY}{the standard error of \code{Y}}
+#' \item{rXY}{the correlation coefficient of \code{X} and \code{Y}}
+#' }
+#' OR
 #'
-#' \code{X:} the x-variable
-#'
-#' \code{Y:} the y-variable
-#'
-#' \code{sX:} the standard error of X
-#'
-#' \code{sY:} the standard error of Y
-#'
-#' \code{rXY:} the correlation coefficient of X and Y
-#'
-#' OR an object of class \code{ArAr}
+#' an object of class \code{ArAr} or \code{ReOs}
 #'
 #' @param xlim 2-element vector with the plot limits of the x-axis
 #' @param ylim 2-element vector with the plot limits of the y-axis
@@ -41,7 +40,7 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,
                              line.col='red',lwd=2,title=TRUE,...){
     if (hasClass(x,'matrix') | hasClass(x,'data.frame'))
         x <- list(X=x[,1],sX=x[,2],Y=x[,3],sY=x[,4],rXY=x[,5])
-    fit <- yorkfit(x$X,x$Y,x$sX,x$sY,x$rXY)
+    fit <- yorkfit(x$X,x$sX,x$Y,x$sY,x$rXY)
     scatterplot(x,xlim=xlim,ylim=ylim,alpha=alpha,
                 show.numbers=show.numbers, ellipse.col=ellipse.col,
                 a=fit$a[1],b=fit$b[1], line.col=line.col,lwd=lwd)
@@ -52,6 +51,7 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,
 #' @param inverse if \code{TRUE}, plots \eqn{^{36}}Ar/\eqn{^{40}}Ar
 #'     vs. \eqn{^{39}}Ar/\eqn{^{40}}Ar. If \code{FALSE}, plots
 #'     \eqn{^{40}}Ar/\eqn{^{36}}Ar vs. \eqn{^{39}}Ar/\eqn{^{36}}Ar.
+#' @param exterr propagate external sources of uncertainty (J, decay constant)?
 #' @return
 #' if \code{plot=FALSE}, returns a list with the following items:
 #' \describe{
@@ -67,22 +67,23 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,
 #' @export
 isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           show.numbers=FALSE,ellipse.col=rgb(0,1,0,0.5),
-                          inverse=TRUE,line.col='red',lwd=2,plot=TRUE,...){
+                          inverse=TRUE,line.col='red',lwd=2,plot=TRUE,
+                          exterr=TRUE,...){
     d <- data2york(x,get.selection(x,inverse))
     if (inverse){
-        fit <- yorkfit(d$Y,d$X,d$sY,d$sX,-d$rXY) # X and Y reversed!
+        fit <- yorkfit(d$Y,d$sY,d$X,d$sX,-d$rXY) # X and Y reversed!
         x0 <- 1/fit$a[1]
         sx0 <- fit$a[2]/fit$a[1]^2
         y0 <- -fit$b[1]/fit$a[1]
         sy0 <- y0*sqrt((fit$a[2]/fit$a[1])^2 + (fit$b[2]/fit$b[1])^2)
-        tt <- get.ArAr.age(x0,sx0,x$J[1],x$J[2])
+        tt <- get.ArAr.age(x0,sx0,x$J[1],x$J[2],exterr=exterr)
         x.lab <- expression(paste(""^"39","Ar/"^"40","Ar"))
         y.lab <- expression(paste(""^"36","Ar/"^"40","Ar"))
     } else {
-        fit <- yorkfit(d$X,d$Y,d$sX,d$sY,d$rXY)
+        fit <- yorkfit(d$X,d$sX,d$Y,d$sY,d$rXY)
         y0 <- fit$a[1]
         sy0 <- fit$a[2]
-        tt <- get.ArAr.age(fit$b[1],fit$b[2],x$J[1],x$J[2])
+        tt <- get.ArAr.age(fit$b[1],fit$b[2],x$J[1],x$J[2],exterr=exterr)
         x.lab <- expression(paste(""^"39","Ar/"^"36","Ar"))
         y.lab <- expression(paste(""^"40","Ar/"^"36","Ar"))
     }
@@ -91,9 +92,36 @@ isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     out$y0 <- c(y0,sy0)
     out$age <- tt
     if (plot) {
-        isochron.default(d,alpha=alpha,show.numbers=show.numbers,
-                         ellipse.col=ellipse.col,a=fit$a[1],b=fit$b[1],
-                         line.col=line.col,lwd=lwd,title=FALSE)
+        isochron.default(d,xlim=xlim,ylim=ylim,alpha=alpha,
+                         show.numbers=show.numbers,
+                         ellipse.col=ellipse.col,a=fit$a[1],
+                         b=fit$b[1], line.col=line.col,lwd=lwd,
+                         title=FALSE)
+        tt <- roundit(out$age[1],out$age[2])
+        title(isochron.title(out,sigdig=sigdig),xlab=x.lab,ylab=y.lab)
+    } else {
+        return(out)
+    }
+}
+#' @rdname isochron
+#' @export
+isochron.ReOs <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
+                          show.numbers=FALSE,ellipse.col=rgb(0,1,0,0.5),
+                          line.col='red',lwd=2,plot=TRUE,exterr=TRUE,...){
+    X <- ID.Re(x,exterr=exterr,isochron=TRUE)
+    fit <- yorkfit(X)
+    out <- fit
+    class(out) <- "isochron"
+    out$y0 <- c(fit$a[1],fit$a[2])
+    out$age <- get.ReOs.age(fit$b[1],fit$b[2],exterr=exterr)
+    if (plot){
+        x.lab <- expression(paste(""^"187","Re/"^"188","Os"))
+        y.lab <- expression(paste(""^"187","Os/"^"188","Os"))
+        isochron.default(X,xlim=xlim,ylim=ylim,alpha=alpha,
+                         show.numbers=show.numbers,
+                         ellipse.col=ellipse.col,a=fit$a[1],
+                         b=fit$b[1], line.col=line.col,lwd=lwd,
+                         title=FALSE)
         tt <- roundit(out$age[1],out$age[2])
         title(isochron.title(out,sigdig=sigdig),xlab=x.lab,ylab=y.lab)
     } else {
@@ -102,8 +130,8 @@ isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 }
 
 get.limits <- function(X,sX){
-    minx <- min(X-3*sX)
-    maxx <- max(X+3*sX)    
+    minx <- min(X-3*sX,na.rm=TRUE)
+    maxx <- max(X+3*sX,na.rm=TRUE)    
     c(minx,maxx)
 }
 

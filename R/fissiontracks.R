@@ -19,19 +19,73 @@ get.absolute.zeta <- function(mineral){
     Lf <- lambda('fission')[1]
     dens <- mindens(mineral)
     Na <- 6.02214e23
-    zeta <- MM*(1+R)*1e18/(Na*Lf*qap*L*dens*R)
+    zeta <- 4*(1+R)*MM*1e18/(Na*Lf*qap*L*dens*R)
     c(zeta,0)
 }
 
-zeta <- function(x,tst=c(0,0)){
-    ngrains <- length(x$Ns)
-    
+#' Calculate the zeta calibration coefficient for fission track dating
+#'
+#' Determines the zeta calibration constant of a fission track dataset
+#' (EDM or LA-ICP-MS) given its true age and analytical uncertainty.
+#'
+#' @param x an object of class \code{fissiontracks}
+#' @param tst a two-element vector with the true age and its standard
+#'     error
+#' @param exterr logical flag indicating whether the external
+#'     uncertainties associated with the age standard or the dosimeter
+#'     glass (for the EDM) should be accounted for when propagating
+#'     the uncertainty of the zeta calibration constant.
+#' @param update logical flag indicating whether the function should
+#'     return an updated version of the input data, or simply return a
+#'     two-element vector with the calibration constant and its
+#'     standard error.
+#' @param sigdig number of significant digits
+#' @return an object of class \code{fissiontracks} with an updated
+#'     \code{x$zeta} value
+#' @examples
+#' data(examples)
+#' print(examples$FT1$zeta)
+#' FT <- set.zeta(examples$FT1,tst=c(250,5))
+#' print(FT$zeta)
+#' @export
+set.zeta <- function(x,tst=c(0,0),exterr=TRUE,update=TRUE,sigdig=2){
+    N <- length(x$Ns)
+    L8 <- lambda('U238')[1]
+    tt <- tst[1]
+    st <- tst[2]
+    if (!exterr) st <- 0
+    if (x$format==1){
+        Ns <- sum(x$x[,'Ns'])
+        Ni <- sum(x$x[,'Ni'])
+        rhoD <- x$rhoD
+        if (!exterr) rhoD[2] <- 0
+        zeta <- 2e6*(exp(L8*tt)-1)/(L8*rhoD[1]*Ns/Ni)
+        zetaErr <- zeta * sqrt( (L8*exp(L8*tt)*st/(exp(L8*tt)-1))^2 +
+                                (rhoD[2]/rhoD[1])^2 + 1/Ns + 1/Ni )
+    } else {
+        Ns <- sum(x$Ns)
+        UsU <- get.UsU(x)
+        UA <- sum(UsU[,1]*x$A)
+        UAerr <- sqrt( sum(UsU[,2]*x$A)^2 )
+        zeta <- (exp(L8*tt)-1)/(L8*Ns/(2*UA))
+        zetaErr <- zeta * sqrt( ((L8*exp(L8*tt)*st)/(exp(L8*tt)-1))^2 +
+                                1/Ns + (UAerr/UA)^2 )
+    }
+    zsz <- roundit(zeta,zetaErr,sigdig=sigdig)
+    if (update){
+        out <- x
+        out$zeta <- c(zsz$x,zsz$err)
+    } else {
+        out <- matrix(c(zsz$x,zsz$err),1,2)
+        colnames(out) <- c('zeta','s[zeta]')
+    }
+    out
 }
 
 ICP.age <- function(x,i=NA,sigdig=NA,exterr=TRUE){
     ngrains <- length(x$Ns)
-    tt <- rep(0,ngrains)
-    st <- rep(0,ngrains)
+    tt <- rep(NA,ngrains)
+    st <- rep(NA,ngrains)
     if (exterr){
         zeta <- x$zeta
     } else {
@@ -75,9 +129,10 @@ get.UsU <- function(x){
     }
     for (j in 1:n){
         if (do.average){
-            m[j] <- length(x$U[[j]]) # spots per grain
-            uhat[j] <- mean(log(x$U[[j]]))
-            num <- num + sum((log(x$U[[j]])-uhat[j])^2)
+            Uj <- stats::na.omit(x$U[[j]])
+            m[j] <- length(Uj) # spots per grain
+            uhat[j] <- mean(log(Uj))
+            num <- num + sum((log(Uj)-uhat[j])^2)
             den <- den + m[j] - 1
         } else {
             out[j,'U'] <- x$U[[j]]
@@ -90,7 +145,7 @@ get.UsU <- function(x){
         for (j in 1:n){
             suhat <- x$sU[[j]]/x$U[[j]]
             vhat[j] <- vhat[j]*(1-m[j]*Aicp/x$A[j])^2 +
-                       sum(suhat^2)*(Aicp/x$A[j])^2
+                       sum(suhat^2,na.rm=TRUE)*(Aicp/x$A[j])^2
         }
         out[,'sU'] <- exp(uhat)*sqrt(vhat)
     }

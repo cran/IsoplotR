@@ -6,13 +6,14 @@
 #' analytical uncertainty associated with decay constants and
 #' J-factors after computing the plateau composition.
 #'
-#' @param x - a three-column matrix whose first column gives the amount
+#' @param x
+#' a three-column matrix whose first column gives the amount
 #'     of \eqn{^{39}}Ar in each aliquot, and whose second and third
 #'     columns give the age and its uncertainty.
-#'
+#' 
 #' OR
-#'
-#' - an object of class \code{ArAr} with \code{format=2}
+#' 
+#' an object of class \code{ArAr} with \code{format=2}
 #' 
 #' @param alpha the confidence limits of the error bars/boxes.
 #' @param plateau logical flag indicating whether a plateau age should
@@ -32,7 +33,8 @@
 #' @param title add a title to the plot? If \code{FALSE}, returns a
 #'     list with plateau parameters.
 #' @param ... optional parameters to the generic \code{plot} function
-#' @return if \code{title=FALSE}, a list with the following items:
+#' @return if \code{title=FALSE}, returns a list with the following
+#'     items:
 #'
 #' \describe{
 #' \item{mean}{a 2-element vector with the plateau mean and standard error}
@@ -55,12 +57,13 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
                                 sigdig=2,line.col='red',lwd=2,
                                 title=TRUE,...){
     ns <- nrow(x)
-    X <- c(0,cumsum(x[,1])/sum(x[,1]))
-    Y <- x[,2]
-    sY <- x[,3]
+    valid <- !is.na(rowSums(x))
+    X <- c(0,cumsum(x[valid,1])/sum(x[valid,1]))
+    Y <- x[valid,2]
+    sY <- x[valid,3]
     fact <- stats::qnorm(1-alpha/2)
-    maxY <- max(Y+fact*sY)
-    minY <- min(Y-fact*sY)
+    maxY <- max(Y+fact*sY,na.rm=TRUE)
+    minY <- min(Y-fact*sY,na.rm=TRUE)
     graphics::plot(c(0,1),c(minY,maxY),type='n',...)
     plat <- plateau(x,alpha=alpha)
     if (plateau) {
@@ -74,7 +77,7 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
         graphics::rect(X[i],Y[i]-fact*sY[i],X[i+1],Y[i]+fact*sY[i],col=colour[i])
         if (i<ns) graphics::lines(rep(X[i+1],2),c(Y[i]-fact*sY[i],Y[i+1]+fact*sY[i+1]))
     }
-    if (title) title(plateau.title(plat,sigdig=sigdig))
+    if (plateau & title) title(plateau.title(plat,sigdig=sigdig))
     else return(plat)
 }
 #' @param exterr propagate the external (decay constant and
@@ -100,7 +103,8 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
                                 lwd=lwd,title=FALSE,...)
     # calculate the weighted mean Ar40Ar39 ratio from the weighted mean age
     R <- get.ArAr.ratio(plat$mean[1],plat$mean[2],x$J[1],0,exterr=FALSE)
-    # recalculate the weighted mean age, this time taking into account decay and J uncertainties
+    # recalculate the weighted mean age, this time
+    # taking into account decay and J uncertainties
     plat$mean <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=exterr)
     if (plateau){
         title(plateau.title(plat,sigdig=sigdig))
@@ -109,7 +113,7 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
 
 # x is a three column vector with Ar39 cumulative fractions, ages and uncertainties
 plateau <- function(x,alpha=0.05){
-    X <- x[,1]/sum(x[,1])
+    X <- x[,1]/sum(x[,1],na.rm=TRUE)
     YsY <- x[,c(2,3)]
     ns <- length(X)
     out <- list()
@@ -119,7 +123,7 @@ plateau <- function(x,alpha=0.05){
     out$fract <- 0
     for (i in 1:(ns-1)){
         for (j in (i+1):ns){
-            fract <- sum(X[i:j])
+            fract <- sum(X[i:j],na.rm=TRUE)
             avg <- weightedmean(YsY[i:j,],plot=FALSE,
                                 detect.outliers=FALSE)
             if (avg$p.value < alpha) {
