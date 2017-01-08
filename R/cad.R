@@ -4,8 +4,8 @@
 #' as a `empirical cumulative distribution function'.
 #' 
 #' @param x a numerical vector OR an object of class \code{UPb},
-#'     \code{ArAr}, \code{UThHe}, \code{fissiontracks} or
-#'     \code{detritals}
+#'     \code{ArAr}, \code{UThHe}, \code{fissiontracks}, \code{ReOs},
+#'     \code{RbSr}, \code{SmNd} or \code{detritals}
 #' @rdname cad
 #' @export
 cad <- function(x,...){ UseMethod("cad",x) }
@@ -27,7 +27,7 @@ cad <- function(x,...){ UseMethod("cad",x) }
 cad.default <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
                         colmap='heat.colors',col='black',...){
     graphics::plot(range(x,na.rm=TRUE),c(0,1),type='n',
-                   ylab='cumulative probability',log='x',...)
+                   ylab='cumulative probability',xlab=xlab,...)
     graphics::lines(stats::ecdf(x),pch=pch,verticals=verticals,col=col)
 }
 #' @param col colour to give to single sample datasets (not applicable
@@ -74,11 +74,38 @@ cad.UPb <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
     tt <- filter.UPb.ages(x,type,cutoff.76,cutoff.disc)[,1]
     cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
 }
+#' @param i2i `isochron to intercept': calculates the initial (aka `inherited',
+#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+#'     \eqn{^{187}}Os/\eqn{^{188}}Os ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}
 #' @rdname cad
 #' @export
 cad.ArAr <- function(x,pch=NA,verticals=TRUE,
-                     xlab='age [Ma]',col='black',...){
-    tt <- ArAr.age(x)[,1]
+                     xlab='age [Ma]',col='black',i2i=FALSE,...){
+    tt <- ArAr.age(x,i2i=i2i)[,1]
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+}
+#' @rdname cad
+#' @export
+cad.ReOs <- function(x,pch=NA,verticals=TRUE,
+                     xlab='age [Ma]',col='black',i2i=TRUE,...){
+    tt <- ReOs.age(x,i2i=i2i)[,1]
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+}
+#' @rdname cad
+#' @export
+cad.SmNd <- function(x,pch=NA,verticals=TRUE,
+                     xlab='age [Ma]',col='black',i2i=TRUE,...){
+    tt <- SmNd.age(x,i2i=i2i)[,1]
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+}
+#' @rdname cad
+#' @export
+cad.RbSr <- function(x,pch=NA,verticals=TRUE,
+                     xlab='age [Ma]',col='black',i2i=TRUE,...){
+    tt <- RbSr.age(x,i2i=i2i)[,1]
     cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
 }
 #' @rdname cad

@@ -3,7 +3,9 @@
 \name{isochron}
 \alias{isochron}
 \alias{isochron.ArAr}
+\alias{isochron.RbSr}
 \alias{isochron.ReOs}
+\alias{isochron.SmNd}
 \alias{isochron.default}
 \title{Calculate and plot isochrons}
 \usage{
@@ -18,7 +20,15 @@ isochron(x, ...)
   inverse = TRUE, line.col = "red", lwd = 2, plot = TRUE,
   exterr = TRUE, ...)
 
+\method{isochron}{RbSr}(x, xlim = NA, ylim = NA, alpha = 0.05,
+  sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
+  line.col = "red", lwd = 2, plot = TRUE, exterr = TRUE, ...)
+
 \method{isochron}{ReOs}(x, xlim = NA, ylim = NA, alpha = 0.05,
+  sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
+  line.col = "red", lwd = 2, plot = TRUE, exterr = TRUE, ...)
+
+\method{isochron}{SmNd}(x, xlim = NA, ylim = NA, alpha = 0.05,
   sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
   line.col = "red", lwd = 2, plot = TRUE, exterr = TRUE, ...)
 }
@@ -34,7 +44,8 @@ isochron(x, ...)
 }
 OR
 
-an object of class \code{ArAr} or \code{ReOs}}
+an object of class \code{ArAr}, \code{ReOs}, \code{RbSr} or
+\code{SmNd}}
 
 \item{...}{optional arguments}
 
@@ -70,8 +81,11 @@ if \code{plot=FALSE}, returns a list with the following items:
 \describe{
 \item{a}{the intercept of the straight line fit and its standard error} 
 \item{b}{the slope of the fit and its standard error}
-\item{y0}{the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio and its standard error}
-\item{age}{the \eqn{^{40}}Ar/\eqn{^{39}}Ar age and its standard error}
+\item{y0}{this either equals \code{a} or, if \code{x} has class
+\code{ArAr}, the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio and
+its standard error}
+\item{age}{the \eqn{^{40}}Ar/\eqn{^{39}}Ar, Re-Os, Rb-Sr or Sm-Nd
+age and its standard error}
 }
 }
 \description{

@@ -14,7 +14,8 @@ agespectrum(x, ...)
 
 \method{agespectrum}{ArAr}(x, alpha = 0.05, plateau = TRUE,
   plateau.col = rgb(0, 1, 0, 0.5), non.plateau.col = rgb(0, 1, 1, 0.5),
-  sigdig = 2, exterr = TRUE, line.col = "red", lwd = 2, ...)
+  sigdig = 2, exterr = TRUE, line.col = "red", lwd = 2, i2i = FALSE,
+  ...)
 }
 \arguments{
 \item{x}{a three-column matrix whose first column gives the amount
@@ -54,6 +55,11 @@ list with plateau parameters.}
 
 \item{exterr}{propagate the external (decay constant and
 calibration factor) uncertainties?}
+
+\item{i2i}{`isochron to intercept': calculates the initial (aka `inherited',
+`excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio from an
+isochron fit. Setting \code{i2i} to \code{FALSE} uses the
+default values stored in \code{settings('iratio',...)}}
 }
 \value{
 if \code{title=FALSE}, returns a list with the following

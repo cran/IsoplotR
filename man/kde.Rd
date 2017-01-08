@@ -3,6 +3,9 @@
 \name{kde}
 \alias{kde}
 \alias{kde.ArAr}
+\alias{kde.RbSr}
+\alias{kde.ReOs}
+\alias{kde.SmNd}
 \alias{kde.UPb}
 \alias{kde.UThHe}
 \alias{kde.default}
@@ -32,7 +35,26 @@ kde(x, ...)
 \method{kde}{ArAr}(x, from = NA, to = NA, bw = NA, adaptive = TRUE,
   log = FALSE, n = 512, plot = TRUE, pch = NA, xlab = "age [Ma]",
   ylab = "", kde.col = rgb(1, 0, 1, 0.6), hist.col = rgb(0, 1, 0, 0.2),
-  show.hist = TRUE, bty = "n", binwidth = NA, ncol = NA, ...)
+  show.hist = TRUE, bty = "n", binwidth = NA, ncol = NA, i2i = FALSE,
+  ...)
+
+\method{kde}{ReOs}(x, from = NA, to = NA, bw = NA, adaptive = TRUE,
+  log = FALSE, n = 512, plot = TRUE, pch = NA, xlab = "age [Ma]",
+  ylab = "", kde.col = rgb(1, 0, 1, 0.6), hist.col = rgb(0, 1, 0, 0.2),
+  show.hist = TRUE, bty = "n", binwidth = NA, ncol = NA, i2i = TRUE,
+  ...)
+
+\method{kde}{SmNd}(x, from = NA, to = NA, bw = NA, adaptive = TRUE,
+  log = FALSE, n = 512, plot = TRUE, pch = NA, xlab = "age [Ma]",
+  ylab = "", kde.col = rgb(1, 0, 1, 0.6), hist.col = rgb(0, 1, 0, 0.2),
+  show.hist = TRUE, bty = "n", binwidth = NA, ncol = NA, i2i = TRUE,
+  ...)
+
+\method{kde}{RbSr}(x, from = NA, to = NA, bw = NA, adaptive = TRUE,
+  log = FALSE, n = 512, plot = TRUE, pch = NA, xlab = "age [Ma]",
+  ylab = "", kde.col = rgb(1, 0, 1, 0.6), hist.col = rgb(0, 1, 0, 0.2),
+  show.hist = TRUE, bty = "n", binwidth = NA, ncol = NA, i2i = TRUE,
+  ...)
 
 \method{kde}{UThHe}(x, from = NA, to = NA, bw = NA, adaptive = TRUE,
   log = FALSE, n = 512, plot = TRUE, pch = NA, xlab = "age [Ma]",
@@ -47,8 +69,8 @@ kde(x, ...)
 }
 \arguments{
 \item{x}{a vector of numbers OR an object of class \code{UPb},
-\code{ArAr}, \code{UThHe}, \code{fissiontracks} or
-\code{detrital}}
+\code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr},
+\code{UThHe}, \code{fissiontracks} or \code{detrital}}
 
 \item{...}{optional arguments to be passed on to \code{density}}
 
@@ -73,9 +95,9 @@ modifier of Abramson (1982) is used}
 \item{pch}{the symbol used to show the samples. May be a vector.
 Set \code{pch = NA} to turn them off.}
 
-\item{xlab}{the label of the x-axis}
+\item{xlab}{the x-axis label}
 
-\item{ylab}{the label of the y-axis}
+\item{ylab}{the y-axis label}
 
 \item{kde.col}{the fill colour of the KDE specified as a four
 element vector of \code{r, g, b, alpha} values}
@@ -128,6 +150,13 @@ function will use the median bandwidth of all the samples.}
 
 \item{normalise}{logical flag indicating whether or not the KDEs
 should all integrate to the same value.}
+
+\item{i2i}{`isochron to intercept': calculates the initial (aka `inherited',
+`excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+\eqn{^{187}}Os/\eqn{^{188}}Os ratio from an isochron
+fit. Setting \code{i2i} to \code{FALSE} uses the default values
+stored in \code{settings('iratio',...)}}
 }
 \value{
 if \code{plot = TRUE}, returns an object of class \code{KDE}, i.e. a

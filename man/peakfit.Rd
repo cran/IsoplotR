@@ -3,6 +3,9 @@
 \name{peakfit}
 \alias{peakfit}
 \alias{peakfit.ArAr}
+\alias{peakfit.RbSr}
+\alias{peakfit.ReOs}
+\alias{peakfit.SmNd}
 \alias{peakfit.UPb}
 \alias{peakfit.UThHe}
 \alias{peakfit.default}
@@ -20,13 +23,24 @@ peakfit(x, ...)
   cutoff.disc = c(-15, 5), exterr = TRUE, sigdig = 2, log = TRUE, ...)
 
 \method{peakfit}{ArAr}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
-  ...)
+  i2i = FALSE, ...)
+
+\method{peakfit}{ReOs}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
+  i2i = TRUE, ...)
+
+\method{peakfit}{SmNd}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
+  i2i = TRUE, ...)
+
+\method{peakfit}{RbSr}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
+  i2i = TRUE, ...)
 
 \method{peakfit}{UThHe}(x, k = 1, sigdig = 2, log = TRUE, ...)
 }
 \arguments{
 \item{x}{either a \code{[2 x n]} matrix with measurements and their
-standard errors, or an object of class \code{fissiontracks}}
+standard errors, or an object of class \code{fissiontracks},
+\code{UPb}, \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr}
+or \code{UThHe}}
 
 \item{...}{optional arguments (not used)}
 
@@ -35,10 +49,11 @@ sought. Setting this parameter to \code{'auto'} automatically
 selects the optimal number of components (up to a maximum of 5)
 using the Bayes Information Criterion (BIC).}
 
-\item{sigdig}{number of significant digits to be used for any legend
-in which the peak fitting results are to be displayed.}
+\item{sigdig}{number of significant digits to be used for any
+legend in which the peak fitting results are to be displayed.}
 
-\item{log}{take the logs of the data before applying the mixture model?}
+\item{log}{take the logs of the data before applying the mixture
+model?}
 
 \item{exterr}{propagate the external sources of uncertainty into
 the component age errors?}
@@ -63,16 +78,21 @@ between the \eqn{^{206}}Pb/\eqn{^{238}}U and
 \eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
 \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 \code{cutoff.disc=NA} if you do not want to use this filter.}
+
+\item{i2i}{`isochron to intercept': calculates the initial (aka `inherited',
+`excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+\eqn{^{187}}Os/\eqn{^{188}}Os ratio from an isochron
+fit. Setting \code{i2i} to \code{FALSE} uses the default values
+stored in \code{settings('iratio',...)}}
 }
 \value{
-a list with the following items:
-\describe{
-\item{peaks}{a vector of peak locations}
-\item{props}{a vector of peak proportions}
-\item{peaks.err}{the standard errors of the peak locations}
-\item{props.err}{the standard errors of the peak proportions}
-\item{legend}{a vector of text expressions to be used in a figure legend}
-}
+a list with the following items: \describe{ \item{peaks}{a
+    vector of peak locations} \item{props}{a vector of peak
+    proportions} \item{peaks.err}{the standard errors of the peak
+    locations} \item{props.err}{the standard errors of the peak
+    proportions} \item{legend}{a vector of text expressions to be
+    used in a figure legend} }
 }
 \description{
 Implements the discrete mixture modelling algorithms of Galbraith
@@ -84,8 +104,8 @@ data(examples)
 peakfit(examples$FT1,k=2)
 }
 \references{
-Galbraith, R.F. and Laslett, G.M., 1993. Statistical models for
-mixed fission track ages. Nuclear tracks and radiation
-measurements, 21(4), pp.459-470.
+Galbraith, R.F. and Laslett, G.M., 1993. Statistical
+    models for mixed fission track ages. Nuclear tracks and
+    radiation measurements, 21(4), pp.459-470.
 }
 

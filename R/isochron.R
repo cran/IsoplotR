@@ -16,7 +16,8 @@
 #' }
 #' OR
 #'
-#' an object of class \code{ArAr} or \code{ReOs}
+#' an object of class \code{ArAr}, \code{ReOs}, \code{RbSr} or
+#' \code{SmNd}
 #'
 #' @param xlim 2-element vector with the plot limits of the x-axis
 #' @param ylim 2-element vector with the plot limits of the y-axis
@@ -57,8 +58,11 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,
 #' \describe{
 #' \item{a}{the intercept of the straight line fit and its standard error} 
 #' \item{b}{the slope of the fit and its standard error}
-#' \item{y0}{the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio and its standard error}
-#' \item{age}{the \eqn{^{40}}Ar/\eqn{^{39}}Ar age and its standard error}
+#' \item{y0}{this either equals \code{a} or, if \code{x} has class
+#' \code{ArAr}, the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio and
+#' its standard error}
+#' \item{age}{the \eqn{^{40}}Ar/\eqn{^{39}}Ar, Re-Os, Rb-Sr or Sm-Nd
+#' age and its standard error}
 #' }
 #' @examples
 #' data(examples)
@@ -105,18 +109,55 @@ isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 }
 #' @rdname isochron
 #' @export
+isochron.RbSr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
+                          show.numbers=FALSE,ellipse.col=rgb(0,1,0,0.5),
+                          line.col='red',lwd=2,plot=TRUE,exterr=TRUE,...){
+    isochron.PD(x,'Rb87',xlim=xlim, ylim=ylim,alpha=alpha,
+                sigdig=sigdig, show.numbers=show.numbers,
+                ellipse.col=ellipse.col,line.col=line.col, lwd=lwd,
+                plot=plot,exterr=exterr,...)
+}
+#' @rdname isochron
+#' @export
 isochron.ReOs <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           show.numbers=FALSE,ellipse.col=rgb(0,1,0,0.5),
                           line.col='red',lwd=2,plot=TRUE,exterr=TRUE,...){
-    X <- ID.Re(x,exterr=exterr,isochron=TRUE)
+    isochron.PD(x,'Re187',xlim=xlim, ylim=ylim,alpha=alpha,
+                sigdig=sigdig, show.numbers=show.numbers,
+                ellipse.col=ellipse.col,line.col=line.col, lwd=lwd,
+                plot=plot,exterr=exterr,...)
+}
+#' @rdname isochron
+#' @export
+isochron.SmNd <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
+                          show.numbers=FALSE,ellipse.col=rgb(0,1,0,0.5),
+                          line.col='red',lwd=2,plot=TRUE,exterr=TRUE,...){
+    isochron.PD(x,'Sm147',xlim=xlim,ylim=ylim,alpha=alpha,
+                sigdig=sigdig, show.numbers=show.numbers,
+                ellipse.col=ellipse.col,line.col=line.col, lwd=lwd,
+                plot=plot,exterr=exterr,...)
+}
+isochron.PD <- function(x,nuclide,xlim=NA,ylim=NA, alpha=0.05,
+                        sigdig=2,show.numbers=FALSE,
+                        ellipse.col=rgb(0,1,0,0.5),line.col='red',
+                        lwd=2,plot=TRUE,exterr=TRUE,...){
+    if (identical(nuclide,'Sm147')){
+        x.lab <- expression(paste(""^"147","Sm/"^"144","Nd"))
+        y.lab <- expression(paste(""^"143","Nd/"^"144","Nd"))
+    } else if (identical(nuclide,'Re187')){
+        x.lab <- expression(paste(""^"187","Re/"^"188","Os"))
+        y.lab <- expression(paste(""^"187","Os/"^"188","Os"))
+    } else if (identical(nuclide,'Rb87')){
+        x.lab <- expression(paste(""^"87","Rb/"^"86","Sr"))
+        y.lab <- expression(paste(""^"87","Sr/"^"86","Sr"))
+    }
+    X <- ppm2ratios(x,exterr=exterr,common=FALSE)
     fit <- yorkfit(X)
     out <- fit
     class(out) <- "isochron"
     out$y0 <- c(fit$a[1],fit$a[2])
-    out$age <- get.ReOs.age(fit$b[1],fit$b[2],exterr=exterr)
+    out$age <- get.PD.age(fit$b[1],fit$b[2],nuclide,exterr=exterr)
     if (plot){
-        x.lab <- expression(paste(""^"187","Re/"^"188","Os"))
-        y.lab <- expression(paste(""^"187","Os/"^"188","Os"))
         isochron.default(X,xlim=xlim,ylim=ylim,alpha=alpha,
                          show.numbers=show.numbers,
                          ellipse.col=ellipse.col,a=fit$a[1],
@@ -142,7 +183,7 @@ isochron.title <- function(fit,sigdig=2){
                         list(a=rounded.age$x, b=rounded.age$err,
                              c=rounded.intercept$x, d=rounded.intercept$err))
     line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
-                        list(a=signif(fit$mswd,2), b=signif(fit$p.value,2)))
+                        list(a=signif(fit$mswd,sigdig), b=signif(fit$p.value,sigdig)))
     graphics::mtext(line1,line=1)
     graphics::mtext(line2,line=0)
 }
@@ -154,7 +195,7 @@ regression.title <- function(fit,sigdig=2){
                         list(a=slope$x, b=slope$err,
                              c=intercept$x, d=intercept$err))
     line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
-                        list(a=signif(fit$mswd,2), b=signif(fit$p.value,2)))
+                        list(a=signif(fit$mswd,sigdig), b=signif(fit$p.value,sigdig)))
     graphics::mtext(line1,line=1)
     graphics::mtext(line2,line=0)
 }

@@ -10,7 +10,7 @@
 #' OR
 #'
 #' and object of class \code{fissiontracks}, \code{UThHe},
-#' \code{ArAr}, or \code{UPb}
+#' \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr} or \code{UPb}
 #' @param from minimum age limit of the radial scale
 #' @param to maximum age limit of the radial scale
 #' @param t0 central value
@@ -38,10 +38,6 @@
 #'     assessment of spread in ages. International Journal of
 #'     Radiation Applications and Instrumentation. Part D. Nuclear
 #'     Tracks and Radiation Measurements, 17(3), pp.207-214.
-#'
-#' Galbraith, R.F. and Laslett, G.M., 1993. Statistical models for
-#' mixed fission track ages. Nuclear tracks and radiation
-#' measurements, 21(4), pp.459-470.
 #' @examples
 #' data(examples)
 #' radialplot(examples$FT1)
@@ -105,39 +101,84 @@ radialplot.UPb <- function(x,from=NA,to=NA,t0=NA,
                            cutoff.76=1100, cutoff.disc=c(-15,5),
                            show.numbers=FALSE, pch=21,bg='white',
                            markers=NULL,k=0,exterr=TRUE,...){
-    peaks <- peakfit(x,k=k,exterr=exterr)
-    markers <- c(markers,peaks$peaks)
-    age2radial(x,from=from,to=to,t0=t0,transformation=transformation,
-               type=type,cutoff.76=cutoff.76,cutoff.disc=cutoff.disc,
-               show.numbers=show.numbers,pch=pch,bg=bg,markers=markers,
-               k=k,...)
-    if (!is.null(peaks$legend))
-        graphics::legend('bottomleft',legend=peaks$legend,bty='n')
+    radialplot.helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,type=type,
+                      cutoff.76=cutoff.76, cutoff.disc=cutoff.disc,
+                      show.numbers=show.numbers,pch=pch,bg=bg,
+                      markers=markers,k=k,exterr=exterr,...)
 }
+#' @param i2i `isochron to intercept': calculates the initial (aka `inherited',
+#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+#'     \eqn{^{187}}Os/\eqn{^{188}}Os ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}
 #' @rdname radialplot
 #' @export
 radialplot.ArAr <- function(x,from=NA,to=NA,t0=NA,
-                            transformation='log', show.numbers=FALSE,
+                            transformation='log',show.numbers=FALSE,
                             pch=21,bg='white',markers=NULL,k=0,
-                            exterr=TRUE,...){
-    peaks <- peakfit(x,k=k,exterr=exterr)
-    markers <- c(markers,peaks$peaks)
-    age2radial(x,from=from,to=to,t0=t0,transformation=transformation,
-               show.numbers=show.numbers,pch=pch,bg=bg,markers=markers,
-               k=k,...)
-    if (!is.null(peaks$legend))
-        graphics::legend('bottomleft',legend=peaks$legend,bty='n')
+                            exterr=TRUE,i2i=FALSE,...){
+    radialplot.helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,
+                      show.numbers=show.numbers,pch=pch,bg=bg,
+                      markers=markers,k=k,exterr=exterr,i2i=i2i,...)
 }
 #' @rdname radialplot
 #' @export
 radialplot.UThHe <- function(x,from=NA,to=NA,t0=NA,
                              transformation='log',show.numbers=FALSE,
                              pch=21,bg='white',markers=NULL,k=0,...){
-    peaks <- peakfit(x,k=k)
+    radialplot.helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,
+                      show.numbers=show.numbers,pch=pch,bg=bg,
+                      markers=markers,k=k,exterr=FALSE,...)
+}
+#' @rdname radialplot
+#' @export
+radialplot.ReOs <- function(x,from=NA,to=NA,t0=NA,
+                            transformation='log',show.numbers=FALSE,
+                            pch=21,bg='white',markers=NULL,k=0,
+                            exterr=TRUE,i2i=TRUE,...){
+    radialplot.helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,
+                      show.numbers=show.numbers,pch=pch,bg=bg,
+                      markers=markers,k=k,exterr=exterr,i2i=i2i,...)
+}
+#' @rdname radialplot
+#' @export
+radialplot.SmNd <- function(x,from=NA,to=NA,t0=NA,
+                            transformation='log',show.numbers=FALSE,
+                            pch=21,bg='white',markers=NULL,k=0,
+                            exterr=TRUE,i2i=TRUE,...){
+    radialplot.helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,
+                      show.numbers=show.numbers,pch=pch,bg=bg,
+                      markers=markers,k=k,exterr=exterr,i2i=i2i,...)
+}
+#' @rdname radialplot
+#' @export
+radialplot.RbSr <- function(x,from=NA,to=NA,t0=NA,
+                            transformation='log',show.numbers=FALSE,
+                            pch=21,bg='white',markers=NULL,k=0,
+                            exterr=TRUE,i2i=TRUE,...){
+    radialplot.helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,
+                      show.numbers=show.numbers,pch=pch,bg=bg,
+                      markers=markers,k=k,exterr=exterr,i2i=i2i,...)
+}
+radialplot.helper <- function(x,from=NA,to=NA,t0=NA,
+                             transformation='log',type=4,
+                             cutoff.76=1100, cutoff.disc=c(-15,5),
+                             show.numbers=FALSE,pch=21,bg='white',
+                             markers=NULL,k=0,exterr=TRUE,i2i=FALSE,
+                             ...){
+    peaks <- peakfit(x,k=k,exterr=exterr,i2i=i2i)
     markers <- c(markers,peaks$peaks)
     age2radial(x,from=from,to=to,t0=t0,transformation=transformation,
-               show.numbers=show.numbers,pch=pch,bg=bg,markers=markers,
-               k=k,...)
+               type=type,cutoff.76=cutoff.76,cutoff.disc=cutoff.disc,
+               show.numbers=show.numbers,pch=pch,bg=bg,
+               markers=markers,k=k,i2i=i2i,...)
     if (!is.null(peaks$legend))
         graphics::legend('bottomleft',legend=peaks$legend,bty='n')
 }
@@ -145,14 +186,20 @@ radialplot.UThHe <- function(x,from=NA,to=NA,t0=NA,
 age2radial <- function(x,from=NA,to=NA,t0=NA,transformation='log',
                        type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
                        show.numbers=FALSE,pch=21,bg='white',
-                       markers=NULL,k=0,...){
+                       markers=NULL,k=0,i2i=FALSE,...){
     if (hasClass(x,'UPb')){
         tt <- filter.UPb.ages(x,type,cutoff.76,
                               cutoff.disc,exterr=FALSE)
     } else if (hasClass(x,'ArAr')){
-        tt <- ArAr.age(x,exterr=FALSE)
+        tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'UThHe')){
         tt <- UThHe.age(x)
+    } else if (hasClass(x,'ReOs')){
+        tt <- ReOs.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'SmNd')){
+        tt <- SmNd.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'RbSr')){
+        tt <- RbSr.age(x,exterr=FALSE,i2i=i2i)
     }
     radialplot.default(tt,from=from,to=to,t0=t0,
                        transformation=transformation,
@@ -225,8 +272,9 @@ radial.scale <- function(x,zeta=0,rhoD=0){
     # plot arc
     Z <- seq(zm-x$z0,zM-x$z0,length.out=N)
     rxy <- z2rxy(Z,e,xM)
-    graphics::plot(rxy[,1],rxy[,2],type='l',xlim=c(0,xM),axes=FALSE,bty='n',
-                   xlab=x$xlab,ylab='standardised estimate')
+    graphics::plot(rxy[,1],rxy[,2],type='l',xlim=c(0,xM),
+                   axes=FALSE,bty='n',xlab=x$xlab,
+                   ylab='standardised estimate')
     c(e,xM)
 }
 
@@ -286,24 +334,13 @@ get.radial.tticks <- function(x){
     out
 }
 
-get.fxy <- function(x,fz,asprat,buffer=0.9){
-    xx <- 1/x$s
-    yy <- fz*(x$z-x$z0)/x$s
-    rd <- sqrt(xx^2+yy^2) # radial distance
-    buffer/max(rd)
-}
-
-get.fz <- function(fz,z0,zlim,asprat){
-    (sin(atan(fz*(zlim[2]-z0))) + sin(atan(fz*(z0-zlim[1]))) - asprat)^2
-}
-
 x2zs <- function(x,...){ UseMethod("x2zs",x) }
 x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA){
     out <- list()
     if (is.na(transformation)) out$transformation <- 'log'
     else out$transformation <- transformation
     if (identical(transformation,'log')){
-        out$offset <- get.offset(x[,1],from)
+        out$offset <- get.offset(x[,1]-2*x[,2],from)
         out$z <- log(x[,1]+out$offset)
         out$s <- x[,2]/(x[,1]+out$offset)
         if (out$offset>0){
@@ -319,22 +356,24 @@ x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA){
     out$z0 <- get.z0(out,t0,from,to)
     # reset limits if necessary
     if (is.na(from)){
-        if (identical(transformation,'log'))
-            out$from <- exp(min(out$z,na.rm=TRUE))-out$offset
-        else
-            out$from <- min(out$z,na.rm=TRUE)
+        min.z <- get.min.z(out)
+        if (identical(transformation,'log')){
+            out$from <- exp(min.z)-out$offset
+        } else {
+            out$from <- min.z
+        }
     } else {
         out$from <- from
     }
     if (is.na(to)){
+        max.z <- get.max.z(out)
         if (identical(transformation,'log'))
-            out$to <- exp(max(out$z,na.rm=TRUE))-out$offset
+            out$to <- exp(max.z)-out$offset
         else if (identical(transformation,'linear'))
-            out$to <- max(out$z,na.rm=TRUE)
+            out$to <- max.z
     } else {
         out$to <- to
     }
-    out$zlim <- range(out$z,na.rm=TRUE)
     out
 }
 x2zs.fissiontracks <- function(x,t0=NA,from=NA,to=NA,transformation=NA){
@@ -385,7 +424,6 @@ x2zs.fissiontracks <- function(x,t0=NA,from=NA,to=NA,transformation=NA){
             out$xlab <- 'Ns+Ni'
         }
         # reset limits if necessary
-        out$zlim <- range(out$z,na.rm=TRUE)
         if (is.na(from)){
             if (identical(transformation,'log'))
                 out$from <- exp(min(out$z,na.rm=TRUE))
@@ -456,8 +494,8 @@ radial.title <- function(fit,sigdig=2){
     line1 <- substitute('central age ='~a%+-%b~'(1'~sigma~')',
                         list(a=rounded.age$x, b=rounded.age$err))
     line2 <- substitute('dispersion ='~a~'%, p('~chi^2*')='~b,
-                        list(a=signif(100*fit$disp,2),
-                             b=signif(fit$p.value,2)))
+                        list(a=signif(100*fit$disp,sigdig),
+                             b=signif(fit$p.value,sigdig)))
     graphics::mtext(line1,line=1)
     graphics::mtext(line2,line=0)
 }
@@ -472,4 +510,28 @@ get.offset <- function(x,from=NA){
         offset = 10^(floor(log10(-m))+1);
     }
     offset
+}
+
+get.min.z <- function(x){
+    rxry <- data2rxry(x)
+    min.ry <- min(rxry[,2],na.rm=TRUE)
+    if (min.ry > -2){ # if the data are underdispersed
+        max.rx <- max(rxry[,1],na.rm=TRUE)
+        min.z <- x$z0-2/max.rx
+    } else {
+        min.z <- min(x$z,na.rm=TRUE)
+    }
+    min.z
+}
+
+get.max.z <- function(x){
+    rxry <- data2rxry(x)
+    max.ry <- max(rxry[,2],na.rm=TRUE)
+    if (max.ry < 2){ # if the data are underdispersed
+        max.rx <- max(rxry[,1],na.rm=TRUE)
+        max.z <- x$z0+2/max.rx
+    } else {
+        max.z <- max(x$z,na.rm=TRUE)
+    }
+    max.z
 }

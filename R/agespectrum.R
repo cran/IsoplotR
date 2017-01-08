@@ -80,6 +80,10 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
     if (plateau & title) title(plateau.title(plat,sigdig=sigdig))
     else return(plat)
 }
+#' @param i2i `isochron to intercept': calculates the initial (aka `inherited',
+#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio from an
+#'     isochron fit. Setting \code{i2i} to \code{FALSE} uses the
+#'     default values stored in \code{settings('iratio',...)}
 #' @param exterr propagate the external (decay constant and
 #'     calibration factor) uncertainties?
 #' @examples
@@ -90,8 +94,9 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
 agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
                              plateau.col=rgb(0,1,0,0.5),
                              non.plateau.col=rgb(0,1,1,0.5),sigdig=2,
-                             exterr=TRUE,line.col='red',lwd=2,...){
-    tt <- ArAr.age(x,jcu=FALSE,exterr=FALSE)
+                             exterr=TRUE,line.col='red',lwd=2,
+                             i2i=FALSE,...){
+    tt <- ArAr.age(x,jcu=FALSE,exterr=FALSE,i2i=i2i)
     if (x$format==2){
         X <- cbind(x$x[,'Ar39'],tt)
     } else {
@@ -145,8 +150,8 @@ plateau.title <- function(fit,sigdig=2){
     line1 <- substitute('mean ='~a%+-%b~' (1'~sigma~')',
                         list(a=rounded.mean$x, b=rounded.mean$err))
     line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
-                        list(a=signif(fit$mswd,2),
-                             b=signif(fit$p.value,2)))
+                        list(a=signif(fit$mswd,sigdig),
+                             b=signif(fit$p.value,sigdig)))
     a <- signif(100*fit$fract,sigdig)
     line3 <- bquote(paste("Includes ",.(a),"% of the",""^"39","Ar"))
     graphics::mtext(line1,line=2)

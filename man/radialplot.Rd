@@ -3,6 +3,9 @@
 \name{radialplot}
 \alias{radialplot}
 \alias{radialplot.ArAr}
+\alias{radialplot.RbSr}
+\alias{radialplot.ReOs}
+\alias{radialplot.SmNd}
 \alias{radialplot.UPb}
 \alias{radialplot.UThHe}
 \alias{radialplot.default}
@@ -27,11 +30,23 @@ radialplot(x, ...)
 
 \method{radialplot}{ArAr}(x, from = NA, to = NA, t0 = NA,
   transformation = "log", show.numbers = FALSE, pch = 21, bg = "white",
-  markers = NULL, k = 0, exterr = TRUE, ...)
+  markers = NULL, k = 0, exterr = TRUE, i2i = FALSE, ...)
 
 \method{radialplot}{UThHe}(x, from = NA, to = NA, t0 = NA,
   transformation = "log", show.numbers = FALSE, pch = 21, bg = "white",
   markers = NULL, k = 0, ...)
+
+\method{radialplot}{ReOs}(x, from = NA, to = NA, t0 = NA,
+  transformation = "log", show.numbers = FALSE, pch = 21, bg = "white",
+  markers = NULL, k = 0, exterr = TRUE, i2i = TRUE, ...)
+
+\method{radialplot}{SmNd}(x, from = NA, to = NA, t0 = NA,
+  transformation = "log", show.numbers = FALSE, pch = 21, bg = "white",
+  markers = NULL, k = 0, exterr = TRUE, i2i = TRUE, ...)
+
+\method{radialplot}{RbSr}(x, from = NA, to = NA, t0 = NA,
+  transformation = "log", show.numbers = FALSE, pch = 21, bg = "white",
+  markers = NULL, k = 0, exterr = TRUE, i2i = TRUE, ...)
 }
 \arguments{
 \item{x}{Either an nx2 matix of (transformed) values z and their
@@ -40,7 +55,7 @@ radialplot(x, ...)
 OR
 
 and object of class \code{fissiontracks}, \code{UThHe},
-\code{ArAr}, or \code{UPb}}
+\code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr} or \code{UPb}}
 
 \item{...}{additional arguments to the generic \code{points}
 function}
@@ -101,6 +116,13 @@ between the \eqn{^{206}}Pb/\eqn{^{238}}U and
 \eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
 \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 \code{cutoff.disc=NA} if you do not want to use this filter.}
+
+\item{i2i}{`isochron to intercept': calculates the initial (aka `inherited',
+`excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+\eqn{^{187}}Os/\eqn{^{188}}Os ratio from an isochron
+fit. Setting \code{i2i} to \code{FALSE} uses the default values
+stored in \code{settings('iratio',...)}}
 }
 \description{
 Implementation of a graphical device developed by Rex Galbraith to
@@ -116,9 +138,5 @@ Galbraith, R.F., 1990. The radial plot: graphical
     assessment of spread in ages. International Journal of
     Radiation Applications and Instrumentation. Part D. Nuclear
     Tracks and Radiation Measurements, 17(3), pp.207-214.
-
-Galbraith, R.F. and Laslett, G.M., 1993. Statistical models for
-mixed fission track ages. Nuclear tracks and radiation
-measurements, 21(4), pp.459-470.
 }
 

@@ -5,8 +5,8 @@
 #'
 #' @param x either a file name (\code{.csv} format) OR a matrix
 #' @param method one of \code{'U-Pb'}, \code{'Ar-Ar'},
-#'     \code{'detritals'} \code{'U-Th-He'}, \code{'fissiontracks'} or
-#'     \code{'other'}
+#'     \code{'detritals'}, \code{Rb-Sr}, \code{Sm-Nd}, \code{Re-Os},
+#'     \code{'U-Th-He'}, \code{'fissiontracks'} or \code{'other'}
 #' @param format formatting option, depends on the value of
 #'     \code{method}.
 #' 
@@ -61,6 +61,14 @@
 #'
 #' \code{file.show(system.file("ReOs.csv",package="IsoplotR"))}
 #'
+#' \item \code{method = 'Rb-Sr'}:
+#'
+#' \code{file.show(system.file("RbSr.csv",package="IsoplotR"))}
+#'
+#' \item \code{method = 'Sm-Nd'}:
+#'
+#' \code{file.show(system.file("SmNd.csv",package="IsoplotR"))}
+#'
 #' \item \code{method = 'U-Th-He'}:
 #'
 #' \code{file.show(system.file("UThHe.csv",package="IsoplotR"))}
@@ -83,7 +91,8 @@
 #' }
 #' @param ... optional arguments to the \code{read.csv} function
 #' @return an object of class \code{UPb}, \code{ArAr}, \code{UThHe},
-#'     \code{detritals}, \code{fissiontracks} or \code{other}
+#'     \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{detritals},
+#'     \code{fissiontracks} or \code{other}
 #' @examples
 #' # load one of the built-in .csv files:
 #' data(examples)
@@ -106,6 +115,10 @@ read.data.matrix <- function(x,method='U-Pb',format=1,...){
         out <- as.ArAr(x,format)
     } else if (identical(method,'Re-Os')){
         out <- as.ReOs(x,format)
+    } else if (identical(method,'Rb-Sr')){
+        out <- as.RbSr(x,format)
+    } else if (identical(method,'Sm-Nd')){
+        out <- as.SmNd(x,format)
     } else if (identical(method,'U-Th-He')){
         out <- as.UThHe(x)
     } else if (identical(method,'fissiontracks')){
@@ -178,6 +191,22 @@ as.ArAr <- function(x,format=2){
     }
     out
 }
+as.RbSr <- function(x,format=1){
+    out <- list()
+    class(out) <- "RbSr"
+    out$x <- NA
+    out$format <- format
+    nc <- ncol(x)
+    nr <- nrow(x)
+    if (format == 1 & nc == 6){
+        X <- x2X(x,2,nr,nc)
+        colnames(X) <- c('Rbppm','errRbppm',
+                         'Srppm','errSrppm',
+                         'Sr87Sr86','errSr87Sr86')
+        out$x <- X
+    }
+    out
+}
 as.ReOs <- function(x,format=1){
     out <- list()
     class(out) <- "ReOs"
@@ -188,8 +217,24 @@ as.ReOs <- function(x,format=1){
     if (format == 1 & nc == 6){
         X <- x2X(x,2,nr,nc)
         colnames(X) <- c('Reppm','errReppm',
-                         'Osppt','errOsppt',
+                         'Osppm','errOsppm',
                          'Os187Os188','errOs187Os188')
+        out$x <- X
+    }
+    out
+}
+as.SmNd <- function(x,format=1){
+    out <- list()
+    class(out) <- "SmNd"
+    out$x <- NA
+    out$format <- format
+    nc <- ncol(x)
+    nr <- nrow(x)
+    if (format == 1 & nc == 6){
+        X <- x2X(x,2,nr,nc)
+        colnames(X) <- c('Smppm','errSmppm',
+                         'Ndppm','errNdppm',
+                         'Nd143Nd144','errNd143Nd144')
         out$x <- X
     }
     out
@@ -259,9 +304,6 @@ as.detritals <- function(x){
         out[[sname]] = X[!is.na(X[,sname]),sname]
     }
     out
-}
-as.RbSr <- function(x){
-
 }
 as.other <- function(x){
     nc <- ncol(x)

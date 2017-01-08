@@ -3,34 +3,39 @@
 \name{age}
 \alias{age}
 \alias{age.ArAr}
+\alias{age.RbSr}
 \alias{age.ReOs}
+\alias{age.SmNd}
 \alias{age.UPb}
 \alias{age.UThHe}
 \alias{age.default}
-\alias{age.detritals}
 \alias{age.fissiontracks}
 \title{Calculate isotopic ages}
 \usage{
 age(x, ...)
 
-\method{age}{default}(x, method = "Pb206U238", exterr = TRUE, J = c(NA,
+\method{age}{default}(x, method = "U238-Pb206", exterr = TRUE, J = c(NA,
   NA), zeta = c(NA, NA), rhoD = c(NA, NA), ...)
 
 \method{age}{UPb}(x, concordia = 1, wetherill = TRUE, exterr = TRUE,
   i = NA, sigdig = NA, ...)
 
-\method{age}{detritals}(x, ...)
-
-\method{age}{ArAr}(x, isochron = FALSE, exterr = TRUE, i = NA,
-  sigdig = NA, ...)
+\method{age}{ArAr}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE,
+  i = NA, sigdig = NA, ...)
 
 \method{age}{UThHe}(x, central = FALSE, i = NA, sigdig = NA, ...)
 
 \method{age}{fissiontracks}(x, central = FALSE, i = NA, sigdig = NA,
   exterr = TRUE, ...)
 
-\method{age}{ReOs}(x, isochron = TRUE, exterr = TRUE, i = NA,
-  sigdig = NA, ...)
+\method{age}{ReOs}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE,
+  i = NA, sigdig = NA, ...)
+
+\method{age}{SmNd}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE,
+  i = NA, sigdig = NA, ...)
+
+\method{age}{RbSr}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE,
+  i = NA, sigdig = NA, ...)
 }
 \arguments{
 \item{x}{can be:
@@ -50,20 +55,31 @@ error, or the spontaneous and induced track densities \code{Ns} and
 \item an eight element vector containing \code{U}, \code{s[U]},
 \code{Th}, \code{s[Th]}, \code{He}, \code{s[He]}, \code{Sm} and
 \code{s[Sm]}
+
+\item a six element vector containing \code{Rb}, \code{s[Rb]},
+\code{Sr}, \code{s[Sr]}, \code{Sr87Sr86}, and \code{s[Sr87Sr86]}
+
+\item a six element vector containing \code{Re}, \code{s[Re]},
+\code{Os}, \code{s[Os]}, \code{Os187Os188}, and \code{s[Os187Os188]}
+
+\item a six element vector containing \code{Sm}, \code{s[Sm]},
+\code{Nd}, \code{s[Nd]}, \code{Nd143Nd144}, and \code{s[Nd144Nd143]}
 }
 
 OR
 
 \itemize{
-\item an object of class \code{UPb}, \code{ArAr}, \code{ReOs},
-\code{UThHe} or \code{fissiontracks}.
+\item an object of class \code{UPb}, \code{ArAr},
+\code{RbSr}, \code{SmNd}, \code{ReOs} \code{UThHe} or
+\code{fissiontracks}.
 }}
 
 \item{...}{additional arguments}
 
-\item{method}{one of either \code{'Pb206U238'}, \code{'Pb207U235'},
-\code{'Pb207Pb206'}, \code{'Ar-Ar'}, \code{'Re-Os'},
-\code{U-Th-He} or \code{fissiontracks}}
+\item{method}{one of either \code{'U238-Pb206'}, \code{'U235-Pb207'},
+\code{'Pb207-Pb206'}, \code{'Ar-Ar'}, \code{'Re-Os'},
+\code{'Sm-Nd'}, \code{'Rb-Sr'}, \code{'U-Th-He'} or
+\code{'fissiontracks'}}
 
 \item{exterr}{propagate the external (decay constant and
 calibration factor) uncertainties?}
@@ -98,6 +114,12 @@ or \code{central=FALSE}).}
 should be considered separately (\code{isochron=FALSE}) or an
 isochron age should be calculated from all Ar-Ar analyses
 together (\code{isochron=TRUE}).}
+
+\item{i2i}{`isochron to intercept': calculates the initial (aka `inherited',
+`excess', or `common') \eqn{^{40}Ar/^{36}Ar} or
+\eqn{^{187}Os/^{188}Os} ratio from an isochron fit. Setting
+\code{i2i} to \code{FALSE} uses the default values stored in
+\code{settings('iratio',...)}}
 
 \item{central}{logical flag indicating whether each U-Th-He analysis
 should be considered separately (\code{central=FALSE}) or a
@@ -153,11 +175,13 @@ ages (if wetherill==TRUE) or the lower intercept age and
 \item{cov}{ the covariance matrix of the elements in \code{x} }
 }
 
-\item if \code{x} has class \code{ArAr} or \code{ReOs} and \code{isochron=FALSE},
-returns a table of Ar-Ar or Re-Os ages and standard errors.
+\item if \code{x} has class \code{ArAr}, \code{RbSr}, \code{SmNd}
+or \code{ReOs} and \code{isochron=FALSE}, returns a table of Ar-Ar,
+Rb-Sr, Sm-Nd or Re-Os ages and standard errors.
 
-\item if \code{x} has class \code{ArAr} or \code{ReOs} and
-\code{isochron=TRUE}, returns a list with the following items:
+\item if \code{x} has class \code{ArAr}, \code{RbSr}, \code{SmNd}
+or \code{ReOs} and \code{isochron=TRUE}, returns a list with the
+following items:
 
 \describe{
 
@@ -167,10 +191,12 @@ error. }
 \item{b}{ the slope of the fit and its standard error. }
 
 \item{y0}{ the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
-\eqn{^{187}}Os/\eqn{^{188}}Os ratio and its standard error. }
+\eqn{^{187}}Os/\eqn{^{188}}Os, \eqn{^{87}}Sr/\eqn{^{86}}Sr, or
+\eqn{^{143}}Nd/\eqn{^{144}}Nd ratio and its standard error. }
 
-\item{age}{ the \eqn{^{40}}Ar/\eqn{^{39}}Ar or
-\eqn{^{187}}Os/\eqn{^{187}}Re age and its standard error. }
+\item{age}{ the \eqn{^{40}}Ar/\eqn{^{39}}Ar,
+\eqn{^{187}}Os/\eqn{^{187}}Re, \eqn{^{87}}Sr/\eqn{^{86}}Sr, or
+\eqn{^{143}}Nd/\eqn{^{144}}Nd age and its standard error. }
 
 }
 

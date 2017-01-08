@@ -22,33 +22,36 @@ settings(setting = NA, ..., fname = NA)
 
 \code{'tracklength'}: equivalent isotropic fission track length}
 
-\item{...}{depends on the value for \code{setting}:
-\itemize{
-\item for \code{'lambda'}: the isotope of interest (one of either
-\code{"fission"}, \code{"U238"}, \code{"U235"}, \code{"Th232"},
-\code{"Re187"}, \code{"Sm147"}, or \code{"K40"}) PLUS (optionally)
-the decay constant value and its analytical error.  Omitting these
-two numbers simply returns the existing values.
+\item{...}{depends on the value for \code{setting}: \itemize{ \item
+    for \code{'lambda'}: the isotope of interest (one of either
+    \code{"fission"}, \code{"U238"}, \code{"U235"}, \code{"Th232"},
+    \code{"Re187"}, \code{"Sm147"}, \code{"Rb87"}, or \code{"K40"})
+    PLUS (optionally) the decay constant value and its analytical
+    error.  Omitting these two numbers simply returns the existing
+    values.
 
-\item for \code{'iratio'}: the isotopic ratio of interest (one of either
-\code{"Ar40Ar36"}, \code{"Ar38Ar36"}, \code{"Rb85Rb87"},
+\item for \code{'iratio'}: the isotopic ratio of interest (one of
+either \code{"Ar40Ar36"}, \code{"Ar38Ar36"}, \code{"Rb85Rb87"},
 \code{"Sr88Sr86"}, \code{"Sr87Sr86"}, \code{"Sr84Sr86"},
 \code{"Re185Re187"}, \code{"Os184Os192"} \code{"Os186Os192"},
 \code{"Os187Os192"}, \code{"Os188Os192"}, \code{"Os189Os192"},
 \code{"Os190Os192"}, \code{"U238U235"}, \code{"Sm144Sm152"},
 \code{"Sm147Sm152"}, \code{"Sm148Sm152"}, \code{"Sm149Sm152"},
-\code{"Sm150Sm152"}, or \code{"Sm154Sm152"}) PLUS (optionally) the
+\code{"Sm150Sm152"}, \code{"Sm154Sm152"}, \code{"Nd142Nd144"},
+\code{"Nd143Nd144"}, \code{"Nd145Nd144"}, \code{"Nd146Nd144"},
+\code{"Nd148Nd144"}, or \code{"Nd150Nd144"}) PLUS (optionally) the
 isotopic ratio and its analytical error.  Omitting these two
 numbers simply returns the existing values.
 
-\item for \code{'imass'}: the (isotopic) molar mass of interest (one of
-either \code{"U"}, \code{"Rb"}, \code{"Rb85"}, \code{"Rb87"},
-\code{"Sr84"}, \code{"Sr86"}, \code{"Sr87"}, \code{"Sr88"},
-\code{"Re"}, \code{"Re185"}, \code{"Re187"}, \code{"Os"},
-\code{"Os184"}, \code{"Os186"}, \code{"Os187"}, \code{"Os188"},
-\code{"Os189"}, \code{"Os190"}, or \code{"Os192"}) PLUS
-(optionally) the molar mass and its analytical error.  Omitting
-these two numbers simply returns the existing values.
+\item for \code{'imass'}: the (isotopic) molar mass of interest
+(one of either \code{"U"}, \code{"Rb"}, \code{"Rb85"},
+\code{"Rb87"}, \code{"Sr84"}, \code{"Sr86"}, \code{"Sr87"},
+\code{"Sr88"}, \code{"Re"}, \code{"Re185"}, \code{"Re187"},
+\code{"Os"}, \code{"Os184"}, \code{"Os186"}, \code{"Os187"},
+\code{"Os188"}, \code{"Os189"}, \code{"Os190"}, \code{"Os192"},
+\code{"Sm"} or \code{"Nd"}) PLUS (optionally) the molar mass and
+its analytical error.  Omitting these two numbers simply returns
+the existing values.
 
 \item for \code{'mindens'}: the mineral of interest (one of either
 \code{"apatite"} or \code{"zircon"}) PLUS the mineral
@@ -69,6 +72,7 @@ existing value.
 \value{
 if \code{setting=NA} and \code{fname=NA}, returns a
     \code{.json} string
+
 if \code{...} contains only the name of an isotope, isotopic ratio,
 element, or mineral and no new value, \code{settings} returns
 either a scalar with the existing value, or a two-element vector
@@ -113,6 +117,11 @@ K. Marti. "Lunar initial \eqn{^{143}}Nd/\eqn{^{144}}Nd: differential
 evolution of the lunar crust and mantle."
 Earth and Planetary Science Letters 39.3 (1978): 349-357.
 
+\item Nd: Zhao, Motian, et
+al. "Absolute measurements of neodymium isotopic abundances and atomic
+weight by MC-ICPMS." International Journal of Mass Spectrometry 245.1
+(2005): 36-40.
+
 \item Re: Selby, D., Creaser, R.A., Stein, H.J., Markey, R.J. and Hannah,
 J.L., 2007.  Assessment of the 187Re decay constant by cross
 calibration of Re-Os molybdenite and U-Pb zircon chronometers in
@@ -121,11 +130,15 @@ pp.1999-2013.
 
 \item Ar: Renne, Paul R., et
 al. "Response to the comment by WH Schwarz et al. on "Joint
-determination of 40K decay constants and
+determination of \eqn{^{40}}K decay constants and
 \eqn{^{40}}Ar*/\eqn{^{40}}K for the Fish Canyon sanidine standard,
 and improved accuracy for \eqn{^{40}}Ar/\eqn{^{39}}Ar
 geochronology" by PR Renne et al.(2010)." Geochimica et
 Cosmochimica Acta 75.17 (2011): 5097-5100.
+
+\item Rb: Villa, I.M., De Bievre, P., Holden, N.E. and Renne, P.R., 2015.
+IUPAC-IUGS recommendation on the half life of \eqn{^{87}}Rb.
+Geochimica et Cosmochimica Acta, 164, pp.382-385.
 }
 \item Isotopic ratios:
 \itemize{

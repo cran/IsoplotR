@@ -5,29 +5,29 @@
 #' geochronological datasets.
 #'
 #' @param x either a \code{[2 x n]} matrix with measurements and their
-#'     standard errors, or an object of class \code{fissiontracks}
+#'     standard errors, or an object of class \code{fissiontracks},
+#'     \code{UPb}, \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr}
+#'     or \code{UThHe}
 #' @param k the number of discrete age components to be
 #'     sought. Setting this parameter to \code{'auto'} automatically
 #'     selects the optimal number of components (up to a maximum of 5)
 #'     using the Bayes Information Criterion (BIC).
 #' @param exterr propagate the external sources of uncertainty into
 #'     the component age errors?
-#' @param sigdig number of significant digits to be used for any legend
-#' in which the peak fitting results are to be displayed.
-#' @param log take the logs of the data before applying the mixture model?
+#' @param sigdig number of significant digits to be used for any
+#'     legend in which the peak fitting results are to be displayed.
+#' @param log take the logs of the data before applying the mixture
+#'     model?
 #' @param ... optional arguments (not used)
-#' @return a list with the following items:
-#' \describe{
-#' \item{peaks}{a vector of peak locations}
-#' \item{props}{a vector of peak proportions}
-#' \item{peaks.err}{the standard errors of the peak locations}
-#' \item{props.err}{the standard errors of the peak proportions}
-#' \item{legend}{a vector of text expressions to be used in a figure legend}
-#' }
-#' @references
-#' Galbraith, R.F. and Laslett, G.M., 1993. Statistical models for
-#' mixed fission track ages. Nuclear tracks and radiation
-#' measurements, 21(4), pp.459-470.
+#' @return a list with the following items: \describe{ \item{peaks}{a
+#'     vector of peak locations} \item{props}{a vector of peak
+#'     proportions} \item{peaks.err}{the standard errors of the peak
+#'     locations} \item{props.err}{the standard errors of the peak
+#'     proportions} \item{legend}{a vector of text expressions to be
+#'     used in a figure legend} }
+#' @references Galbraith, R.F. and Laslett, G.M., 1993. Statistical
+#'     models for mixed fission track ages. Nuclear tracks and
+#'     radiation measurements, 21(4), pp.459-470.
 #' @examples
 #' data(examples)
 #' peakfit(examples$FT1,k=2)
@@ -91,62 +91,86 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,...){
 peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,
                         cutoff.disc=c(-15,5),exterr=TRUE,
                         sigdig=2,log=TRUE,...){
-    if (k<1) return(NULL)
-    if (identical(k,'auto')) k <- BIC.fit(x,5,log=log)
-    fit <- ages2peaks(x,k=k,type=type,cutoff.76=cutoff.76,
-                      cutoff.disc=cutoff.disc,log=log)
-    if (exterr){
-        if (identical(k,'min')) numpeaks <- 1
-        else numpeaks <- k
-        for (i in 1:numpeaks){
-            R <- get.ratios.UPb(tt=fit$peaks[i],st=fit$peaks.err[i],
-                                exterr=TRUE,as.UPb=TRUE)
-            age.with.exterr <- filter.UPb.ages(R,type=type,cutoff.76=cutoff.76,
-                                               cutoff.disc=cutoff.disc,exterr=TRUE)
-            fit$peaks.err[i] <- age.with.exterr[2]
-        }
-    }
-    fit$legend <- peaks2legend(fit,sigdig=sigdig,k=k)
-    fit
+    peakfit.helper(x,k=k,type=type,cutoff.76=cutoff.76,
+                   cutoff.disc=cutoff.disc,exterr=exterr,
+                   sigdig=sigdig,log=log,...)
+}
+#' @param i2i `isochron to intercept': calculates the initial (aka `inherited',
+#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+#'     \eqn{^{187}}Os/\eqn{^{188}}Os ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}
+#' @rdname peakfit
+#' @export
+peakfit.ArAr <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,i2i=FALSE,...){
+    peakfit.helper(x,k=k,exterr=exterr,sigdig=sigdig,log=log,i2i=i2i,...)
 }
 #' @rdname peakfit
 #' @export
-peakfit.ArAr <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,...){
-    if (k<1) return(NULL)
-    if (identical(k,'auto')) k <- BIC.fit(x,5,log=log)
-    fit <- ages2peaks(x,k=k,log=log)
-    if (exterr){
-        if (identical(k,'min')) numpeaks <- 1
-        else numpeaks <- k
-        for (i in 1:numpeaks){
-            R <- get.ArAr.ratio(fit$peaks[i],fit$peaks.err[i],
-                                x$J[1],0,exterr=FALSE)
-            age.with.exterr <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=TRUE)
-            fit$peaks.err[i] <- age.with.exterr[2]
-        }
-    }
-    fit$legend <- peaks2legend(fit,sigdig=sigdig,k=k)
-    fit
+peakfit.ReOs <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,i2i=TRUE,...){
+    peakfit.helper(x,k=k,exterr=exterr,sigdig=sigdig,log=log,i2i=i2i,...)
+}
+#' @rdname peakfit
+#' @export
+peakfit.SmNd <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,i2i=TRUE,...){
+    peakfit.helper(x,k=k,exterr=exterr,sigdig=sigdig,log=log,i2i=i2i,...)
+}
+#' @rdname peakfit
+#' @export
+peakfit.RbSr <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,i2i=TRUE,...){
+    peakfit.helper(x,k=k,exterr=exterr,sigdig=sigdig,log=log,i2i=i2i,...)
 }
 #' @rdname peakfit
 #' @export
 peakfit.UThHe <- function(x,k=1,sigdig=2,log=TRUE,...){
+    peakfit.helper(x,k=k,sigdig=sigdig,log=log,...)
+}
+peakfit.helper <- function(x,k=1,type=4,cutoff.76=1100,
+                           cutoff.disc=c(-15,5),exterr=TRUE,sigdig=2,
+                           log=TRUE,i2i=FALSE,...){
     if (k<1) return(NULL)
     if (identical(k,'auto')) k <- BIC.fit(x,5,log=log)
-    fit <- ages2peaks(x,k=k,log=log)
+    fit <- ages2peaks(x,k=k,log=log,i2i=i2i)
+    if (exterr){
+        if (identical(k,'min')) numpeaks <- 1
+        else numpeaks <- k
+        for (i in 1:numpeaks){
+            if (hasClass(x,'UPb')){
+                R <- get.ratios.UPb(tt=fit$peaks[i],st=fit$peaks.err[i],
+                                    exterr=TRUE,as.UPb=TRUE)
+                age.with.exterr <- filter.UPb.ages(R,type=type,cutoff.76=cutoff.76,
+                                                   cutoff.disc=cutoff.disc,exterr=TRUE)
+            } else if (hasClass(x,'ArAr')){
+                R <- get.ArAr.ratio(fit$peaks[i],fit$peaks.err[i],
+                                    x$J[1],0,exterr=FALSE)
+                age.with.exterr <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=TRUE)
+            } else if (hasClass(x,'ReOs')|hasClass(x,'SmNd')|hasClass(x,'RbSr')){
+                R <- get.ReOs.ratio(fit$peaks[i],fit$peaks.err[i],exterr=FALSE)
+                age.with.exterr <- get.ReOs.age(R[1],R[2],exterr=TRUE)
+            }
+            fit$peaks.err[i] <- age.with.exterr[2]
+        }
+    }
     fit$legend <- peaks2legend(fit,sigdig=sigdig,k=k)
-    fit
+    fit    
 }
 
 ages2peaks <- function(x,k=1,type=4,cutoff.76=1100,
-                       cutoff.disc=c(-15,5),log=TRUE){
+                       cutoff.disc=c(-15,5),log=TRUE,i2i=FALSE){
     if (hasClass(x,'UPb')){
         tt <- filter.UPb.ages(x,type,cutoff.76,
                               cutoff.disc,exterr=FALSE)
     } else if (hasClass(x,'ArAr')){
-        tt <- ArAr.age(x,exterr=FALSE)
+        tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'UThHe')){
         tt <- UThHe.age(x)
+    } else if (hasClass(x,'ReOs')){
+        tt <- ReOs.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'SmNd')){
+        tt <- SmNd.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'RbSr')){
+        tt <- RbSr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'fissiontracks')){
         tt <- fissiontrack.age(x,exterr=FALSE)
     }
@@ -213,8 +237,8 @@ peaks2legend <- function(fit,sigdig=2,k=NULL){
     for (i in 1:length(fit$peaks)){
         rounded.age <- roundit(fit$peaks[i],fit$peaks.err[i],sigdig=sigdig)
         rounded.prop <- roundit(fit$props[i],fit$props.err[i],sigdig=sigdig)
-        line <- paste0('Peak ',i,': ',rounded.age$x,'+/-',
-                       rounded.age$err,' (',100*rounded.prop$x,'+/-',
+        line <- paste0('Peak ',i,': ',rounded.age$x,'\u00B1',
+                       rounded.age$err,' (',100*rounded.prop$x,'\u00B1',
                        100*rounded.prop$err,'%)')
         out <- c(out,line)
     }

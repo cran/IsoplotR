@@ -5,8 +5,8 @@
 #' adaptive kernel bandwidth modifier.
 #'
 #' @param x a vector of numbers OR an object of class \code{UPb},
-#'     \code{ArAr}, \code{UThHe}, \code{fissiontracks} or
-#'     \code{detrital}
+#'     \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr},
+#'     \code{UThHe}, \code{fissiontracks} or \code{detrital}
 #' @rdname kde
 #' @export
 kde <- function(x,...){ UseMethod("kde",x) }
@@ -23,8 +23,8 @@ kde <- function(x,...){ UseMethod("kde",x) }
 #' @param plot show the KDE as a plot
 #' @param pch the symbol used to show the samples. May be a vector.
 #'     Set \code{pch = NA} to turn them off.
-#' @param xlab the label of the x-axis
-#' @param ylab the label of the y-axis
+#' @param xlab the x-axis label
+#' @param ylab the y-axis label
 #' @param kde.col the fill colour of the KDE specified as a four
 #'     element vector of \code{r, g, b, alpha} values
 #' @param show.hist logical flag indicating whether a histogram should
@@ -157,16 +157,65 @@ kde.detritals <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,
         return(X)
     }
 }
+#' @param i2i `isochron to intercept': calculates the initial (aka `inherited',
+#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+#'     \eqn{^{187}}Os/\eqn{^{188}}Os ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}
 #' @rdname kde
 #' @export
 kde.ArAr <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
                      n=512,plot=TRUE,pch=NA,xlab="age [Ma]",ylab="",
                      kde.col=rgb(1,0,1,0.6),hist.col=rgb(0,1,0,0.2),
-                     show.hist=TRUE,bty='n',binwidth=NA,ncol=NA,...){
-    tt <- ArAr.age(x)[,1]
+                     show.hist=TRUE,bty='n',binwidth=NA,ncol=NA,
+                     i2i=FALSE,...){
+    tt <- ArAr.age(x,i2i=i2i)[,1]
     kde.default(tt,from=from,to=to,bw=bw,adaptive=adaptive,log=log,
                 n=n,plot=plot,pch=pch,xlab=xlab,ylab=ylab,
-                kde.col=kde.col, hist.col=hist.col,
+                kde.col=kde.col,hist.col=hist.col,
+                show.hist=show.hist,bty=bty,binwidth=binwidth,
+                ncol=ncol,...)
+}
+#' @rdname kde
+#' @export
+kde.ReOs <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
+                     n=512,plot=TRUE,pch=NA,xlab="age [Ma]",ylab="",
+                     kde.col=rgb(1,0,1,0.6),hist.col=rgb(0,1,0,0.2),
+                     show.hist=TRUE,bty='n',binwidth=NA,ncol=NA,
+                     i2i=TRUE,...){
+    tt <- ReOs.age(x,i2i=i2i)[,1]
+    kde.default(tt,from=from,to=to,bw=bw,adaptive=adaptive,log=log,
+                n=n,plot=plot,pch=pch,xlab=xlab,ylab=ylab,
+                kde.col=kde.col,hist.col=hist.col,
+                show.hist=show.hist,bty=bty,binwidth=binwidth,
+                ncol=ncol,...)
+}
+#' @rdname kde
+#' @export
+kde.SmNd <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
+                     n=512,plot=TRUE,pch=NA,xlab="age [Ma]",ylab="",
+                     kde.col=rgb(1,0,1,0.6),hist.col=rgb(0,1,0,0.2),
+                     show.hist=TRUE,bty='n',binwidth=NA,ncol=NA,
+                     i2i=TRUE,...){
+    tt <- SmNd.age(x,i2i=i2i)[,1]
+    kde.default(tt,from=from,to=to,bw=bw,adaptive=adaptive,log=log,
+                n=n,plot=plot,pch=pch,xlab=xlab,ylab=ylab,
+                kde.col=kde.col,hist.col=hist.col,
+                show.hist=show.hist,bty=bty,binwidth=binwidth,
+                ncol=ncol,...)
+}
+#' @rdname kde
+#' @export
+kde.RbSr <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
+                     n=512,plot=TRUE,pch=NA,xlab="age [Ma]",ylab="",
+                     kde.col=rgb(1,0,1,0.6),hist.col=rgb(0,1,0,0.2),
+                     show.hist=TRUE,bty='n',binwidth=NA,ncol=NA,
+                     i2i=TRUE,...){
+    tt <- RbSr.age(x,i2i=i2i)[,1]
+    kde.default(tt,from=from,to=to,bw=bw,adaptive=adaptive,log=log,
+                n=n,plot=plot,pch=pch,xlab=xlab,ylab=ylab,
+                kde.col=kde.col,hist.col=hist.col,
                 show.hist=show.hist,bty=bty,binwidth=binwidth,
                 ncol=ncol,...)
 }
@@ -336,9 +385,9 @@ plot.KDE <- function(x,pch='|',xlab="age [Ma]",ylab="",
                        ybottom=0,ytop=h$density,col=hist.col)
         if (graphics::par('yaxt')!='n') {
             fact <- max(h$counts)/max(h$density)
-            labels <- pretty(fact*h$density)
-            at <- labels/fact
-            graphics::axis(2,at=at,labels=labels)
+            lbls <- pretty(fact*h$density)
+            at <- lbls/fact
+            graphics::axis(2,at=at,labels=lbls)
         }
     }
     graphics::polygon(x$x,x$y,col=kde.col)
