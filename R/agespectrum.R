@@ -13,7 +13,7 @@
 #' 
 #' OR
 #' 
-#' an object of class \code{ArAr} with \code{format=2}
+#' an object of class \code{ArAr}
 #' 
 #' @param alpha the confidence limits of the error bars/boxes.
 #' @param plateau logical flag indicating whether a plateau age should
@@ -41,8 +41,9 @@
 #'
 #' \item{mswd}{the mean square of the weighted deviates of the plateau}
 #'
-#' \item{p.value}{the p-value of a Chi-square test with n-1 degrees of
-#' freedom, where n is the number of steps in the plateau.}
+#' \item{p.value}{the p-value of a Chi-square test with \eqn{n-1}
+#' degrees of freedom, where \eqn{n} is the number of steps in the
+#' plateau.}
 #'
 #' \item{fract}{the fraction of \eqn{^{39}}Ar contained in the
 #' plateau} }
@@ -97,11 +98,7 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
                              exterr=TRUE,line.col='red',lwd=2,
                              i2i=FALSE,...){
     tt <- ArAr.age(x,jcu=FALSE,exterr=FALSE,i2i=i2i)
-    if (x$format==2){
-        X <- cbind(x$x[,'Ar39'],tt)
-    } else {
-        X <- cbind(seq(0,1,length.out=nrow(x$x)),tt)
-    }
+    X <- cbind(x$x[,'Ar39'],tt)
     x.lab <- expression(paste("cumulative ",""^"39","Ar fraction"))
     plat <- agespectrum.default(X,alpha=alpha,xlab=x.lab,ylab='age [Ma]',
                                 plateau=plateau,sigdig=sigdig,line.col=line.col,
@@ -148,7 +145,7 @@ plateau <- function(x,alpha=0.05){
 plateau.title <- function(fit,sigdig=2){
     rounded.mean <- roundit(fit$mean[1],fit$mean[2],sigdig=sigdig)
     line1 <- substitute('mean ='~a%+-%b~' (1'~sigma~')',
-                        list(a=rounded.mean$x, b=rounded.mean$err))
+                        list(a=rounded.mean[1], b=rounded.mean[2]))
     line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
                         list(a=signif(fit$mswd,sigdig),
                              b=signif(fit$p.value,sigdig)))

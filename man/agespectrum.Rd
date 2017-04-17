@@ -24,7 +24,7 @@ agespectrum(x, ...)
 
 OR
 
-an object of class \code{ArAr} with \code{format=2}}
+an object of class \code{ArAr}}
 
 \item{...}{optional parameters to the generic \code{plot} function}
 
@@ -70,8 +70,9 @@ if \code{title=FALSE}, returns a list with the following
 
 \item{mswd}{the mean square of the weighted deviates of the plateau}
 
-\item{p.value}{the p-value of a Chi-square test with n-1 degrees of
-freedom, where n is the number of steps in the plateau.}
+\item{p.value}{the p-value of a Chi-square test with \eqn{n-1}
+degrees of freedom, where \eqn{n} is the number of steps in the
+plateau.}
 
 \item{fract}{the fraction of \eqn{^{39}}Ar contained in the
 plateau} }

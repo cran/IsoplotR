@@ -62,9 +62,13 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,...){
     if (k == 0) return(NULL)
     if (identical(k,'auto')) k <- BIC.fit(x,5,log=log)
     if (x$format == 1 & !identical(k,'min'))
-        out <- binomial.mixtures(x,k,...)
-    else
+        out <- binomial.mixtures(x,k,exterr=exterr,...)
+    else if (x$format == 2){
+        out <- peakfit.helper(x,k=k,sigdig=sigdig,log=log,
+                              exterr=exterr,...)
+    } else if (x$format == 3){
         out <- ages2peaks(x,k,log=log)
+    }
     out$legend <- peaks2legend(out,sigdig=sigdig,k=k)
     out
 }
@@ -136,19 +140,7 @@ peakfit.helper <- function(x,k=1,type=4,cutoff.76=1100,
         if (identical(k,'min')) numpeaks <- 1
         else numpeaks <- k
         for (i in 1:numpeaks){
-            if (hasClass(x,'UPb')){
-                R <- get.ratios.UPb(tt=fit$peaks[i],st=fit$peaks.err[i],
-                                    exterr=TRUE,as.UPb=TRUE)
-                age.with.exterr <- filter.UPb.ages(R,type=type,cutoff.76=cutoff.76,
-                                                   cutoff.disc=cutoff.disc,exterr=TRUE)
-            } else if (hasClass(x,'ArAr')){
-                R <- get.ArAr.ratio(fit$peaks[i],fit$peaks.err[i],
-                                    x$J[1],0,exterr=FALSE)
-                age.with.exterr <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=TRUE)
-            } else if (hasClass(x,'ReOs')|hasClass(x,'SmNd')|hasClass(x,'RbSr')){
-                R <- get.ReOs.ratio(fit$peaks[i],fit$peaks.err[i],exterr=FALSE)
-                age.with.exterr <- get.ReOs.age(R[1],R[2],exterr=TRUE)
-            }
+            age.with.exterr <- add.exterr(x,fit$peaks[i],fit$peaks.err[i])
             fit$peaks.err[i] <- age.with.exterr[2]
         }
     }
@@ -237,16 +229,16 @@ peaks2legend <- function(fit,sigdig=2,k=NULL){
     for (i in 1:length(fit$peaks)){
         rounded.age <- roundit(fit$peaks[i],fit$peaks.err[i],sigdig=sigdig)
         rounded.prop <- roundit(fit$props[i],fit$props.err[i],sigdig=sigdig)
-        line <- paste0('Peak ',i,': ',rounded.age$x,'\u00B1',
-                       rounded.age$err,' (',100*rounded.prop$x,'\u00B1',
-                       100*rounded.prop$err,'%)')
+        line <- paste0('Peak ',i,': ',rounded.age[1],'\u00B1',
+                       rounded.age[2],' (',100*rounded.prop[1],'\u00B1',
+                       100*rounded.prop[2],'%)')
         out <- c(out,line)
     }
     out
 }
 minage2legend <- function(fit,sigdig=2){
     rounded.age <- roundit(fit$peaks,fit$peaks.err,sigdig=sigdig)
-    paste0('Minimum: ',rounded.age$x,'+/-',rounded.age$err)
+    paste0('Minimum: ',rounded.age[1],'+/-',rounded.age[2])
 }
 
 normal.mixtures <- function(x,k,sigdig=2,...){
@@ -301,7 +293,8 @@ normal.mixtures <- function(x,k,sigdig=2,...){
 binomial.mixtures <- function(x,k,exterr=TRUE,...){
     yu <- x$x[,'Ns']
     mu <- x$x[,'Ns'] + x$x[,'Ni']
-    theta <- (x$x[,'Ns']/x$x[,'Ni'])/(1+x$x[,'Ns']/x$x[,'Ni'])
+    NsNi <- (x$x[,'Ns']+0.5)/(x$x[,'Ni']+0.5)
+    theta <- NsNi/(1+NsNi)
     thetai <- seq(min(theta),max(theta),length.out=k)
     pii <- rep(1,k)/k
     n <- length(yu)
@@ -333,14 +326,14 @@ binomial.mixtures <- function(x,k,exterr=TRUE,...){
         biu[,i] <- (yu-thetai[i]*mu)^2 - thetai[i]*(1-thetai[i])*mu
     }
     E <- get.peakfit.covmat(k,pii,piu,aiu,biu)
-    theta.var <- diag(E)[k:(2*k-1)]
-    pe <- theta2age(x,thetai,theta.var,exterr)
+    beta.var <- diag(E)[k:(2*k-1)]
+    pe <- theta2age(x,thetai,beta.var,exterr)
     props.err <- get.props.err(E)
     list(L=L,peaks=pe$peaks,props=pii,
          peaks.err=pe$peaks.err,props.err=props.err)
 }
 
-theta2age <- function(x,theta,theta.var,exterr=TRUE){
+theta2age <- function(x,theta,beta.var,exterr=TRUE){
     rhoD <- x$rhoD
     zeta <- x$zeta
     if (!exterr) {
@@ -352,11 +345,10 @@ theta2age <- function(x,theta,theta.var,exterr=TRUE){
     peaks.err <- rep(0,k)
     for (i in 1:k){
         NsNi <- theta[i]/(1-theta[i])
-        relErrNsNi <- theta.var[i]/theta[i]^2
         L8 <- lambda('U238')[1]
         peaks[i] <- log(1+0.5*L8*(zeta[1]/1e6)*rhoD[1]*(NsNi))/L8
-        peaks.err[i] <- peaks[i]*sqrt(relErrNsNi +
-                                      (rhoD[2]/rhoD[1])^2 + (zeta[2]/zeta[1])^2)
+        peaks.err[i] <- peaks[i]*sqrt(beta.var[i] +
+                        (rhoD[2]/rhoD[1])^2 + (zeta[2]/zeta[1])^2)
     }
     list(peaks=peaks,peaks.err=peaks.err)
 }

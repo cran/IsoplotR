@@ -24,14 +24,52 @@ read.data(x, ...)
 \item{format}{formatting option, depends on the value of
     \code{method}.
 
-if \code{method = 'Ar-Ar'}, then \code{format} is one of either:
+if \code{method='U-Pb'}, then \code{format} is one of either:
 
 \enumerate{
-\item{\code{39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]}}
-\item{\code{39, 39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]}}
+\item{\code{7/5, s[7/5], 6/8, s[6/8], rho}}
+\item{\code{8/6, s[8/6], 7/6, s[7/6] (, rho)}}
+\item{\code{X=7/6, s[X], Y=7/5, s[Y], Z=6/8, s[Z] (, rho[X,Y]) (, rho[Y,Z])}}
 }
 
-if \code{method = 'fissiontracks'}, then \code{format} is one of
+where optional columns are marked in round brackets
+
+if \code{method='Ar-Ar'}, then \code{format} is one of either:
+
+\enumerate{
+\item{\code{9/6, s[9/6], 0/6, s[0/6], rho (, 39)}}
+\item{\code{6/0, s[6/0], 9/0, s[9/0] (, rho) (, 39)}}
+\item{\code{9/0, s[9/0], 6/0, s[6/0], 9/6, s[9/6] (, 39)}}
+}
+
+if \code{method='Rb-Sr'}, then \code{format} is one of either:
+
+\enumerate{
+\item{\code{Rb87/Sr86, s[Rb87/Sr86], Sr87/Sr86, s[Sr87/Sr86] (, rho)}}
+\item{\code{Rb, s[Rb], Sr, s[Sr], Sr87/Sr86, s[Sr87/Sr86]}}
+}
+
+where \code{Rb} and \code{Sr} are in ppm
+
+if \code{method='Sm-Nd'}, then \code{format} is one of either:
+
+\enumerate{
+\item{\code{Sm147/Nd144, s[Sm147/Nd144], Nd143/Nd144, s[Nd143/Nd144] (, rho)}}
+\item{\code{Sm, s[Sm], Nd, s[Nd], Nd143/Nd144, s[Nd143/Nd144]}}
+}
+
+where \code{Sm} and \code{Nd} are in ppm
+
+if \code{method='Re-Os'}, then \code{format} is one of either:
+
+\enumerate{
+\item{\code{Re187/Os188, s[Re187/Os188], Os187/Os188, s[Os187/Os188] (, rho)}}
+\item{\code{Re, s[Re], Os, s[Os], Os187/Os188, s[Os187/Os188]}}
+}
+
+where \code{Re} and \code{Os} are in ppm
+
+if \code{method='fissiontracks'}, then \code{format} is one of
 either:
 
 \enumerate{
@@ -51,8 +89,7 @@ uncertainties.}
 dating' method, which only requires a table with the the number of
 spontaneous tracks, the area over which these were counted and one
 or more U/Ca- or U-concentration measurements and their analytical
-uncertainties.}
-}}
+uncertainties.}  }}
 }
 \value{
 an object of class \code{UPb}, \code{ArAr}, \code{UThHe},
@@ -65,12 +102,20 @@ data classes
 }
 \details{
 Example input files can be found by using \code{R}'s
-\code{system.file(...)} function:
+    \code{system.file(...)} function:
 
 \enumerate{
-\item \code{method = 'U-Pb'}:
+\item \code{method = 'U-Pb'} and \code{format = 1}:
 
-\code{file.show(system.file("UPb.csv",package="IsoplotR"))}
+\code{file.show(system.file("UPb1.csv",package="IsoplotR"))}
+
+\item \code{method = 'U-Pb'} and \code{format = 2}:
+
+\code{file.show(system.file("UPb2.csv",package="IsoplotR"))}
+
+\item \code{method = 'U-Pb'} and \code{format = 3}:
+
+\code{file.show(system.file("UPb3.csv",package="IsoplotR"))}
 
 \item \code{method = 'Ar-Ar'} and \code{format = 1}:
 
@@ -79,6 +124,10 @@ Example input files can be found by using \code{R}'s
 \item \code{method = 'Ar-Ar'} and \code{format = 2}:
 
 \code{file.show(system.file("ArAr2.csv",package="IsoplotR"))}
+
+\item \code{method = 'Ar-Ar'} and \code{format = 3}:
+
+\code{file.show(system.file("ArAr3.csv",package="IsoplotR"))}
 
 \item \code{method = 'Re-Os'}:
 
@@ -111,6 +160,15 @@ Example input files can be found by using \code{R}'s
 \item \code{method = 'detritals'}:
 
 \code{file.show(system.file("DZ.csv",package="IsoplotR"))}
+
+\item \code{method = 'detritals'}:
+
+\code{file.show(system.file("MountTom.csv",package="IsoplotR"))}
+
+\code{file.show(system.file("spectrum",package="IsoplotR"))}
+
+\code{file.show(system.file("average.csv",package="IsoplotR"))}
+
 }
 }
 \examples{

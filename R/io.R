@@ -10,14 +10,52 @@
 #' @param format formatting option, depends on the value of
 #'     \code{method}.
 #' 
-#' if \code{method = 'Ar-Ar'}, then \code{format} is one of either:
+#' if \code{method='U-Pb'}, then \code{format} is one of either:
 #'
 #' \enumerate{
-#' \item{\code{39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]}}
-#' \item{\code{39, 39/40, s[39/40], 36/40, s[36/40], 39/36, s[39/36]}}
+#' \item{\code{7/5, s[7/5], 6/8, s[6/8], rho}}
+#' \item{\code{8/6, s[8/6], 7/6, s[7/6] (, rho)}}
+#' \item{\code{X=7/6, s[X], Y=7/5, s[Y], Z=6/8, s[Z] (, rho[X,Y]) (, rho[Y,Z])}}
 #' }
 #'
-#' if \code{method = 'fissiontracks'}, then \code{format} is one of
+#' where optional columns are marked in round brackets
+#'
+#' if \code{method='Ar-Ar'}, then \code{format} is one of either:
+#'
+#' \enumerate{
+#' \item{\code{9/6, s[9/6], 0/6, s[0/6], rho (, 39)}}
+#' \item{\code{6/0, s[6/0], 9/0, s[9/0] (, rho) (, 39)}}
+#' \item{\code{9/0, s[9/0], 6/0, s[6/0], 9/6, s[9/6] (, 39)}}
+#' }
+#'
+#' if \code{method='Rb-Sr'}, then \code{format} is one of either:
+#'
+#' \enumerate{
+#' \item{\code{Rb87/Sr86, s[Rb87/Sr86], Sr87/Sr86, s[Sr87/Sr86] (, rho)}}
+#' \item{\code{Rb, s[Rb], Sr, s[Sr], Sr87/Sr86, s[Sr87/Sr86]}}
+#' }
+#'
+#' where \code{Rb} and \code{Sr} are in ppm
+#'
+#' if \code{method='Sm-Nd'}, then \code{format} is one of either:
+#'
+#' \enumerate{
+#' \item{\code{Sm147/Nd144, s[Sm147/Nd144], Nd143/Nd144, s[Nd143/Nd144] (, rho)}}
+#' \item{\code{Sm, s[Sm], Nd, s[Nd], Nd143/Nd144, s[Nd143/Nd144]}}
+#' }
+#'
+#' where \code{Sm} and \code{Nd} are in ppm
+#'
+#' if \code{method='Re-Os'}, then \code{format} is one of either:
+#'
+#' \enumerate{
+#' \item{\code{Re187/Os188, s[Re187/Os188], Os187/Os188, s[Os187/Os188] (, rho)}}
+#' \item{\code{Re, s[Re], Os, s[Os], Os187/Os188, s[Os187/Os188]}}
+#' }
+#'
+#' where \code{Re} and \code{Os} are in ppm
+#'
+#' if \code{method='fissiontracks'}, then \code{format} is one of
 #' either:
 #'
 #' \enumerate{
@@ -37,17 +75,23 @@
 #' dating' method, which only requires a table with the the number of
 #' spontaneous tracks, the area over which these were counted and one
 #' or more U/Ca- or U-concentration measurements and their analytical
-#' uncertainties.}
-#' }
+#' uncertainties.}  }
 #'
-#' @details
-#' Example input files can be found by using \code{R}'s
-#' \code{system.file(...)} function:
+#' @details Example input files can be found by using \code{R}'s
+#'     \code{system.file(...)} function:
 #'
 #' \enumerate{
-#' \item \code{method = 'U-Pb'}:
+#' \item \code{method = 'U-Pb'} and \code{format = 1}:
 #'
-#' \code{file.show(system.file("UPb.csv",package="IsoplotR"))}
+#' \code{file.show(system.file("UPb1.csv",package="IsoplotR"))}
+#'
+#' \item \code{method = 'U-Pb'} and \code{format = 2}:
+#'
+#' \code{file.show(system.file("UPb2.csv",package="IsoplotR"))}
+#'
+#' \item \code{method = 'U-Pb'} and \code{format = 3}:
+#'
+#' \code{file.show(system.file("UPb3.csv",package="IsoplotR"))}
 #'
 #' \item \code{method = 'Ar-Ar'} and \code{format = 1}:
 #'
@@ -56,6 +100,10 @@
 #' \item \code{method = 'Ar-Ar'} and \code{format = 2}:
 #'
 #' \code{file.show(system.file("ArAr2.csv",package="IsoplotR"))}
+#'
+#' \item \code{method = 'Ar-Ar'} and \code{format = 3}:
+#'
+#' \code{file.show(system.file("ArAr3.csv",package="IsoplotR"))}
 #'
 #' \item \code{method = 'Re-Os'}:
 #'
@@ -88,6 +136,15 @@
 #' \item \code{method = 'detritals'}:
 #'
 #' \code{file.show(system.file("DZ.csv",package="IsoplotR"))}
+#'
+#' \item \code{method = 'detritals'}:
+#'
+#' \code{file.show(system.file("MountTom.csv",package="IsoplotR"))}
+#'
+#' \code{file.show(system.file("spectrum",package="IsoplotR"))}
+#'
+#' \code{file.show(system.file("average.csv",package="IsoplotR"))}
+#'
 #' }
 #' @param ... optional arguments to the \code{read.csv} function
 #' @return an object of class \code{UPb}, \code{ArAr}, \code{UThHe},
@@ -131,110 +188,164 @@ read.data.matrix <- function(x,method='U-Pb',format=1,...){
     out
 }
 
-as.UPb <- function(x,format=1){
+as.UPb <- function(x,format=3){
     out <- list()
     class(out) <- "UPb"
     out$x <- NA
     out$format <- format
     nc <- ncol(x)
     nr <- nrow(x)
-    if (format == 1 & nc == 6){
-        X <- x2X(x,2,nr,nc)
-        colnames(X) <- c('Pb207Pb206','errPb207Pb206',
-                         'Pb206U238','errPb206U238',
-                         'Pb207U235','errPb207U235')
-        U238Pb206 <- 1/X[,'Pb206U238']
-        errU238Pb206 <- X[,'errPb206U238']/X[,'Pb206U238']^2
-        out$x <- cbind(X[,c('Pb207U235','errPb207U235','Pb206U238','errPb206U238')],
-                       U238Pb206, errU238Pb206,
-                       X[,c('Pb207Pb206','errPb207Pb206')])
-        colnames(out$x) <- c('Pb207U235','errPb207U235',
-                             'Pb206U238','errPb206U238',
-                             'U238Pb206','errU238Pb206',
-                             'Pb207Pb206','errPb207Pb206')
+    X <- shiny2matrix(x,2,nr,nc)
+    cnames <- NULL
+    if (format == 1 & nc == 5){
+        cnames <- c('Pb207U235','errPb207U235',
+                    'Pb206U238','errPb206U238','rhoXY')        
+        out$x <- X
+    } else if (format == 2 & nc %in% c(4,5)) {
+        cnames <- c('U238Pb206','errU238Pb206','Pb207Pb206','errPb207Pb206','rhoXY')
+        if (nc == 4){
+            rho <- rep(0,nr-1)
+            out$x <- cbind(X,rho)
+        } else {
+            i <- which(is.na(X[,5]))
+            X[i,5] <- 0
+            out$x <- X
+        }
+    } else if (format == 3 & nc %in% c(6,7,8)){
+        cnames <- c('Pb207U235','errPb207U235',
+                    'Pb206U238','errPb206U238',
+                    'Pb207Pb206','errPb207Pb206',
+                    'rhoXY','rhoYZ')
+        if (nc == 8){
+            rhoXY <- X[,7]
+            rhoYZ <- X[,8]
+            i <- which(is.na(rhoXY))
+            j <- which(is.na(rhoYZ))
+        } else if (nc == 7){
+            rhoXY <- X[,7]
+            rhoYZ <- rep(0,nr-1)
+            i <- which(is.na(rhoXY))
+            j <- 1:(nr-1)
+            X <- cbind(X,rhoYZ)
+        } else {
+            rhoXY <- rep(0,nr-1)
+            rhoYZ <- rep(0,nr-1)
+            i <- 1:(nr-1)
+            j <- 1:(nr-1)
+            X <- cbind(X,rhoXY,rhoYZ)
+        }
+        X[i,7] <- get.cor.75.68(X[i,1],X[i,2],X[i,3],X[i,4],X[,5],X[i,6])
+        X[j,8] <- get.cor.68.76(X[j,1],X[j,2],X[j,3],X[j,4],X[,5],X[j,6])
+        out$x <- X
     }
+    colnames(out$x) <- cnames
     out
 }
-as.ArAr <- function(x,format=2){
+get.cor.75.68 <- function(Pb207U235,errPb207U235,Pb206U238,errPb206U238,
+                          Pb207Pb206,errPb207Pb206){
+    cov.75.68 <- Pb207U235*Pb206U238*((errPb207U235/Pb207U235)^2+
+                 (errPb206U238/Pb206U238)^2-(errPb207Pb206/Pb207Pb206)^2)/2
+    cor.75.68 <- cov.75.68/(errPb207U235*errPb206U238)
+    cor.75.68
+}
+get.cor.68.76 <- function(Pb207U235,errPb207U235,Pb206U238,errPb206U238,
+                          Pb207Pb206,errPb207Pb206){
+    cov.68.76 <- Pb206U238*Pb207U235*((errPb207U235/Pb207U235)^2-
+                 (errPb206U238/Pb206U238)^2-(errPb207Pb206/Pb207Pb206)^2)/2
+    cor.68.76 <- cov.68.76/(errPb206U238*Pb207Pb206)
+    cor.68.76
+}
+as.ArAr <- function(x,format=3){
     out <- list()
     class(out) <- "ArAr"
     out$format <- format
     out$J <- as.numeric(x[2,1:2])
     nc <- ncol(x)
     nr <- nrow(x)
-    if (format == 1 & nc == 6){
-        X <- x2X(x,4,nr,nc)
-        colnames(X) <- c('Ar39Ar40','errAr39Ar40',
-                         'Ar36Ar40','errAr36Ar40',
-                         'Ar39Ar36','errAr39Ar36')
-        Ar40Ar36 <- 1/X[,'Ar36Ar40']
-        errAr40Ar36 <- X[,'errAr36Ar40']/X[,'Ar36Ar40']^2
-        out$x <- cbind(X,Ar40Ar36,errAr40Ar36)
+    bi <- 4 # begin index
+    X <- shiny2matrix(x,bi,nr,nc)
+    if (format==3 & nc %in% c(6,7)){
+        if (nc==7){
+            out$x <- X
+        } else {
+            ns <- nr-bi+1 # number of samples
+            Ar39 <- rep(1/ns,ns)
+            out$x <- cbind(X,Ar39)            
+        }
         colnames(out$x) <- c('Ar39Ar40','errAr39Ar40',
                              'Ar36Ar40','errAr36Ar40',
-                             'Ar39Ar36','errAr39Ar36',
-                             'Ar40Ar36','errAr40Ar36')
-    } else if (format == 2 & nc == 7){
-        X <- x2X(x,4,nr,nc)
-        colnames(X) <- c('Ar39',
-                         'Ar39Ar40','errAr39Ar40',
-                         'Ar36Ar40','errAr36Ar40',
-                         'Ar39Ar36','errAr39Ar36')
-        Ar40Ar36 <- 1/X[,'Ar36Ar40']
-        errAr40Ar36 <- X[,'errAr36Ar40']/X[,'Ar36Ar40']^2
-        out$x <- cbind(X,Ar40Ar36,errAr40Ar36)
-        colnames(out$x) <- c('Ar39',
-                             'Ar39Ar40','errAr39Ar40',
-                             'Ar36Ar40','errAr36Ar40',
-                             'Ar39Ar36','errAr39Ar36',
-                             'Ar40Ar36','errAr40Ar36')
+                             'Ar39Ar36','errAr39Ar36','Ar39')
+    } else if (nc %in% c(4,5,6)){
+        if (nc==6){
+            out$x <- X
+        } else {
+            ns <- nr-bi+1 # number of samples
+            Ar39 <- rep(1/ns,ns)
+            out$x <- cbind(X,Ar39)
+        }
+        if (nc==4) {
+            rho <- 0
+        }
+        if (format==1) {
+            colnames(out$x) <- c('Ar39Ar36','errAr39Ar36',
+                                 'Ar40Ar36','errAr40Ar36',
+                                 'rho','Ar39')
+        } else {
+            colnames(out$x) <- c('Ar39Ar40','errAr39Ar40',
+                                 'Ar36Ar40','errAr36Ar40',
+                                 'rho','Ar39')
+        }
     }
     out
 }
-as.RbSr <- function(x,format=1){
+as.RbSr <- function(x,format=2){
+    cnames1 <- c('Rb87Sr86','errRb87Sr86',
+                 'Sr87Sr86','errSr87Sr86','rho')
+    cnames2 <- c('Rbppm','errRbppm','Srppm','errSrppm',
+                 'Sr87Sr86','errSr87Sr86')
+    as.PD(x,"RbSr",cnames1,cnames2,format)
+}
+as.ReOs <- function(x,format=2){
+    cnames1 <- c('Re187Os188','errRe187Os188',
+                 'Os187Os188','errOs187Os188','rho')
+    cnames2 <- c('Reppm','errReppm','Osppm','errOsppm',
+                 'Os187Os188','errOs187Os188')
+    as.PD(x,"ReOs",cnames1,cnames2,format)
+}
+as.SmNd <- function(x,format=2){
+    cnames1 <- c('Sm143Nd144','errSm143Nd144',
+                 'Nd143Nd144','errNd143Nd144','rho')
+    cnames2 <- c('Smppm','errSmppm','Ndppm','errNdppm',
+                 'Nd143Nd144','errNd143Nd144')
+    as.PD(x,"SmNd",cnames1,cnames2,format)
+}
+as.LuHf <- function(x,format=2){
+    cnames1 <- c('Lu176Hf177','errLu176Hf177',
+                 'Hf176Hf177','errHf176Hf177','rho')
+    cnames2 <- c('Luppm','errLuppm','Hfppm','errHfppm',
+                 'Hf176Hf177','errHf176Hf177')
+    as.PD(x,"LuHf",cnames1,cnames2,format)
+}
+as.PD <- function(x,classname,colnames1,colnames2,format){
     out <- list()
-    class(out) <- "RbSr"
+    class(out) <- c(classname,'PD')
     out$x <- NA
     out$format <- format
     nc <- ncol(x)
     nr <- nrow(x)
-    if (format == 1 & nc == 6){
-        X <- x2X(x,2,nr,nc)
-        colnames(X) <- c('Rbppm','errRbppm',
-                         'Srppm','errSrppm',
-                         'Sr87Sr86','errSr87Sr86')
-        out$x <- X
-    }
-    out
-}
-as.ReOs <- function(x,format=1){
-    out <- list()
-    class(out) <- "ReOs"
-    out$x <- NA
-    out$format <- format
-    nc <- ncol(x)
-    nr <- nrow(x)
-    if (format == 1 & nc == 6){
-        X <- x2X(x,2,nr,nc)
-        colnames(X) <- c('Reppm','errReppm',
-                         'Osppm','errOsppm',
-                         'Os187Os188','errOs187Os188')
-        out$x <- X
-    }
-    out
-}
-as.SmNd <- function(x,format=1){
-    out <- list()
-    class(out) <- "SmNd"
-    out$x <- NA
-    out$format <- format
-    nc <- ncol(x)
-    nr <- nrow(x)
-    if (format == 1 & nc == 6){
-        X <- x2X(x,2,nr,nc)
-        colnames(X) <- c('Smppm','errSmppm',
-                         'Ndppm','errNdppm',
-                         'Nd143Nd144','errNd143Nd144')
+    X <- shiny2matrix(x,2,nr,nc)
+    if (format == 1 & nc %in% c(4,5)){
+        colnames(X) <- colnames1
+        if (nc == 4){
+            rho <- rep(0,nr-1)
+            out$x <- cbind(X,rho)
+        } else if (nc == 5){
+            i <- which(is.na(X[,5]))
+            X[i,5] <- 0
+            out$x <- X
+        }
+    } else if (format == 2 & nc == 6){
+        colnames(X) <- colnames2
         out$x <- X
     }
     out
@@ -243,7 +354,7 @@ as.UThHe <- function(x){
     nc <- ncol(x)
     nr <- nrow(x)
     out <- matrix(0,nr-1,nc)
-    out[1:(nr-1),1:nc] <- x2X(x,2,nr,nc)
+    out[1:(nr-1),1:nc] <- shiny2matrix(x,2,nr,nc)
     if (nc==8) {
         colnames(out) <- c('He','errHe','U','errU','Th','errTh','Sm','errSm')
     } else if (nc==6) {
@@ -263,8 +374,8 @@ as.fissiontracks <- function(x,format=1){
     if (format==1){
         out$zeta <- as.numeric(x[2,1:2])
         out$rhoD <- as.numeric(x[4,1:2])
-        X <- x2X(x,6,nr,2)
-        out$x <- x2X(x,6,nr,2)
+        X <- shiny2matrix(x,6,nr,2)
+        out$x <- shiny2matrix(x,6,nr,2)
         colnames(out$x) <- c('Ns','Ni')
     } else {
         if (format==2){
@@ -298,7 +409,7 @@ as.detritals <- function(x){
     nr <- nrow(x)
     nc <- ncol(x)
     snames <- x[1,]
-    X <- x2X(x,2,nr,nc)
+    X <- shiny2matrix(x,2,nr,nc)
     colnames(X) <- snames
     for (sname in snames){
         out[[sname]] = X[!is.na(X[,sname]),sname]
@@ -312,7 +423,9 @@ as.other <- function(x){
     matrix(as.numeric(x),ncol=nc)
 }
 
-x2X <- function(x,br,nr,nc){
+# x = a numerical vector, br = length of the preamble with parameters
+# nr = number of rows, nc = number of columns
+shiny2matrix <- function(x,br,nr,nc){
     suppressWarnings(
         return(matrix(as.numeric(x[(br:nr),]),nr-br+1,nc))
     )

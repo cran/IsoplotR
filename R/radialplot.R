@@ -340,7 +340,7 @@ x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA){
     if (is.na(transformation)) out$transformation <- 'log'
     else out$transformation <- transformation
     if (identical(transformation,'log')){
-        out$offset <- get.offset(x[,1]-2*x[,2],from)
+        out$offset <- get.offset(x[,1],from)
         out$z <- log(x[,1]+out$offset)
         out$s <- x[,2]/(x[,1]+out$offset)
         if (out$offset>0){
@@ -492,7 +492,7 @@ iatt <- function(z,zeta,rhoD){
 radial.title <- function(fit,sigdig=2){
     rounded.age <- roundit(fit$age[1],fit$age[2],sigdig=sigdig)
     line1 <- substitute('central age ='~a%+-%b~'(1'~sigma~')',
-                        list(a=rounded.age$x, b=rounded.age$err))
+                        list(a=rounded.age[1], b=rounded.age[2]))
     line2 <- substitute('dispersion ='~a~'%, p('~chi^2*')='~b,
                         list(a=signif(100*fit$disp,sigdig),
                              b=signif(fit$p.value,sigdig)))

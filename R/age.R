@@ -61,11 +61,11 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
     if (length(x)==1) X <- c(x,0)
     else X <- x[1:2]
     if (identical(method,'U235-Pb207')){
-        out <- get.Pb207U235age(X[1],X[2],exterr)
+        out <- get.Pb207U235.age(X[1],X[2],exterr)
     } else if (identical(method,'U238-Pb206')){
-        out <- get.Pb206U238age(X[1],X[2],exterr)
+        out <- get.Pb206U238.age(X[1],X[2],exterr)
     } else if (identical(method,'Pb206-Pb207')){
-        out <- get.Pb207Pb206age(X[1],X[2],exterr)
+        out <- get.Pb207Pb206.age(X[1],X[2],exterr)
     } else if (identical(method,'Ar-Ar')){
         out <- get.ArAr.age(X[1],X[2],X[3],X[4],exterr)
     } else if (identical(method,'Re-Os')){
@@ -86,19 +86,19 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
     }
     out
 }
-#' @param concordia scalar flag indicating whether each U-Pb analysis
-#'     should be considered separately (\code{concordia=1}), a
+#' @param type scalar flag indicating whether each U-Pb analysis
+#'     should be considered separately (\code{type=1}), a
 #'     concordia age should be calculated from all U-Pb analyses
-#'     together (\code{concordia=2}), or a discordia line should be
-#'     fit through all the U-Pb analyses (\code{concordia=3}).
+#'     together (\code{type=2}), or a discordia line should be
+#'     fit through all the U-Pb analyses (\code{type=3}).
 #' 
 #' @param wetherill logical flag to indicate whether the data should
 #'     be evaluated in Wetherill (\code{TRUE}) or Tera-Wasserburg
 #'     (\code{FALSE}) space.  This option is only used when
-#'     \code{concordia=2}
+#'     \code{type=2}
 #' 
 #' @param sigdig number of significant digits for the uncertainty
-#'     estimate (only used if \code{concordia=1}, \code{isochron=FALSE}
+#'     estimate (only used if \code{type=1}, \code{isochron=FALSE}
 #'     or \code{central=FALSE}).
 #'
 #' @return 
@@ -108,7 +108,7 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item if \code{x} is a scalar or a vector, returns the age using
 #' the geochronometer given by \code{method} and its standard error.
 #'
-#' \item if \code{x} has class \code{UPb} and \code{concordia=1},
+#' \item if \code{x} has class \code{UPb} and \code{type=1},
 #' returns a table with the following columns: \code{t.75},
 #' \code{err[t.75]}, \code{t.68}, \code{err[t.68]}, \code{t.76},
 #' \code{err[t.76]}, \code{t.conc}, \code{err[t.conc]}, containing the
@@ -117,7 +117,7 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, and the
 #' concordia age and standard error, respectively.
 #'  
-#' \item if \code{x} has class \code{UPb} and \code{concordia=2},
+#' \item if \code{x} has class \code{UPb} and \code{type=2},
 #' returns a list with the following items:
 #'
 #' \describe{
@@ -140,12 +140,12 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' for isotopic equivalence and age concordance, respectively. }
 #' }
 #' 
-#' \item if \code{x} has class \code{UPb} and \code{concordia=3},
+#' \item if \code{x} has class \code{UPb} and \code{type=3},
 #' returns a list with the following items:
 #'
 #' \describe{
 #' \item{x}{ a two element vector with the upper and lower intercept
-#' ages (if wetherill==TRUE) or the lower intercept age and
+#' ages (if \code{wetherill=TRUE}) or the lower intercept age and
 #' \eqn{^{207}}Pb/\eqn{^{206}}Pb intercept (for Tera-Wasserburg) }
 #' 
 #' \item{cov}{ the covariance matrix of the elements in \code{x} }
@@ -187,7 +187,7 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item{uvw}{ a three-element list with the weighted mean log[U/He],
 #' log[Th/He] and log[Sm/He] compositions. }
 #'
-#' \item{covmat}{ a 3x3 covariance matrix for uvw}
+#' \item{covmat}{ a 3x3 covariance matrix for \code{uvw}}
 #'
 #' \item{mswd}{ the reduced Chi-square value for the
 #' log[U/He]-log[Th/He] compositions. }
@@ -226,17 +226,17 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' @examples
 #' data(examples)
 #' print(age(examples$UPb))
-#' print(age(examples$UPb,concordia=1))
-#' print(age(examples$UPb,concordia=2))
+#' print(age(examples$UPb,type=1))
+#' print(age(examples$UPb,type=2))
 #' @rdname age
 #' @export
-age.UPb <- function(x,concordia=1,wetherill=TRUE,
+age.UPb <- function(x,type=1,wetherill=TRUE,
                     exterr=TRUE,i=NA,sigdig=NA,...){
-    if (concordia==1)
+    if (type==1)
         out <- UPb.age(x,exterr=exterr,i=i,sigdig=sigdig,...)
-    else if (concordia==2)
+    else if (type==2)
         out <- concordia.age(x,wetherill=TRUE,exterr=TRUE,...)
-    else if (concordia==3)
+    else if (type==3)
         out <- discordia.age(x,wetherill=TRUE,exterr=TRUE,...)
     out
 }
@@ -247,8 +247,8 @@ age.UPb <- function(x,concordia=1,wetherill=TRUE,
 #'     isochron age should be calculated from all Ar-Ar analyses
 #'     together (\code{isochron=TRUE}).
 #' @param i2i `isochron to intercept': calculates the initial (aka `inherited',
-#'     `excess', or `common') \eqn{^{40}Ar/^{36}Ar} or
-#'     \eqn{^{187}Os/^{188}Os} ratio from an isochron fit. Setting
+#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar or
+#'     \eqn{^{187}}Os/\eqn{^{188}}Os ratio from an isochron fit. Setting
 #'     \code{i2i} to \code{FALSE} uses the default values stored in
 #'     \code{settings('iratio',...)}
 #' @rdname age
@@ -298,5 +298,38 @@ age.RbSr <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
 age.PD <- function(x,nuclide,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
     if (isochron) out <- isochron(x,plot=FALSE,sigdig=sigdig)
     else out <- PD.age(x,nuclide,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
+    out
+}
+
+# tt and st are the age and error (scalars produced by peakfit or weightedmean)
+# calculated without taking into account the external errors
+add.exterr <- function(x,tt,st,cutoff.76=1100,type=4){
+    out <- c(0,0)
+    if (hasClass(x,'UPb')){
+        if (type==1){
+            R <- age.to.Pb207U235.ratio(tt,st)
+            out <- get.Pb207U235.age(R[,1],R[,2],exterr=TRUE)
+        } else if (type==2 | (type==4 & (tt<cutoff.76)) | (type==5)){
+            R <- age.to.Pb206U238.ratio(tt,st)
+            out <- get.Pb206U238.age(R[,1],R[,2],exterr=TRUE)
+        } else if (type==3 | (type==4 & (tt>=cutoff.76))){
+            R <- age.to.Pb207Pb206.ratio(tt,st)
+            out <- get.Pb207Pb206.age(R[,1],R[,2],exterr=TRUE)
+        }
+    } else if (hasClass(x,'ArAr')){
+        R <- get.ArAr.ratio(tt,st,x$J[1],0,exterr=FALSE)
+        out <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=TRUE)
+    } else if (hasClass(x,'ReOs')){
+        R <- get.ReOs.ratio(tt,st,exterr=FALSE)
+        out <- get.ReOs.age(R[1],R[2],exterr=TRUE)
+    } else if (hasClass(x,'SmNd')){
+        R <- get.SmNd.ratio(tt,st,exterr=FALSE)
+        out <- get.SmNd.age(R[1],R[2],exterr=TRUE)
+    } else if (hasClass(x,'RbSr')){
+        R <- get.RbSr.ratio(tt,st,exterr=FALSE)
+        out <- get.RbSr.age(R[1],R[2],exterr=TRUE)
+    } else if (hasClass(x,'fissiontracks')){
+        out[2] <- tt * sqrt( (x$zeta[2]/x$zeta[1])^2 + (st/tt)^2 )
+    }
     out
 }
