@@ -38,4 +38,3 @@ print(examples$FT1$zeta)
 FT <- set.zeta(examples$FT1,tst=c(250,5))
 print(FT$zeta)
 }
-

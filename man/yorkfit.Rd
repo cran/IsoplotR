@@ -61,4 +61,3 @@ York, Derek, et al. "Unified equations for the slope,
 intercept, and standard errors of the best straight line."
 American Journal of Physics 72.3 (2004): 367-375.
 }
-

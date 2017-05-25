@@ -2,8 +2,8 @@
 % Please edit documentation in R/agespectrum.R
 \name{agespectrum}
 \alias{agespectrum}
-\alias{agespectrum.ArAr}
 \alias{agespectrum.default}
+\alias{agespectrum.ArAr}
 \title{Plot a (40Ar/39Ar) release spectrum}
 \usage{
 agespectrum(x, ...)
@@ -88,4 +88,3 @@ J-factors after computing the plateau composition.
 data(examples)
 agespectrum(examples$ArAr,ylim=c(0,80))
 }
-

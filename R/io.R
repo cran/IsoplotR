@@ -55,6 +55,15 @@
 #'
 #' where \code{Re} and \code{Os} are in ppm
 #'
+#' if \code{method='Lu-Hf'}, then \code{format} is one of either:
+#'
+#' \enumerate{
+#' \item{\code{Lu176/Hf177, s[Lu176/Hf177], Hf176/Hf177, s[Hf176/Hf177] (, rho)}}
+#' \item{\code{Lu, s[Lu], Hf, s[Hf], Hf176/Hf177, s[Hf176/Hf177]}}
+#' }
+#'
+#' where \code{Lu} and \code{Hf} are in ppm
+#'
 #' if \code{method='fissiontracks'}, then \code{format} is one of
 #' either:
 #'
@@ -85,6 +94,7 @@
 #' \item{Re-Os: \code{ReOs1.csv}, \code{ReOs2.csv}}
 #' \item{Sm-Nd: \code{SmNd1.csv}, \code{SmNd2.csv}}
 #' \item{Rb-Sr: \code{RbSr1.csv}, \code{RbSr2.csv}}
+#' \item{Lu-Hf: \code{LuHf1.csv}, \code{LuHf2.csv}}
 #' \item{fissiontracks: \code{FT1.csv}, \code{FT2.csv}, \code{FT3.csv}}
 #' \item{U-Th-He: \code{UThHe.csv}, \code{UThSmHe.csv}}
 #' \item{detritals: \code{Namib.csv}}
@@ -153,6 +163,8 @@ read.data.matrix <- function(x,method='U-Pb',format=1,...){
         out <- as.RbSr(x,format)
     } else if (identical(method,'Sm-Nd')){
         out <- as.SmNd(x,format)
+    } else if (identical(method,'Lu-Hf')){
+        out <- as.LuHf(x,format)
     } else if (identical(method,'U-Th-He')){
         out <- as.UThHe(x)
     } else if (identical(method,'fissiontracks')){

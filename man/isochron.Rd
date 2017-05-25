@@ -2,11 +2,12 @@
 % Please edit documentation in R/isochron.R
 \name{isochron}
 \alias{isochron}
+\alias{isochron.default}
 \alias{isochron.ArAr}
 \alias{isochron.RbSr}
 \alias{isochron.ReOs}
 \alias{isochron.SmNd}
-\alias{isochron.default}
+\alias{isochron.LuHf}
 \title{Calculate and plot isochrons}
 \usage{
 isochron(x, ...)
@@ -31,6 +32,10 @@ isochron(x, ...)
 \method{isochron}{SmNd}(x, xlim = NA, ylim = NA, alpha = 0.05,
   sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
   line.col = "red", lwd = 2, plot = TRUE, exterr = TRUE, ...)
+
+\method{isochron}{LuHf}(x, xlim = NA, ylim = NA, alpha = 0.05,
+  sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
+  line.col = "red", lwd = 2, plot = TRUE, exterr = TRUE, ...)
 }
 \arguments{
 \item{x}{EITHER a matrix with the following five columns:
@@ -45,8 +50,8 @@ isochron(x, ...)
 
 OR
 
-an object of class \code{ArAr}, \code{ReOs}, \code{RbSr} or
-\code{SmNd}}
+an object of class \code{ArAr}, \code{ReOs}, \code{RbSr},
+\code{SmNd} or \code{LuHf}.}
 
 \item{...}{optional arguments}
 
@@ -90,7 +95,7 @@ age and its standard error}
 }
 }
 \description{
-Plots cogenetic \eqn{^{40}}Ar/\eqn{^{39}}Ar data as X-Y
+Plots cogenetic Ar-Ar, Rb-Sr, Sm-Nd, Re-Os or Lu-Hf data as X-Y
 scatterplots, fits an isochron curve through them using the
 \code{yorkfit} function, and computes the corresponding isochron
 age, including decay constant uncertainties.
@@ -99,4 +104,3 @@ age, including decay constant uncertainties.
 data(examples)
 isochron(examples$ArAr)
 }
-

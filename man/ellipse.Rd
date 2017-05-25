@@ -32,4 +32,3 @@ plot(c(90,110),c(90,110),type='l')
 polygon(ell,col=rgb(0,1,0,0.5))
 points(x,y,pch=21,bg='black')
 }
-

@@ -54,4 +54,3 @@ correlations and decay constant uncertainties.
 data(examples)
 concordia(examples$UPb)
 }
-

@@ -59,4 +59,3 @@ helioplot(examples$UThHe,logratio=FALSE)
 Vermeesch, P., 2010. HelioPlot, and the treatment of overdispersed
 (U-Th-Sm)/He data. Chemical Geology, 271(3), pp.108-111.
 }
-

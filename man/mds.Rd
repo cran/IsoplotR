@@ -80,4 +80,3 @@ mds(examples$DZ,shepard=TRUE)
 Vermeesch, P., 2013. Multi-sample comparison of
     detrital age distributions. Chemical Geology, 341, pp.140-146.
 }
-

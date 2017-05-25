@@ -2,10 +2,10 @@
 % Please edit documentation in R/central.R
 \name{central}
 \alias{central}
-\alias{central.UThHe}
 \alias{central.default}
+\alias{central.UThHe}
 \alias{central.fissiontracks}
-\title{Calculate U-Th-He (and fission track) central ages and compositions}
+\title{Calculate U-Th-He and fission track central ages and compositions}
 \usage{
 central(x, ...)
 
@@ -16,7 +16,9 @@ central(x, ...)
 \method{central}{fissiontracks}(x, mineral = NA, ...)
 }
 \arguments{
-\item{x}{an object of class \code{UThHe} or \code{fissiontracks}}
+\item{x}{an object of class \code{UThHe} or \code{fissiontracks},
+OR a 2-column matrix with (strictly positive) values and
+uncertainties}
 
 \item{...}{optional arguments}
 
@@ -75,4 +77,3 @@ parameters.
 data(examples)
 print(central(examples$UThHe)$age)
 }
-

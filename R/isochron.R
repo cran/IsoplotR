@@ -1,6 +1,6 @@
 #' Calculate and plot isochrons
 #'
-#' Plots cogenetic \eqn{^{40}}Ar/\eqn{^{39}}Ar data as X-Y
+#' Plots cogenetic Ar-Ar, Rb-Sr, Sm-Nd, Re-Os or Lu-Hf data as X-Y
 #' scatterplots, fits an isochron curve through them using the
 #' \code{yorkfit} function, and computes the corresponding isochron
 #' age, including decay constant uncertainties.
@@ -17,8 +17,8 @@
 #'
 #' OR
 #'
-#' an object of class \code{ArAr}, \code{ReOs}, \code{RbSr} or
-#' \code{SmNd}
+#' an object of class \code{ArAr}, \code{ReOs}, \code{RbSr},
+#' \code{SmNd} or \code{LuHf}.
 #'
 #' @param xlim 2-element vector with the plot limits of the x-axis
 #' @param ylim 2-element vector with the plot limits of the y-axis
@@ -136,6 +136,16 @@ isochron.SmNd <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                 ellipse.col=ellipse.col,line.col=line.col, lwd=lwd,
                 plot=plot,exterr=exterr,...)
 }
+#' @rdname isochron
+#' @export
+isochron.LuHf <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
+                          show.numbers=FALSE,ellipse.col=rgb(0,1,0,0.5),
+                          line.col='red',lwd=2,plot=TRUE,exterr=TRUE,...){
+    isochron.PD(x,'Lu176',xlim=xlim,ylim=ylim,alpha=alpha,
+                sigdig=sigdig, show.numbers=show.numbers,
+                ellipse.col=ellipse.col,line.col=line.col, lwd=lwd,
+                plot=plot,exterr=exterr,...)
+}
 isochron.PD <- function(x,nuclide,xlim=NA,ylim=NA, alpha=0.05,
                         sigdig=2,show.numbers=FALSE,
                         ellipse.col=rgb(0,1,0,0.5),line.col='red',
@@ -149,6 +159,9 @@ isochron.PD <- function(x,nuclide,xlim=NA,ylim=NA, alpha=0.05,
     } else if (identical(nuclide,'Rb87')){
         x.lab <- expression(paste(""^"87","Rb/"^"86","Sr"))
         y.lab <- expression(paste(""^"87","Sr/"^"86","Sr"))
+    } else if (identical(nuclide,'Lu176')){
+        x.lab <- expression(paste(""^"176","Lu/"^"177","Hf"))
+        y.lab <- expression(paste(""^"176","Hf/"^"177","Hf"))
     }
     X <- data2york(x,exterr=exterr,common=FALSE)
     fit <- yorkfit(X)
