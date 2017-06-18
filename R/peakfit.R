@@ -100,13 +100,19 @@ peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,
                    cutoff.disc=cutoff.disc,exterr=exterr,
                    sigdig=sigdig,log=log,...)
 }
-#' @param i2i
-#'     `isochron to intercept': calculates the initial (aka `inherited',
-#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#' @param i2i `isochron to intercept': calculates the initial (aka
+#'     `inherited', `excess', or `common')
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
 #'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
 #'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
 #'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-#'     uses the default values stored in \code{settings('iratio',...)}
+#'     uses the default values stored in \code{settings('iratio',...)
+#'     or zero (for the Pb-Pb method).}
+#' @rdname peakfit
+#' @export
+peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,i2i=TRUE,...){
+    peakfit.helper(x,k=k,exterr=exterr,sigdig=sigdig,log=log,i2i=i2i,...)
+}
 #' @rdname peakfit
 #' @export
 peakfit.ArAr <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,i2i=FALSE,...){
@@ -160,6 +166,8 @@ ages2peaks <- function(x,k=1,type=4,cutoff.76=1100,
     if (hasClass(x,'UPb')){
         tt <- filter.UPb.ages(x,type,cutoff.76,
                               cutoff.disc,exterr=FALSE)
+    } else if (hasClass(x,'PbPb')){
+        tt <- PbPb.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'ArAr')){
         tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'UThHe')){
@@ -356,7 +364,7 @@ theta2age <- function(x,theta,beta.var,exterr=TRUE){
 }
 
 BIC.fit <- function(x,max.k,...){
-    n <- numgrains(x)
+    n <- length(x)
     BIC <- Inf
     for (k in 1:max.k){
         fit <- peakfit(x,k,...)

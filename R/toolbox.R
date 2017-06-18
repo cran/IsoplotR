@@ -1,41 +1,12 @@
-numgrains <- function(x,...){ UseMethod("numgrains",x) }
-numgrains.default <- function(x){ length(x[,1]) }
-numgrains.UPb <- function(x){ length(x$x[,1]) }
-numgrains.ArAr <- function(x){ length(x$x[,1]) }
-numgrains.RbSr <- function(x){ length(x$x[,1]) }
-numgrains.SmNd <- function(x){ length(x$x[,1]) }
-numgrains.ReOs <- function(x){ length(x$x[,1]) }
-numgrains.LuHf <- function(x){ length(x$x[,1]) }
-numgrains.fissiontracks <- function(x){ length(x$x[,1]) }
-
-select <- function(x,selection){
-    out <- x
-    i <- which(names(x$x) %in% selection)
-    out$x <- x$x[i]
-    out$covmat <- x$covmat[i,i]
-    out
-}
-
-zip.matrix <- function(x){
-    nc <- ncol(x)
-    nr <- nrow(x)
-    out <- rep(0,nr*nc)
-    i <- seq(from=0,to=(nr-1)*nc,by=nc)
-    for (j in 1:nc){
-        out[i+j] <- x[,j]
-    }
-    out
-}
-
-unzip.vector <- function(x,nc=2){
-    nr <- length(x)/nc
-    out <- matrix(0,nr,nc)
-    i <- seq(from=0,to=(nr-1)*nc,by=nc)
-    for (j in 1:nc){
-        out[,j] <- x[i+j]
-    }
-    out
-}
+length.UPb  <- function(x){ nrow(x$x) }
+length.PbPb <- function(x){ nrow(x$x) }
+length.ArAr <- function(x){ nrow(x$x) }
+length.RbSr <- function(x){ nrow(x$x) }
+length.SmNd <- function(x){ nrow(x$x) }
+length.ReOs <- function(x){ nrow(x$x) }
+length.LuHf <- function(x){ nrow(x$x) }
+length.fissiontracks <- function(x){ nrow(x$x) }
+length.UThHe <- function(x){ nrow(x) }
 
 roundit <- function(age,err,sigdig=2){
     out <- cbind(age,err)
@@ -67,10 +38,6 @@ getmM <- function(x,from=NA,to=NA,log=FALSE){
     list(m=from,M=to)
 }
 
-emptyplot <- function(){
-    graphics::plot(c(0,1),c(0,1),type='n',axes=FALSE,xlab="",ylab="")
-}
-
 cor2cov <- function(sX,sY,rXY){
     covmat <- matrix(0,2,2)
     covmat[1,1] <- sX^2
@@ -80,28 +47,17 @@ cor2cov <- function(sX,sY,rXY){
     covmat
 }
 
-get.cov.xzyz <- function(xz,err.xz,yz,err.yz,err.xy){
-    xy <- xz/yz
-    0.5*xz*yz*((err.xz/xz)^2 + (err.yz/yz)^2 - (err.xy/xy)^2)
+get.cov.div <- function(A,err.A,B,err.B,AB,err.AB){
+    0.5*A*B*((err.A/A)^2+(err.B/B)^2-(err.AB/AB)^2)
 }
-get.cor.xzyz <- function(xz,err.xz,yz,err.yz,err.xy){
-    get.cov.xzyz(xz,err.xz,yz,err.yz,err.xy)/(err.xz*err.yz)
+get.cor.div <- function(A,err.A,B,err.B,AB,err.AB){
+    get.cov.div(A,err.A,B,err.B,AB,err.AB)/(err.A*err.B)
 }
-
-get.cov.zxzy <- function(zx,err.zx,zy,err.zy,err.xy){
-    xy <- zy/zx
-    0.5*zx*zy*((err.zy/zy)^2 + (err.zx/zx)^2 - (err.xy/xy)^2)
+get.cov.mult <- function(A,err.A,B,err.B,AB,err.AB){
+    0.5*A*B*((err.AB/AB)^2 - (err.A/A)^2 - (err.B/B)^2)
 }
-get.cor.zxzy <- function(zx,err.zx,zy,err.zy,err.xy){
-    get.cov.zxzy(zx,err.zx,zy,err.zy,err.xy)/(err.zx*err.zy)
-}
-
-get.cov.xzzy <- function(xz,err.xz,zy,err.zy,err.xy){
-    xy <- xz*zy
-    0.5*xz*zy*((err.xy/xy)^2 - (err.xz/xz)^2 - (err.zy/zy)^2)
-}
-get.cor.xzzy <- function(xz,err.xz,zy,err.zy,err.xy){
-    get.cov.xzzy(xz,err.xz,zy,err.zy,err.xy)/(err.xz*err.zy)
+get.cor.mult <- function(A,err.A,B,err.B,AB,err.AB){
+    get.cov.mult(A,err.A,B,err.B,AB,err.AB)/(err.A*err.B)
 }
 
 # simultaneously performs error propagation for multiple samples
@@ -117,12 +73,6 @@ errorprop <- function(J11,J12,J21,J22,E11,E12,E22){
 hasClass <- function(x,classname){
     classname %in% class(x)
 }
-
-get.covmat <- function(x,...){ UseMethod("get.covmat",x) }
-get.covmat.default <- function(x,i,...){ stop('Invalid input into covmat() function') }
-
-get.selection <- function(x,...){ UseMethod("get.selection",x) }
-get.selection.default <- function(x,...){ x }
 
 # negative multivariate log likelihood to be fed into R's optim function
 LL.norm <- function(x,covmat){

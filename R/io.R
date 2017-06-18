@@ -4,7 +4,7 @@
 #' data classes
 #'
 #' @param x either a file name (\code{.csv} format) OR a matrix
-#' @param method one of \code{'U-Pb'}, \code{'Ar-Ar'},
+#' @param method one of \code{'U-Pb'}, \code{'Pb-Pb'}, \code{'Ar-Ar'},
 #'     \code{'detritals'}, \code{Rb-Sr}, \code{Sm-Nd}, \code{Re-Os},
 #'     \code{'U-Th-He'}, \code{'fissiontracks'} or \code{'other'}
 #' @param format formatting option, depends on the value of
@@ -19,6 +19,14 @@
 #' }
 #'
 #' where optional columns are marked in round brackets
+#'
+#' if \code{method='Pb-Pb'}, then \code{format} is one of either:
+#'
+#' \enumerate{
+#' \item{\code{6/4, s[6/4], 7/4, s[7/4], rho}}
+#' \item{\code{4/6, s[4/6], 7/6, s[7/6], rho}}
+#' \item{\code{6/4, s[6/4], 7/4, s[7/4], 7/6, s[7/6]}}
+#' }
 #'
 #' if \code{method='Ar-Ar'}, then \code{format} is one of either:
 #'
@@ -90,6 +98,7 @@
 #'
 #' \itemize{
 #' \item{U-Pb: \code{UPb1.csv}, \code{UPb2.csv}, \code{UPb3.csv}}
+#' \item{Pb-Pb: \code{PbPb1.csv}, \code{PbPb2.csv}, \code{PbPb3.csv}}
 #' \item{Ar-Ar: \code{ArAr1.csv}, \code{ArAr2.csv}, \code{ArAr3.csv}}
 #' \item{Re-Os: \code{ReOs1.csv}, \code{ReOs2.csv}}
 #' \item{Sm-Nd: \code{SmNd1.csv}, \code{SmNd2.csv}}
@@ -105,9 +114,10 @@
 #' \code{system.file(...)} function.
 #'
 #' @param ... optional arguments to the \code{read.csv} function
-#' @return an object of class \code{UPb}, \code{ArAr}, \code{UThHe},
-#'     \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{detritals},
-#'     \code{fissiontracks} or \code{other}
+#' @return an object of class \code{UPb}, \code{PbPb}, \code{ArAr},
+#'     \code{UThHe}, \code{ReOs}, \code{SmNd}, \code{RbSr},
+#'     \code{LuHf}, \code{detritals}, \code{fissiontracks} or
+#'     \code{other}
 #' @examples
 #' file.show(system.file("spectrum.csv",package="IsoplotR"))
 #'
@@ -136,7 +146,7 @@
 #' d6 <- read.data(f6,method="detritals")
 #' kde(d6)
 #'
-#' #  three `other' files (MountTom.csv, spectrum.csv, average.csv)
+#' #  three 'other' files (MountTom.csv, spectrum.csv, average.csv)
 #' f7 <- system.file("MountTom.csv",package="IsoplotR")
 #' d7 <- read.data(f7,method="other")
 #' radialplot(d7)
@@ -155,6 +165,8 @@ read.data.default <- function(x,method='U-Pb',format=1,...){
 read.data.matrix <- function(x,method='U-Pb',format=1,...){
     if (identical(method,'U-Pb')){
         out <- as.UPb(x,format)
+    } else if (identical(method,'Pb-Pb')){
+        out <- as.PbPb(x,format)
     } else if (identical(method,'Ar-Ar')){
         out <- as.ArAr(x,format)
     } else if (identical(method,'Re-Os')){
@@ -188,10 +200,11 @@ as.UPb <- function(x,format=3){
     cnames <- NULL
     if (format == 1 & nc == 5){
         cnames <- c('Pb207U235','errPb207U235',
-                    'Pb206U238','errPb206U238','rhoXY')        
+                    'Pb206U238','errPb206U238','rhoXY')
         out$x <- X
     } else if (format == 2 & nc %in% c(4,5)) {
-        cnames <- c('U238Pb206','errU238Pb206','Pb207Pb206','errPb207Pb206','rhoXY')
+        cnames <- c('U238Pb206','errU238Pb206',
+                    'Pb207Pb206','errPb207Pb206','rhoXY')
         if (nc == 4){
             rho <- rep(0,nr-1)
             out$x <- cbind(X,rho)
@@ -232,17 +245,39 @@ as.UPb <- function(x,format=3){
 }
 get.cor.75.68 <- function(Pb207U235,errPb207U235,Pb206U238,errPb206U238,
                           Pb207Pb206,errPb207Pb206){
-    cov.75.68 <- Pb207U235*Pb206U238*((errPb207U235/Pb207U235)^2+
-                 (errPb206U238/Pb206U238)^2-(errPb207Pb206/Pb207Pb206)^2)/2
-    cor.75.68 <- cov.75.68/(errPb207U235*errPb206U238)
-    cor.75.68
+    get.cor.div(Pb207U235,errPb207U235,
+                Pb206U238,errPb206U238,
+                Pb207Pb206,errPb207Pb206)
 }
 get.cor.68.76 <- function(Pb207U235,errPb207U235,Pb206U238,errPb206U238,
                           Pb207Pb206,errPb207Pb206){
-    cov.68.76 <- Pb206U238*Pb207U235*((errPb207U235/Pb207U235)^2-
-                 (errPb206U238/Pb206U238)^2-(errPb207Pb206/Pb207Pb206)^2)/2
-    cor.68.76 <- cov.68.76/(errPb206U238*Pb207Pb206)
-    cor.68.76
+    get.cor.mult(Pb206U238,errPb206U238,
+                 Pb207Pb206,errPb207Pb206,
+                 Pb207U235,errPb207U235)
+}
+as.PbPb <- function(x,format=1){
+    out <- list()
+    class(out) <- "PbPb"
+    out$x <- NA
+    out$format <- format
+    nc <- ncol(x)
+    nr <- nrow(x)
+    X <- shiny2matrix(x,2,nr,nc)
+    cnames <- NULL
+    if (format == 1 & nc == 5){
+        cnames <- c('Pb206Pb204','errPb206Pb204',
+                    'Pb207Pb204','errPb207Pb204','rho')
+    } else if (format == 2 & nc == 5) {
+        cnames <- c('Pb204Pb206','errPb204Pb206',
+                    'Pb207Pb206','errPb207Pb206','rho')
+    } else if (format == 3 & nc == 6){
+        cnames <- c('Pb206Pb204','errPb206Pb204',
+                    'Pb207Pb204','errPb207Pb204',
+                    'Pb207Pb206','errPb207Pb206')
+    }
+    out$x <- X
+    colnames(out$x) <- cnames
+    out
 }
 as.ArAr <- function(x,format=3){
     out <- list()

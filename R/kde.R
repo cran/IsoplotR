@@ -5,8 +5,9 @@
 #' adaptive kernel bandwidth modifier.
 #'
 #' @param x a vector of numbers OR an object of class \code{UPb},
-#'     \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr},
-#'     \code{UThHe}, \code{fissiontracks} or \code{detrital}
+#'     \code{PbPb}, \code{ArAr}, \code{ReOs}, \code{SmNd},
+#'     \code{RbSr}, \code{UThHe}, \code{fissiontracks} or
+#'     \code{detrital}
 #' @rdname kde
 #' @export
 kde <- function(x,...){ UseMethod("kde",x) }
@@ -157,13 +158,28 @@ kde.detritals <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,
         return(X)
     }
 }
-#' @param i2i
-#'     `isochron to intercept': calculates the initial (aka `inherited',
-#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#' @param i2i `isochron to intercept': calculates the initial (aka
+#'     `inherited', `excess', or `common')
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
 #'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
 #'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
 #'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-#'     uses the default values stored in \code{settings('iratio',...)}
+#'     uses the default values stored in \code{settings('iratio',...)
+#'     or zero (for the Pb-Pb method).}
+#' @rdname kde
+#' @export
+kde.PbPb <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
+                     n=512,plot=TRUE,pch=NA,xlab="age [Ma]",ylab="",
+                     kde.col=rgb(1,0,1,0.6),hist.col=rgb(0,1,0,0.2),
+                     show.hist=TRUE,bty='n',binwidth=NA,ncol=NA,
+                     i2i=FALSE,...){
+    tt <- PbPb.age(x,i2i=i2i)[,1]
+    kde.default(tt,from=from,to=to,bw=bw,adaptive=adaptive,log=log,
+                n=n,plot=plot,pch=pch,xlab=xlab,ylab=ylab,
+                kde.col=kde.col,hist.col=hist.col,
+                show.hist=show.hist,bty=bty,binwidth=binwidth,
+                ncol=ncol,...)
+}
 #' @rdname kde
 #' @export
 kde.ArAr <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,

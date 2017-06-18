@@ -10,8 +10,8 @@
 #' OR
 #'
 #' and object of class \code{fissiontracks}, \code{UThHe},
-#' \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{LuHf} or
-#' \code{UPb}
+#' \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{LuHf},
+#' \code{PbPb} or \code{UPb}
 #' @param from minimum age limit of the radial scale
 #' @param to maximum age limit of the radial scale
 #' @param t0 central value
@@ -53,7 +53,7 @@ radialplot.default <- function(x,from=NA,to=NA,t0=NA,transformation='log',
     peaks <- peakfit(x,k=k,sigdig=sigdig)
     markers <- c(markers,peaks$peaks)
     X <- x2zs(x,t0=t0,from=from,to=to,transformation=transformation)
-    radial.plot(X,show.numbers=show.numbers,pch=pch,bg=bg,markers=markers,...)
+    radial.plot(X,show.numbers=show.numbers,pch=pch,bg=bg,markers=markers)
     if (title) title(radial.title(central(x),sigdig=sigdig))
     if (!is.null(peaks$legend))
         graphics::legend('bottomleft',legend=peaks$legend,bty='n')
@@ -109,12 +109,25 @@ radialplot.UPb <- function(x,from=NA,to=NA,t0=NA,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=exterr,...)
 }
-#' @param i2i `isochron to intercept': calculates the initial (aka `inherited',
-#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#' @param i2i `isochron to intercept': calculates the initial (aka
+#'     `inherited', `excess', or `common')
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
 #'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
 #'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
 #'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-#'     uses the default values stored in \code{settings('iratio',...)}
+#'     uses the default values stored in \code{settings('iratio',...)
+#'     or zero (for the Pb-Pb method).}
+#' @rdname radialplot
+#' @export
+radialplot.PbPb <- function(x,from=NA,to=NA,t0=NA,
+                            transformation='log',show.numbers=FALSE,
+                            pch=21,bg='white',markers=NULL,k=0,
+                            exterr=TRUE,i2i=TRUE,...){
+    radialplot.helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,
+                      show.numbers=show.numbers,pch=pch,bg=bg,
+                      markers=markers,k=k,exterr=exterr,i2i=i2i,...)
+}
 #' @rdname radialplot
 #' @export
 radialplot.ArAr <- function(x,from=NA,to=NA,t0=NA,
@@ -191,7 +204,7 @@ radialplot.helper <- function(x,from=NA,to=NA,t0=NA,
     age2radial(x,from=from,to=to,t0=t0,transformation=transformation,
                type=type,cutoff.76=cutoff.76,cutoff.disc=cutoff.disc,
                show.numbers=show.numbers,pch=pch,bg=bg,
-               markers=markers,k=k,i2i=i2i,...)
+               markers=markers,i2i=i2i,...)
     if (!is.null(peaks$legend))
         graphics::legend('bottomleft',legend=peaks$legend,bty='n')
 }
@@ -203,6 +216,8 @@ age2radial <- function(x,from=NA,to=NA,t0=NA,transformation='log',
     if (hasClass(x,'UPb')){
         tt <- filter.UPb.ages(x,type,cutoff.76,
                               cutoff.disc,exterr=FALSE)
+    } else if (hasClass(x,'PbPb')){
+        tt <- PbPb.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'ArAr')){
         tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'UThHe')){

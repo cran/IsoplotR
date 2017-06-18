@@ -4,6 +4,7 @@
 \alias{isochron}
 \alias{isochron.default}
 \alias{isochron.ArAr}
+\alias{isochron.PbPb}
 \alias{isochron.RbSr}
 \alias{isochron.ReOs}
 \alias{isochron.SmNd}
@@ -17,6 +18,11 @@ isochron(x, ...)
   line.col = "red", lwd = 2, title = TRUE, ...)
 
 \method{isochron}{ArAr}(x, xlim = NA, ylim = NA, alpha = 0.05,
+  sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
+  inverse = TRUE, line.col = "red", lwd = 2, plot = TRUE,
+  exterr = TRUE, ...)
+
+\method{isochron}{PbPb}(x, xlim = NA, ylim = NA, alpha = 0.05,
   sigdig = 2, show.numbers = FALSE, ellipse.col = rgb(0, 1, 0, 0.5),
   inverse = TRUE, line.col = "red", lwd = 2, plot = TRUE,
   exterr = TRUE, ...)

@@ -1,9 +1,3 @@
-get.selection.ArAr <- function(x,inverse=TRUE,...){
-    if (inverse) selection <- c('Ar39Ar40','Ar36Ar40')
-    else selection <- c('Ar39Ar36','Ar40Ar36')
-    selection
-}
-
 # returns ratios, errors and correlations
 ArAr.normal.ratios <- function(x){
     ns <- length(x)
@@ -33,9 +27,9 @@ ArAr.normal.ratios <- function(x){
         Ar40Ar36 <- 1/x$x[,'Ar36Ar40']
         errAr39Ar36 <- x$x[,'errAr39Ar36']
         errAr40Ar36 <- x$x[,'errAr36Ar40']/x$x[,'Ar36Ar40']^2
-        rho <- get.cor.xzyz(Ar39Ar36,errAr39Ar36,
-                            Ar40Ar36,errAr40Ar36,
-                            x$x[,'errAr39Ar40'])
+        rho <- get.cor.div(Ar39Ar36,errAr39Ar36,
+                           Ar40Ar36,errAr40Ar36,
+                           x$x[,'Ar39Ar40'],x$x[,'errAr39Ar40'])
     }
     out <- cbind(Ar39Ar36,errAr39Ar36,Ar40Ar36,errAr40Ar36,rho)
     colnames(out) <- c('Ar39Ar36','errAr39Ar36',
@@ -71,9 +65,9 @@ ArAr.inverse.ratios <- function(x){
         Ar36Ar40 <- x$x[,'Ar36Ar40']
         errAr39Ar40 <- x$x[,'errAr39Ar40']
         errAr36Ar40 <- x$x[,'errAr36Ar40']
-        rho <- get.cor.xzyz(Ar39Ar40,errAr39Ar40,
-                            Ar36Ar40,errAr36Ar40,
-                            x$x[,'errAr39Ar36'])
+        rho <- get.cor.div(Ar39Ar40,errAr39Ar40,
+                           Ar36Ar40,errAr36Ar40,
+                           x$x[,'Ar39Ar36'],x$x[,'errAr39Ar36'])
     }
     out <- cbind(Ar39Ar40,errAr39Ar40,Ar36Ar40,errAr36Ar40,rho)
     colnames(out) <- c('Ar39Ar40','errAr39Ar40',
@@ -116,9 +110,9 @@ ArAr.age.ratios <- function(x){
         colnames(covmat) <- c('varX','varY','cov')
         covmat[,'varX'] <- errAr40Ar39^2
         covmat[,'varY'] <- errAr39Ar36^2
-        covmat[,'cov'] <- get.cov.xzzy(Ar40Ar39,errAr40Ar39,
+        covmat[,'cov'] <- get.cov.mult(Ar40Ar39,errAr40Ar39,
                                        Ar39Ar36,errAr39Ar36,
-                                       errAr40Ar36)
+                                       Ar40Ar39*Ar39Ar36,errAr40Ar36)
     }
     out <- cbind(Ar40Ar39,covmat[,'varX'],Ar39Ar36,covmat[,'varY'],covmat[,'cov'])
     colnames(out) <- c('Ar40Ar39','varAr40Ar39',
@@ -195,5 +189,3 @@ ArAr.age <- function(x,jcu=TRUE,exterr=TRUE,i=NA,sigdig=NA,i2i=FALSE){
     if (!is.na(i)) out <- out[i,]
     out
 }
-
-length.ArAr <- function(x){ nrow(x$x) }
