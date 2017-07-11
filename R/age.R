@@ -32,18 +32,21 @@
 #'
 #' \item a six element vector containing \code{Lu}, \code{s[Lu]},
 #' \code{Hf}, \code{s[Hf]}, \code{Hf176Hf177}, and \code{s[Hf176Hf177]}
+#'
+#' \item a five element vector containing \code{4/8}, \code{s[4/8]},
+#' \code{0/8}, \code{s[0/8]}, and \code{cov[4/8,0/8]}
 #' }
 #'
 #' OR
 #'
 #' \itemize{
-#' \item an object of class \code{UPb}, \code{PbPb}, \code{ArAr},
-#' \code{RbSr}, \code{SmNd}, \code{ReOs}, \code{LuHf} \code{UThHe} or
+#' \item an object of class \code{UPb}, \code{PbPb}, \code{ArAr}, \code{ThU},
+#' \code{RbSr}, \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{UThHe} or
 #' \code{fissiontracks}.
 #' }
 #'
 #' @param method one of either \code{'U238-Pb206'}, \code{'U235-Pb207'},
-#'     \code{'Pb207-Pb206'}, \code{'Ar-Ar'}, \code{'Re-Os'},
+#'     \code{'Pb207-Pb206'}, \code{'Ar-Ar'}, \code{'Th-U'}, \code{'Re-Os'},
 #'     \code{'Sm-Nd'}, \code{'Rb-Sr'}, \code{'Lu-Hf'}, \code{'U-Th-He'} or
 #'     \code{'fissiontracks'}
 #' 
@@ -79,6 +82,8 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
         out <- get.SmNd.age(X[1],X[2],exterr)
     } else if (identical(method,'Lu-Hf')){
         out <- get.LuHf.age(X[1],X[2],exterr)
+    } else if (identical(method,'Th-U')){
+        out <- get.ThU.age(X[1],X[2],X[3],X[4],X[5],exterr)
     } else if (identical(method,'U-Th-He')){
         if (length(x)==6)
             out <- get.UThHe.age(X[1],X[2],X[3],X[4],X[5],X[6])
@@ -156,36 +161,77 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item{cov}{ the covariance matrix of the elements in \code{x} }
 #' }
 #'
-#' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr}, \code{SmNd},
-#' \code{ReOs}, \code{LuHf} and \code{isochron=FALSE}, returns a table of Pb-Pb,
-#' Ar-Ar, Rb-Sr, Sm-Nd, Re-Os or Lu-Hf ages and standard errors.
-#'
+#' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
+#' \code{SmNd}, \code{ReOs}, \code{LuHf} and \code{isochron=FALSE},
+#' returns a table of Pb-Pb, Ar-Ar, Rb-Sr, Sm-Nd, Re-Os or Lu-Hf and
+#' standard errors.
+#' 
 #' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
 #' \code{SmNd}, \code{ReOs} or \code{LuHf} and \code{isochron=TRUE},
 #' returns a list with the following items:
 #'
 #' \describe{
 #'
-#' \item{a}{ the intercept of the straight line fit and its standard
-#' error. }
+#' \item{a}{the intercept of the straight line fit and its standard
+#' error.}
 #' 
-#' \item{b}{ the slope of the fit and its standard error. }
+#' \item{b}{the slope of the fit and its standard error.}
+#'
+#' \item{cov.ab}{the covariance of the slope and intercept}
 #' 
-#' \item{y0}{ the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
+#' \item{mswd}{the mean square of the residuals (a.k.a
+#'     `reduced Chi-square') statistic}
+#'
+#' \item{p.value}{the p-value of a Chi-square test for linearity}
+#'
+#' \item{y0}{the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
 #' \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{187}}Os/\eqn{^{188}}Os,
 #' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio and its standard error. }
+#' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio and its standard error.}
 #' 
-#' \item{age}{ the \eqn{^{207}}Pb/\eqn{^{206}}Pb,
+#' \item{age}{the \eqn{^{207}}Pb/\eqn{^{206}}Pb,
 #' \eqn{^{40}}Ar/\eqn{^{39}}Ar, \eqn{^{187}}Os/\eqn{^{187}}Re,
 #' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf age and its standard error. }
-#' 
+#' \eqn{^{176}}Hf/\eqn{^{177}}Hf age and its standard error.}
+#'     
 #' }
+#'
+#' \item if \code{x} has class \code{ThU} and \code{isochron=FALSE},
+#' returns a 5-column table with the Th-U ages, their standard errors,
+#' the initial \eqn{^{234}U/^{238}U}-ratios, their standard errors,
+#' and the correlation coefficient between the ages and the initial
+#' ratios.
+#'
+#' \item if \code{x} has class \code{ThU} and \code{isochron=TRUE},
+#' returns the output of an `Osmond Type-II' isochron, i.e.:
+#'
+#' \describe{
+#'
+#' \item{par}{the best fitting \eqn{^{234}U/^{238}U} intercept,
+#' \eqn{^{234}U/^{232}Th} slope, \eqn{^{230}Th/^{238}U} intercept and
+#' \eqn{^{230}Th/^{232}Th} slope.}
+#'
+#' \item{cov}{the covariance matrix of \code{par}.}
+#'
+#' \item{a}{the \eqn{^{234}U/^{238}U} intercept (i.e. the detrital
+#' Th-corrected value) and its standard error.}
 #' 
-#' \item if \code{x} has class \code{UThHe} and \code{central=FALSE},
-#' returns a table of U-Th-He ages and standard errors.
+#' \item{b}{the \eqn{^{234}U/^{232}Th} slope and its standard error.}
+#'
+#' \item{cov.ab}{the covariance of \code{a} and \code{b}.}
 #' 
+#' \item{mswd}{the mean square of the residuals (a.k.a
+#'     `reduced Chi-square') statistic.}
+#'
+#' \item{p.value}{the p-value of a Chi-square test for linearity.}
+#'
+#' \item{y0}{the initial \eqn{^{234}U/^{238}U}-ratio and its standard
+#' error.}
+#'
+#' \item{age}{the Th-U isochron age and its standard error.}
+#'
+#' }
+#'
 #' \item if \code{x} has class \code{UThHe} and \code{central=TRUE},
 #' returns a list with the following items:
 #'
@@ -260,14 +306,16 @@ age.PbPb <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
 #'     should be considered separately (\code{isochron=FALSE}) or an
 #'     isochron age should be calculated from all Ar-Ar analyses
 #'     together (\code{isochron=TRUE}).
-#' @param i2i `isochron to intercept': calculates the initial (aka
-#'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-#'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-#'     uses the default values stored in \code{settings('iratio',...)
-#'     or zero (for the Pb-Pb method).}
+#' @param i2i
+#'     `isochron to intercept': calculates the initial (aka `inherited',
+#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
+#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}  or zero (for the Pb-Pb
+#'     method). When applied to data of class \code{ThU}, setting
+#'     \code{i2i} to \code{TRUE} applies a detrital Th-correction.
 #' @rdname age
 #' @export
 age.ArAr <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
@@ -295,6 +343,13 @@ age.UThHe <- function(x,central=FALSE,i=NA,sigdig=NA,...){
 age.fissiontracks <- function(x,central=FALSE,i=NA,sigdig=NA,exterr=TRUE,...){
     if (central) out <- central(x)
     else out <- fissiontrack.age(x,i=i,sigdig=sigdig,exterr=exterr)
+    out
+}
+#' @rdname age
+#' @export
+age.ThU <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
+    if (isochron) out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
+    else out <- ThU.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
     out
 }
 #' @rdname age
@@ -328,17 +383,17 @@ add.exterr <- function(x,tt,st,cutoff.76=1100,type=4){
     out <- c(0,0)
     if (hasClass(x,'UPb')){
         if (type==1){
-            R <- age.to.Pb207U235.ratio(tt,st)
+            R <- age_to_Pb207U235_ratio(tt,st)
             out <- get.Pb207U235.age(R[,1],R[,2],exterr=TRUE)
         } else if (type==2 | (type==4 & (tt<cutoff.76)) | (type==5)){
-            R <- age.to.Pb206U238.ratio(tt,st)
+            R <- age_to_Pb206U238_ratio(tt,st)
             out <- get.Pb206U238.age(R[,1],R[,2],exterr=TRUE)
         } else if (type==3 | (type==4 & (tt>=cutoff.76))){
-            R <- age.to.Pb207Pb206.ratio(tt,st)
+            R <- age_to_Pb207Pb206_ratio(tt,st)
             out <- get.Pb207Pb206.age(R[,1],R[,2],exterr=TRUE)
         }
     } else if (hasClass(x,'PbPb')){
-        R <- age.to.Pb207Pb206.ratio(tt,st)
+        R <- age_to_Pb207Pb206_ratio(tt,st)
         out <- get.Pb207Pb206.age(R[,1],R[,2],exterr=TRUE)
     } else if (hasClass(x,'ArAr')){
         R <- get.ArAr.ratio(tt,st,x$J[1],0,exterr=FALSE)

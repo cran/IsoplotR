@@ -2,8 +2,8 @@
 #'
 #' Implements the unified regression algorithm of York et al. (2004)
 #' which, although based on least squares, yields results that are
-#' consistent with maximum likelihood estimates of Ludwig and
-#' Titterington (1994)
+#' consistent with maximum likelihood estimates of Titterington and
+#' Halliday (1979)
 #'
 #' @param x a 5-column matrix with the X-values, the analytical
 #'     uncertainties of the X-values, the Y-values, the analytical
@@ -20,10 +20,9 @@
 #'     `reduced Chi-square') statistic}
 #'     }
 #' @references
-#'
-#' Ludwig, K. R., and D. M. Titterington. "Calculation of \eqn{^{230}}Th/U
-#' isochrons, ages, and errors." Geochimica et Cosmochimica Acta
-#' 58.22 (1994): 5031-5042.
+#' Titterington, D.M. and Halliday, A.N., 1979. On the fitting of
+#' parallel isochrons and the method of maximum likelihood. Chemical
+#' Geology, 26(3), pp.183-195.
 #' 
 #' York, Derek, et al. "Unified equations for the slope,
 #' intercept, and standard errors of the best straight line."
@@ -40,7 +39,7 @@
 #'    sY <- Y*0.005
 #'    rXY <- rep(0.8,n)
 #'    dat <- cbind(X,sX,Y,sY,rXY)
-#'    fit <- yorkfit(dat)
+#'    fit <- york(dat)
 #'    covmat <- matrix(0,2,2)
 #'    plot(range(X),fit$a[1]+fit$b[1]*range(X),type='l',ylim=range(Y))
 #'    for (i in 1:n){
@@ -52,7 +51,7 @@
 #'        polygon(ell)
 #'    }
 #' @export
-yorkfit <- function(x){
+york <- function(x){
     colnames(x) <- c('X','sX','Y','sY','rXY')
     ab <- lm(x[,'Y'] ~ x[,'X'])$coefficients # initial guess
     a <- ab[1]
@@ -91,7 +90,7 @@ get.york.mswd <- function(x,a,b){
     X2 <- 0
     nn <- length(x[,'X'])
     for (i in 1:nn){
-        E <- cor2cov(x[i,'sX'],x[i,'sY'],x[i,'rXY'])
+        E <- cor2cov2(x[i,'sX'],x[i,'sY'],x[i,'rXY'])
         X <- matrix(c(x[i,'X']-xy[i,1],x[i,'Y']-xy[i,2]),1,2)
         if (!any(is.na(X)))
             X2 <- X2 + 0.5*X %*% solve(E) %*% t(X)
@@ -122,7 +121,7 @@ get.york.xy <- function(x,a,b){
 
 data2york <- function(x,...){ UseMethod("data2york",x) }
 data2york.default <- function(x,...){ stop('default function undefined') }
-data2york.UPb <- function(x,wetherill=TRUE){
+data2york.UPb <- function(x,wetherill=TRUE,...){
     ns <- length(x)
     out <- matrix(0,ns,5)
     colnames(out) <- c('X','sX','Y','sY','rXY')
@@ -158,7 +157,7 @@ data2york.UPb <- function(x,wetherill=TRUE){
     colnames(out) <- c('X','sX','Y','sY','rXY')
     out
 }
-data2york.ArAr <- function(x,inverse=TRUE){
+data2york.ArAr <- function(x,inverse=TRUE,...){
     if (inverse)
         out <- ArAr.inverse.ratios(x)
     else
@@ -166,7 +165,7 @@ data2york.ArAr <- function(x,inverse=TRUE){
     colnames(out) <- c('X','sX','Y','sY','rXY')
     out
 }
-data2york.PbPb <- function(x,inverse=TRUE){
+data2york.PbPb <- function(x,inverse=TRUE,...){
     if (inverse)
         out <- PbPb.inverse.ratios(x)
     else
@@ -174,7 +173,7 @@ data2york.PbPb <- function(x,inverse=TRUE){
     colnames(out) <- c('X','sX','Y','sY','rXY')
     out
 }
-data2york.PD <- function(x,exterr=FALSE,common=FALSE){
+data2york.PD <- function(x,exterr=FALSE,common=FALSE,...){
     if (x$format==1){
         out <- x$x
     } else if (x$format==2){

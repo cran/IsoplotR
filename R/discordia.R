@@ -1,8 +1,8 @@
 discordia.age <- function(x,wetherill=TRUE,exterr=TRUE){
     d <- data2york(x,wetherill=wetherill)
-    fit <- yorkfit(d)
+    fit <- york(d)
     itt <- concordia.intersection(fit,wetherill)
-    hess <- stats::optimHess(itt,LL.concordia.intersection, d=d,x=x,
+    hess <- stats::optimHess(itt,LL.concordia.intersection,d=d,x=x,
                              wetherill=wetherill,exterr=exterr)
     out <- list()
     out$x <- itt
@@ -10,18 +10,18 @@ discordia.age <- function(x,wetherill=TRUE,exterr=TRUE){
     out
 }
 
-# itt = output of the yorkfit function
+# itt = output of the york function
 # d = output of UPb2york
 # X = output of UPb.preprocess
 LL.concordia.intersection <- function(itt,d,x,wetherill,exterr){
     LL <- 0
     if (wetherill){
-        XYl <- age.to.wetherill.ratios(itt[1])
-        XYu <- age.to.wetherill.ratios(itt[2])
+        XYl <- age_to_wetherill_ratios(itt[1])
+        XYu <- age_to_wetherill_ratios(itt[2])
         b <- (XYu$x[2]-XYl$x[2])/(XYu$x[1]-XYl$x[1])
         a <- XYu$x[2]-b*XYu$x[1]
     } else {
-        XYl <- age.to.terawasserburg.ratios(itt[1])
+        XYl <- age_to_terawasserburg_ratios(itt[1])
         a <- itt[2]
         b <- (XYl$x[2]-a)/XYl$x[1]
     }
@@ -32,6 +32,7 @@ LL.concordia.intersection <- function(itt,d,x,wetherill,exterr){
     for (i in 1:length(x)){
         if (wetherill) samp <- wetherill(x,i)
         else samp <- tera.wasserburg(x,i)
+        covmat <- samp$cov
         if (exterr) {
             dcomp <- discordant.composition(disc[i],itt[1],itt[2],wetherill)
             covmat <- samp$cov + dcomp$cov
@@ -142,11 +143,11 @@ discordia.plot <- function(fit,wetherill=TRUE){
     X <- c(0,0)
     Y <- c(0,0)
     if (wetherill) {
-        X <- age.to.Pb207U235.ratio(fit$x)[,'75']
-        Y <- age.to.Pb206U238.ratio(fit$x)[,'68']
+        X <- age_to_Pb207U235_ratio(fit$x)[,'75']
+        Y <- age_to_Pb206U238_ratio(fit$x)[,'68']
     } else {
-        X[1] <- age.to.U238Pb206.ratio(fit$x['t[l]'])[,'86']
-        Y[1] <- age.to.Pb207Pb206.ratio(fit$x['t[l]'])[,'76']
+        X[1] <- age_to_U238Pb206_ratio(fit$x['t[l]'])[,'86']
+        Y[1] <- age_to_Pb207Pb206_ratio(fit$x['t[l]'])[,'76']
         Y[2] <- fit$x['Pb207Pb206']
     }
     graphics::lines(X,Y)

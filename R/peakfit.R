@@ -6,8 +6,8 @@
 #'
 #' @param x either a \code{[2 x n]} matrix with measurements and their
 #'     standard errors, or an object of class \code{fissiontracks},
-#'     \code{UPb}, \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr},
-#'     \code{LuHf} or \code{UThHe}
+#'     \code{UPb}, \code{PbPb}, \code{ArAr}, \code{ReOs}, \code{SmNd},
+#'     \code{RbSr}, \code{LuHf}, \code{ThU} or \code{UThHe}
 #' @param k the number of discrete age components to be
 #'     sought. Setting this parameter to \code{'auto'} automatically
 #'     selects the optimal number of components (up to a maximum of 5)
@@ -43,9 +43,9 @@ peakfit.default <- function(x,k='auto',sigdig=2,log=TRUE,...){
         x[,1] <- log(x[,1])
     }
     if (identical(k,'min')) {
-        out <- min.age.model(x,sigdig=sigdig)
+        out <- min_age_model(x,sigdig=sigdig)
     } else if (identical(k,'auto')) {
-        out <- normal.mixtures(x,k=BIC.fit(x,5),sigdig=sigdig,...)
+        out <- normal.mixtures(x,k=BIC_fit(x,5),sigdig=sigdig,...)
     } else {
         out <- normal.mixtures(x,k,sigdig=sigdig,...)
     }
@@ -61,7 +61,7 @@ peakfit.default <- function(x,k='auto',sigdig=2,log=TRUE,...){
 peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,...){
     out <- NULL
     if (k == 0) return(out)
-    if (identical(k,'auto')) k <- BIC.fit(x,5,log=log)
+    if (identical(k,'auto')) k <- BIC_fit(x,5,log=log)
     if (x$format == 1 & !identical(k,'min')){
         out <- binomial.mixtures(x,k,exterr=exterr,...)
     }  else if (x$format == 3){
@@ -100,14 +100,15 @@ peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,
                    cutoff.disc=cutoff.disc,exterr=exterr,
                    sigdig=sigdig,log=log,...)
 }
-#' @param i2i `isochron to intercept': calculates the initial (aka
-#'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-#'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-#'     uses the default values stored in \code{settings('iratio',...)
-#'     or zero (for the Pb-Pb method).}
+#' @param i2i `isochron to intercept': calculates the initial
+#'     (aka `inherited', `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
+#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}  or zero (for the Pb-Pb
+#'     method). When applied to data of class \code{ThU}, setting
+#'     \code{i2i} to \code{TRUE} applies a detrital Th-correction.
 #' @rdname peakfit
 #' @export
 peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,i2i=TRUE,...){
@@ -140,6 +141,11 @@ peakfit.LuHf <- function(x,k=1,exterr=TRUE,sigdig=2,log=TRUE,i2i=TRUE,...){
 }
 #' @rdname peakfit
 #' @export
+peakfit.ThU <- function(x,k=1,exterr=FALSE,sigdig=2,log=TRUE,i2i=TRUE,...){
+    peakfit.helper(x,k=k,exterr=exterr,sigdig=sigdig,log=log,i2i=i2i,...)
+}
+#' @rdname peakfit
+#' @export
 peakfit.UThHe <- function(x,k=1,sigdig=2,log=TRUE,...){
     peakfit.helper(x,k=k,sigdig=sigdig,log=log,...)
 }
@@ -147,7 +153,7 @@ peakfit.helper <- function(x,k=1,type=4,cutoff.76=1100,
                            cutoff.disc=c(-15,5),exterr=TRUE,sigdig=2,
                            log=TRUE,i2i=FALSE,...){
     if (k<1) return(NULL)
-    if (identical(k,'auto')) k <- BIC.fit(x,5,log=log)
+    if (identical(k,'auto')) k <- BIC_fit(x,5,log=log)
     fit <- ages2peaks(x,k=k,log=log,i2i=i2i)
     if (exterr){
         if (identical(k,'min')) numpeaks <- 1
@@ -182,6 +188,8 @@ ages2peaks <- function(x,k=1,type=4,cutoff.76=1100,
         tt <- LuHf.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'fissiontracks')){
         tt <- fissiontrack.age(x,exterr=FALSE)
+    } else if (hasClass(x,'ThU')){
+        tt <- ThU.age(x,exterr=FALSE,i2i=i2i)
     }
     peakfit.default(tt,k,log=log)
 }
@@ -234,7 +242,7 @@ get.props.err <- function(E){
 }
 
 peaks2legend <- function(fit,sigdig=2,k=NULL){
-    if (identical(k,'min')) return(minage2legend(fit,sigdig))
+    if (identical(k,'min')) return(min_age_to_legend(fit,sigdig))
     out <- NULL
     for (i in 1:length(fit$peaks)){
         rounded.age <- roundit(fit$peaks[i],fit$peaks.err[i],sigdig=sigdig)
@@ -246,7 +254,7 @@ peaks2legend <- function(fit,sigdig=2,k=NULL){
     }
     out
 }
-minage2legend <- function(fit,sigdig=2){
+min_age_to_legend <- function(fit,sigdig=2){
     rounded.age <- roundit(fit$peaks,fit$peaks.err,sigdig=sigdig)
     paste0('Minimum: ',rounded.age[1],'+/-',rounded.age[2])
 }
@@ -363,7 +371,7 @@ theta2age <- function(x,theta,beta.var,exterr=TRUE){
     list(peaks=peaks,peaks.err=peaks.err)
 }
 
-BIC.fit <- function(x,max.k,...){
+BIC_fit <- function(x,max.k,...){
     n <- length(x)
     BIC <- Inf
     for (k in 1:max.k){
@@ -381,7 +389,7 @@ BIC.fit <- function(x,max.k,...){
 }
 
 # Simple 3-parameter Normal model (Section 6.11 of Galbraith, 2005)
-min.age.model <- function(zs,sigdig=2){
+min_age_model <- function(zs,sigdig=2){
     z <- zs[,1]
     mu <- seq(min(z),max(z),length.out=100)
     sigma <- seq(stats::sd(z)/10,2*stats::sd(z),length.out=10)
@@ -392,7 +400,7 @@ min.age.model <- function(zs,sigdig=2){
         for (sigmai in sigma){ # sigma
             for (propi in prop){ # pi
                 pars <- c(mui,sigmai,propi)
-                newL <- get.min.age.L(pars,zs)
+                newL <- get.minage.L(pars,zs)
                 if (newL < L) {
                     L <- newL
                     fit <- pars
@@ -400,14 +408,14 @@ min.age.model <- function(zs,sigdig=2){
             }
         }
     }
-    H <- stats::optimHess(fit,get.min.age.L,zs=zs)
+    H <- stats::optimHess(fit,get.minage.L,zs=zs)
     E <- solve(H)
     out <- list(L=L,peaks=fit[1],
                 peaks.err=sqrt(E[1,1]),props.err=sqrt(E[3,3]))
     out
 }
 
-get.min.age.L <- function(pars,zs){
+get.minage.L <- function(pars,zs){
     z <- zs[,1]
     s <- zs[,2]
     mu <- pars[1]

@@ -11,7 +11,7 @@
 #'
 #' and object of class \code{fissiontracks}, \code{UThHe},
 #' \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{LuHf},
-#' \code{PbPb} or \code{UPb}
+#' \code{ThU}, \code{PbPb} or \code{UPb}
 #' @param from minimum age limit of the radial scale
 #' @param to maximum age limit of the radial scale
 #' @param t0 central value
@@ -103,27 +103,28 @@ radialplot.UPb <- function(x,from=NA,to=NA,t0=NA,
                            cutoff.76=1100, cutoff.disc=c(-15,5),
                            show.numbers=FALSE, pch=21,bg='white',
                            markers=NULL,k=0,exterr=TRUE,...){
-    radialplot.helper(x,from=from,to=to,t0=t0,
+    radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,type=type,
                       cutoff.76=cutoff.76, cutoff.disc=cutoff.disc,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=exterr,...)
 }
-#' @param i2i `isochron to intercept': calculates the initial (aka
-#'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-#'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-#'     uses the default values stored in \code{settings('iratio',...)
-#'     or zero (for the Pb-Pb method).}
+#' @param i2i `isochron to intercept': calculates the initial
+#'     (aka `inherited', `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
+#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}  or zero (for the Pb-Pb
+#'     method). When applied to data of class \code{ThU}, setting
+#'     \code{i2i} to \code{TRUE} applies a detrital Th-correction.
 #' @rdname radialplot
 #' @export
 radialplot.PbPb <- function(x,from=NA,to=NA,t0=NA,
                             transformation='log',show.numbers=FALSE,
                             pch=21,bg='white',markers=NULL,k=0,
                             exterr=TRUE,i2i=TRUE,...){
-    radialplot.helper(x,from=from,to=to,t0=t0,
+    radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=exterr,i2i=i2i,...)
@@ -134,7 +135,7 @@ radialplot.ArAr <- function(x,from=NA,to=NA,t0=NA,
                             transformation='log',show.numbers=FALSE,
                             pch=21,bg='white',markers=NULL,k=0,
                             exterr=TRUE,i2i=FALSE,...){
-    radialplot.helper(x,from=from,to=to,t0=t0,
+    radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=exterr,i2i=i2i,...)
@@ -144,7 +145,7 @@ radialplot.ArAr <- function(x,from=NA,to=NA,t0=NA,
 radialplot.UThHe <- function(x,from=NA,to=NA,t0=NA,
                              transformation='log',show.numbers=FALSE,
                              pch=21,bg='white',markers=NULL,k=0,...){
-    radialplot.helper(x,from=from,to=to,t0=t0,
+    radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=FALSE,...)
@@ -155,7 +156,7 @@ radialplot.ReOs <- function(x,from=NA,to=NA,t0=NA,
                             transformation='log',show.numbers=FALSE,
                             pch=21,bg='white',markers=NULL,k=0,
                             exterr=TRUE,i2i=TRUE,...){
-    radialplot.helper(x,from=from,to=to,t0=t0,
+    radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=exterr,i2i=i2i,...)
@@ -166,7 +167,7 @@ radialplot.SmNd <- function(x,from=NA,to=NA,t0=NA,
                             transformation='log',show.numbers=FALSE,
                             pch=21,bg='white',markers=NULL,k=0,
                             exterr=TRUE,i2i=TRUE,...){
-    radialplot.helper(x,from=from,to=to,t0=t0,
+    radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=exterr,i2i=i2i,...)
@@ -177,7 +178,7 @@ radialplot.RbSr <- function(x,from=NA,to=NA,t0=NA,
                             transformation='log',show.numbers=FALSE,
                             pch=21,bg='white',markers=NULL,k=0,
                             exterr=TRUE,i2i=TRUE,...){
-    radialplot.helper(x,from=from,to=to,t0=t0,
+    radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=exterr,i2i=i2i,...)
@@ -188,12 +189,22 @@ radialplot.LuHf <- function(x,from=NA,to=NA,t0=NA,
                             transformation='log',show.numbers=FALSE,
                             pch=21,bg='white',markers=NULL,k=0,
                             exterr=TRUE,i2i=TRUE,...){
-    radialplot.helper(x,from=from,to=to,t0=t0,
+    radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,bg=bg,
                       markers=markers,k=k,exterr=exterr,i2i=i2i,...)
 }
-radialplot.helper <- function(x,from=NA,to=NA,t0=NA,
+#' @rdname radialplot
+#' @export
+radialplot.ThU <- function(x,from=NA,to=NA,t0=NA,
+                           transformation='log',show.numbers=FALSE,
+                           pch=21,bg='white',markers=NULL,k=0,i2i=TRUE,...){
+    radialplot_helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,
+                      show.numbers=show.numbers,pch=pch,bg=bg,
+                      markers=markers,k=k,exterr=FALSE,i2i=i2i,...)
+}
+radialplot_helper <- function(x,from=NA,to=NA,t0=NA,
                              transformation='log',type=4,
                              cutoff.76=1100, cutoff.disc=c(-15,5),
                              show.numbers=FALSE,pch=21,bg='white',
@@ -230,6 +241,8 @@ age2radial <- function(x,from=NA,to=NA,t0=NA,transformation='log',
         tt <- RbSr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'LuHf')){
         tt <- LuHf.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'ThU')){
+        tt <- ThU.age(x,exterr=FALSE,i2i=i2i)
     }
     radialplot.default(tt,from=from,to=to,t0=t0,
                        transformation=transformation,
@@ -242,32 +255,32 @@ radial.plot <- function(x,zeta=0,rhoD=0,asprat=3/4,
                         markers=NULL,...){
     exM <- radial.scale(x,zeta,rhoD)
     tticks <- get.radial.tticks(x)
-    plot.radial.lines(tticks,l=0.025,x,exM[1],exM[2],
+    plot_radial_lines(tticks,l=0.025,x,exM[1],exM[2],
                       zeta,rhoD,label=TRUE)
     if (!is.null(markers)){
-        plot.radial.lines(markers,x,exM[1],exM[2],
+        plot_radial_lines(markers,x,exM[1],exM[2],
                           zeta,rhoD,label=FALSE)
     }
-    plot.radial.axes(x)
-    plot.points(x,show.numbers,pch,bg,...)
+    plot_radial_axes(x)
+    plot_points(x,show.numbers,pch,bg,...)
 }
 
-plot.points <- function(x,show.numbers=FALSE,pch=21,bg='white',...){
+plot_points <- function(x,show.numbers=FALSE,pch=21,bg='white',...){
     rxy <- data2rxry(x)
     rx <- rxy[,1]
     ry <- rxy[,2]
     if (show.numbers) {
         if('cex' %in% names(list(...)))
-            points(rx,ry,pch=pch,bg=bg,...)
+            graphics::points(rx,ry,pch=pch,bg=bg,...)
         else
-            points(rx,ry,pch=pch,bg=bg,cex=3,...)
-        text(rx,ry,1:length(rx))
+            graphics::points(rx,ry,pch=pch,bg=bg,cex=3,...)
+        graphics::text(rx,ry,1:length(rx))
     } else {
-        points(rx,ry,pch=pch,bg=bg,...)
+        graphics::points(rx,ry,pch=pch,bg=bg,...)
     }
 }
 
-plot.radial.axes <- function(x){
+plot_radial_axes <- function(x){
     xs <- stats::na.omit(x$s)
     graphics::Axis(side=2,at=c(-2,0,2),labels=c(-2,0,2))
     if (identical(x$transformation,'arcsin')){
@@ -308,7 +321,7 @@ radial.scale <- function(x,zeta=0,rhoD=0){
     c(e,xM)
 }
 
-plot.radial.lines <- function(tt,x,e,xM,zeta=0,rhoD=0,l=1,label=FALSE){
+plot_radial_lines <- function(tt,x,e,xM,zeta=0,rhoD=0,l=1,label=FALSE){
     z <- t2z(tt,x,zeta,rhoD)
     rxyb <- z2rxy(z-x$z0,e,xM)
     rxye <- z2rxy(z-x$z0,e,(1-l)*xM)
@@ -365,7 +378,7 @@ get.radial.tticks <- function(x){
 }
 
 x2zs <- function(x,...){ UseMethod("x2zs",x) }
-x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA){
+x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
     out <- list()
     if (is.na(transformation)) out$transformation <- 'log'
     else out$transformation <- transformation
@@ -406,7 +419,7 @@ x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA){
     }
     out
 }
-x2zs.fissiontracks <- function(x,t0=NA,from=NA,to=NA,transformation=NA){
+x2zs.fissiontracks <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
     out <- list()
     if (is.na(transformation)){
         if (x$format==1) out$transformation <- 'arcsin'

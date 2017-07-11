@@ -11,6 +11,7 @@
 \alias{peakfit.SmNd}
 \alias{peakfit.RbSr}
 \alias{peakfit.LuHf}
+\alias{peakfit.ThU}
 \alias{peakfit.UThHe}
 \title{Finite mixture modelling of geochronological datasets}
 \usage{
@@ -42,13 +43,16 @@ peakfit(x, ...)
 \method{peakfit}{LuHf}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
   i2i = TRUE, ...)
 
+\method{peakfit}{ThU}(x, k = 1, exterr = FALSE, sigdig = 2, log = TRUE,
+  i2i = TRUE, ...)
+
 \method{peakfit}{UThHe}(x, k = 1, sigdig = 2, log = TRUE, ...)
 }
 \arguments{
 \item{x}{either a \code{[2 x n]} matrix with measurements and their
 standard errors, or an object of class \code{fissiontracks},
-\code{UPb}, \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr},
-\code{LuHf} or \code{UThHe}}
+\code{UPb}, \code{PbPb}, \code{ArAr}, \code{ReOs}, \code{SmNd},
+\code{RbSr}, \code{LuHf}, \code{ThU} or \code{UThHe}}
 
 \item{...}{optional arguments (not used)}
 
@@ -87,14 +91,15 @@ between the \eqn{^{206}}Pb/\eqn{^{238}}U and
 \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 \code{cutoff.disc=NA} if you do not want to use this filter.}
 
-\item{i2i}{`isochron to intercept': calculates the initial (aka
-`inherited', `excess', or `common')
-\eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-\eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-uses the default values stored in \code{settings('iratio',...)
-or zero (for the Pb-Pb method).}}
+\item{i2i}{`isochron to intercept': calculates the initial
+(aka `inherited', `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+\eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+\eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
+\eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
+fit. Setting \code{i2i} to \code{FALSE} uses the default values
+stored in \code{settings('iratio',...)}  or zero (for the Pb-Pb
+method). When applied to data of class \code{ThU}, setting
+\code{i2i} to \code{TRUE} applies a detrital Th-correction.}
 }
 \value{
 a list with the following items: \describe{ \item{peaks}{a
