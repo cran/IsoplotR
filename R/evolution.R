@@ -22,11 +22,9 @@
 #'     isochron age?
 #' @param sigdig number of significant digits for the isochron age
 #' @param ... optional arguments to the generic \code{plot} function
-#'
 #' @examples
 #' data(examples)
 #' evolution(examples$ThU)
-#'
 #' @references Ludwig, K.R. and Titterington, D.M., 1994. Calculation
 #'     of \eqn{^{230}}Th/U isochrons, ages, and errors. Geochimica et
 #'     Cosmochimica Acta, 58(22), pp.5031-5042.
@@ -34,6 +32,7 @@
 #' Ludwig, K.R., 2003. Mathematical-statistical treatment of data and
 #'     errors for 230 Th/U geochronology. Reviews in Mineralogy and
 #'     Geochemistry, 52(1), pp.631-656.
+#' @importFrom grDevices rgb
 #' @export
 evolution <- function(x,xlim=NA,ylim=NA,alpha=0.05,transform=FALSE,
                       detrital=FALSE,show.numbers=FALSE,
@@ -50,13 +49,13 @@ evolution <- function(x,xlim=NA,ylim=NA,alpha=0.05,transform=FALSE,
     }
     if (isochron){
         fit <- isochron.ThU(x,type=3,plot=FALSE,exterr=exterr)
-        title(evolution.title(fit,sigdig=sigdig))
+        graphics::title(evolution.title(fit,sigdig=sigdig))
     }
 }
 
 U4U8vst <- function(x,detrital=FALSE,xlim=NA,ylim=NA,
                     alpha=0.05,show.numbers=FALSE,
-                    ellipse.col=rgb(0,1,0,0.5),...){
+                    ellipse.col=grDevices::rgb(0,1,0,0.5),...){
     ns <- length(x)
     ta0 <- ThU.age(x,exterr=FALSE,i2i=detrital,cor=FALSE)
     nsd <- 3
@@ -83,7 +82,7 @@ U4U8vst <- function(x,detrital=FALSE,xlim=NA,ylim=NA,
 
 U4U8vsTh0U8 <- function(x,isochron=FALSE,detrital=FALSE, xlim=NA,
                         ylim=NA, alpha=0.05,show.numbers=FALSE,
-                        ellipse.col=rgb(0,1,0,0.5),
+                        ellipse.col=grDevices::rgb(0,1,0,0.5),
                         line.col='darksalmon',...){
     ns <- length(x)
     d <- data2evolution(x,detrital=detrital)
@@ -95,7 +94,6 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,detrital=FALSE, xlim=NA,
         e48 <- 1
         e08 <- fit$par['A'] + fit$par['B']*(e48-fit$par['a'])/fit$par['b']
         graphics::lines(c(b08,e08),c(b48,e48))
-        graphics::points(b08,b48,pch=19)
     }
     covmat <- matrix(0,2,2)
     for (i in 1:ns){
@@ -112,9 +110,10 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,detrital=FALSE, xlim=NA,
     if (isochron){
         sa <- sqrt(fit$cov['a','a'])
         sA <- sqrt(fit$cov['A','A'])
-        ell <- matrix(c(fit$par['A'],sa,fit$par['a'],sA,
+        ell <- matrix(c(fit$par['A'],sA,fit$par['a'],sa,
                         fit$cov['a','A']/(sa*sA)),1,5)
-        scatterplot(ell,alpha=alpha,ellipse.col='white',
+        scatterplot(ell,alpha=alpha,
+                    ellipse.col=grDevices::rgb(1,1,1,0.85),
                     line.col='black',new.plot=FALSE)
     }
 }

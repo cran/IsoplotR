@@ -83,7 +83,7 @@ central.default <- function(x,...){
     out$age <- c(tt,st)
     out$disp <- sigma
     out$mswd <- Chi2/df
-    out$p.value <- 1-pchisq(Chi2,df)
+    out$p.value <- 1-stats::pchisq(Chi2,df)
     out
 }
 #' @rdname central
@@ -103,25 +103,24 @@ central.UThHe <- function(x,...){
         cc <- uvw2UThHe(out$uvw,out$covmat)
         out$age <- get.UThHe.age(cc['U'],cc['sU'],cc['Th'],cc['sTh'],
                                  cc['He'],cc['sHe'],cc['Sm'],cc['sSm'])
-        SS <- SS.UThHe.uv(out$uvw[1:2],x)
     } else {
         uv <- UThHe2uv(x)
         fit <- stats::optim(c(0,0),SS.UThHe.uv,method='BFGS',
                             hessian=TRUE,x=x)
-        out$uv <- fit$par
+        out$uvw <- fit$par
         out$covmat <- solve(fit$hessian)
         nms <- c('u','v')
         cc <- uv2UThHe(out$uv,out$covmat)
         out$age <- get.UThHe.age(cc['U'],cc['sU'],
                                  cc['Th'],cc['sTh'],
                                  cc['He'],cc['sHe'])
-        SS <- SS.UThHe.uv(out$uv,x)
     }
-    names(out$uv) <- nms
+    SS <- SS.UThHe.uv(out$uvw[1:2],x)
+    names(out$uvw) <- nms
     colnames(out$covmat) <- nms
     rownames(out$covmat) <- nms
     out$mswd <- SS/df
-    out$p.value <- 1-pchisq(SS,df)
+    out$p.value <- 1-stats::pchisq(SS,df)
     out
 }
 #' @param mineral setting this parameter to either \code{apatite} or
@@ -158,7 +157,7 @@ central.fissiontracks <- function(x,mineral=NA,...){
         out$age <- c(tt,st)
         out$disp <- sigma
         out$mswd <- Chi2/df
-        out$p.value <- 1-pchisq(Chi2,df)
+        out$p.value <- 1-stats::pchisq(Chi2,df)
     } else if (x$format>1){
         tst <- age(x,exterr=FALSE,mineral=mineral)
         out <- central.default(tst)

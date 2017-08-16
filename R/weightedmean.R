@@ -49,6 +49,7 @@ weightedmean <- function(x,...){ UseMethod("weightedmean",x) }
 #' @param sigdig the number of significant digits of the numerical
 #'     values reported in the title of the graphical output.
 #' @param alpha the confidence limits of the error bars/rectangles.
+#' @importFrom grDevices rgb
 #' @rdname weightedmean
 #' @export
 weightedmean.default <- function(x,detect.outliers=TRUE,plot=TRUE,
@@ -67,7 +68,7 @@ weightedmean.default <- function(x,detect.outliers=TRUE,plot=TRUE,
     }
     fit <- get.weightedmean(X,sX,valid)
     if (plot){
-        plot.weightedmean(X,sX,fit,rect.col=rect.col,
+        plot_weightedmean(X,sX,fit,rect.col=rect.col,
                           outlier.col=outlier.col,sigdig=sigdig,
                           alpha=alpha,...)
     } else {
@@ -93,6 +94,18 @@ weightedmean.default <- function(x,detect.outliers=TRUE,plot=TRUE,
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 #'     \code{cutoff.disc=NA} if you do not want to use this filter.
 #' @param exterr propagate decay constant uncertainty?
+#' @param common.Pb apply a common lead correction using one of three
+#'     methods:
+#'
+#' \code{1}: use the isochron intercept as the initial Pb-composition
+#'
+#' \code{2}: use the Stacey-Kramer two-stage model to infer the initial
+#' Pb-composition
+#'
+#' \code{3}: use the Pb-composition stored in
+#' \code{settings('iratio','Pb206Pb204')} and
+#' \code{settings('iratio','Pb207Pb204')}
+#'
 #' @examples
 #' ages <- c(251.9,251.59,251.47,251.35,251.1,251.04,250.79,250.73,251.22,228.43)
 #' errs <- c(0.28,0.28,0.63,0.34,0.28,0.63,0.28,0.4,0.28,0.33)
@@ -106,8 +119,12 @@ weightedmean.UPb <- function(x,detect.outliers=TRUE,plot=TRUE,
                              outlier.col=rgb(0,1,1,0.5),
                              sigdig=2,type=4,cutoff.76=1100,
                              cutoff.disc=c(-15,5),alpha=0.05,
-                             exterr=TRUE,...){
-    weightedmean.helper(x,detect.outliers=detect.outliers,plot=plot,
+                             exterr=TRUE,common.Pb=0,...){
+    if (common.Pb %in% c(1,2,3))
+        X <- common.Pb.correction(x,option=common.Pb)
+    else
+        X <- x
+    weightedmean_helper(X,detect.outliers=detect.outliers,plot=plot,
                         rect.col=rect.col,outlier.col=outlier.col,
                         type=type,cutoff.76=cutoff.76,
                         cutoff.disc=cutoff.disc,sigdig=sigdig,
@@ -128,7 +145,7 @@ weightedmean.PbPb <- function(x,detect.outliers=TRUE,plot=TRUE,
                               rect.col=rgb(0,1,0,0.5),
                               outlier.col=rgb(0,1,1,0.5), sigdig=2,
                               alpha=0.05,exterr=TRUE,i2i=FALSE,...){
-    weightedmean.helper(x,detect.outliers=detect.outliers,plot=plot,
+    weightedmean_helper(x,detect.outliers=detect.outliers,plot=plot,
                         rect.col=rect.col,outlier.col=outlier.col,
                         sigdig=sigdig,alpha=alpha,exterr=exterr,
                         i2i=i2i,...)
@@ -139,7 +156,7 @@ weightedmean.ThU <- function(x,detect.outliers=TRUE,plot=TRUE,
                              rect.col=rgb(0,1,0,0.5),
                              outlier.col=rgb(0,1,1,0.5), sigdig=2,
                              alpha=0.05,i2i=TRUE,...){
-    weightedmean.helper(x,detect.outliers=detect.outliers,plot=plot,
+    weightedmean_helper(x,detect.outliers=detect.outliers,plot=plot,
                         rect.col=rect.col,outlier.col=outlier.col,
                         sigdig=sigdig,alpha=alpha,exterr=FALSE,
                         i2i=i2i,...)
@@ -150,7 +167,7 @@ weightedmean.ArAr <- function(x,detect.outliers=TRUE,plot=TRUE,
                               rect.col=rgb(0,1,0,0.5),
                               outlier.col=rgb(0,1,1,0.5), sigdig=2,
                               alpha=0.05,exterr=TRUE,i2i=FALSE,...){
-    weightedmean.helper(x,detect.outliers=detect.outliers,plot=plot,
+    weightedmean_helper(x,detect.outliers=detect.outliers,plot=plot,
                         rect.col=rect.col,outlier.col=outlier.col,
                         sigdig=sigdig,alpha=alpha,exterr=exterr,
                         i2i=i2i,...)
@@ -161,7 +178,7 @@ weightedmean.ReOs <- function(x,detect.outliers=TRUE,plot=TRUE,
                               rect.col=rgb(0,1,0,0.5),
                               outlier.col=rgb(0,1,1,0.5), sigdig=2,
                               alpha=0.05,exterr=TRUE,i2i=TRUE,...){
-    weightedmean.helper(x,detect.outliers=detect.outliers,plot=plot,
+    weightedmean_helper(x,detect.outliers=detect.outliers,plot=plot,
                         rect.col=rect.col,outlier.col=outlier.col,
                         sigdig=sigdig,alpha=alpha,exterr=exterr,
                         i2i=i2i,...)
@@ -172,7 +189,7 @@ weightedmean.SmNd <- function(x,detect.outliers=TRUE,plot=TRUE,
                               rect.col=rgb(0,1,0,0.5),
                               outlier.col=rgb(0,1,1,0.5), sigdig=2,
                               alpha=0.05,exterr=TRUE,i2i=TRUE,...){
-    weightedmean.helper(x,detect.outliers=detect.outliers,plot=plot,
+    weightedmean_helper(x,detect.outliers=detect.outliers,plot=plot,
                         rect.col=rect.col,outlier.col=outlier.col,
                         sigdig=sigdig,alpha=alpha,exterr=exterr,
                         i2i=i2i,...)
@@ -183,7 +200,7 @@ weightedmean.RbSr <- function(x,detect.outliers=TRUE,plot=TRUE,
                               rect.col=rgb(0,1,0,0.5),
                               outlier.col=rgb(0,1,1,0.5), sigdig=2,
                               alpha=0.05,exterr=TRUE,i2i=TRUE,...){
-    weightedmean.helper(x,detect.outliers=detect.outliers,plot=plot,
+    weightedmean_helper(x,detect.outliers=detect.outliers,plot=plot,
                         rect.col=rect.col,outlier.col=outlier.col,
                         sigdig=sigdig,alpha=alpha,exterr=exterr,
                         i2i=i2i,...)
@@ -194,7 +211,7 @@ weightedmean.LuHf <- function(x,detect.outliers=TRUE,plot=TRUE,
                               rect.col=rgb(0,1,0,0.5),
                               outlier.col=rgb(0,1,1,0.5), sigdig=2,
                               alpha=0.05,exterr=TRUE,i2i=TRUE,...){
-    weightedmean.helper(x,detect.outliers=detect.outliers,plot=plot,
+    weightedmean_helper(x,detect.outliers=detect.outliers,plot=plot,
                         rect.col=rect.col,outlier.col=outlier.col,
                         sigdig=sigdig,alpha=alpha,exterr=exterr,
                         i2i=i2i,...)
@@ -208,7 +225,7 @@ weightedmean.UThHe <- function(x,detect.outliers=TRUE,plot=TRUE,
     tt <- UThHe.age(x)
     fit <- weightedmean.default(tt,detect.outliers=detect.outliers,plot=FALSE,...)
     if (plot){
-        plot.weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
+        plot_weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
                           outlier.col=outlier.col,sigdig=sigdig,
                           alpha=alpha)
     } else {
@@ -240,17 +257,17 @@ weightedmean.fissiontracks <- function(x,detect.outliers=TRUE,plot=TRUE,
             sqrt( stt2 + (rhoD[2]/rhoD[1])^2 + (zeta[2]/zeta[1])^2 )
     }
     if (plot){
-        plot.weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
+        plot_weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
                           outlier.col=outlier.col,sigdig=sigdig,
                           alpha=alpha)
     } else {
         return(fit)
     }
 }
-weightedmean.helper <- function(x,detect.outliers=TRUE,plot=TRUE,
-                                rect.col=rgb(0,1,0,0.5),type=4,
+weightedmean_helper <- function(x,detect.outliers=TRUE,plot=TRUE,
+                                rect.col=grDevices::rgb(0,1,0,0.5),type=4,
                                 cutoff.76=1100,cutoff.disc=c(-15,5),
-                                outlier.col=rgb(0,1,1,0.5), sigdig=2,
+                                outlier.col=grDevices::rgb(0,1,1,0.5), sigdig=2,
                                 alpha=0.05,exterr=TRUE,i2i=FALSE,...){
     if (hasClass(x,'UPb')){
         tt <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
@@ -276,7 +293,7 @@ weightedmean.helper <- function(x,detect.outliers=TRUE,plot=TRUE,
                                cutoff.76=cutoff.76,type=type)
     }
     if (plot){
-        plot.weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
+        plot_weightedmean(tt[,1],tt[,2],fit,rect.col=rect.col,
                           outlier.col=outlier.col,sigdig=sigdig,alpha=alpha)
     } else {
         return(fit)
@@ -297,7 +314,7 @@ get.weightedmean <- function(X,sX,valid=TRUE){
         df <- length(X)-1
         SS <- sum(((X-out$mean[1])/sX)^2)
         out$mswd <- SS/df
-        out$p.value <- 1-pchisq(SS,df)
+        out$p.value <- 1-stats::pchisq(SS,df)
         out$valid <- valid
     } else {
         out$mean <- X
@@ -331,8 +348,8 @@ wtdmean.title <- function(fit,sigdig=2){
     }
 }
 
-plot.weightedmean <- function(X,sX,fit,rect.col=rgb(0,1,0,0.5),
-                              outlier.col=rgb(0,1,1,0.5),sigdig=2,
+plot_weightedmean <- function(X,sX,fit,rect.col=grDevices::rgb(0,1,0,0.5),
+                              outlier.col=grDevices::rgb(0,1,1,0.5),sigdig=2,
                               alpha=0.05){
     ns <- length(X)
     fact <- stats::qnorm(1-alpha/2)
@@ -348,5 +365,5 @@ plot.weightedmean <- function(X,sX,fit,rect.col=rgb(0,1,0,0.5),
         graphics::rect(xleft=i-0.4,ybottom=X[i]-fact*sX[i],
                        xright=i+0.4,ytop=X[i]+fact*sX[i],col=col)
     }
-    title(wtdmean.title(fit,sigdig=sigdig))
+    graphics::title(wtdmean.title(fit,sigdig=sigdig))
 }
