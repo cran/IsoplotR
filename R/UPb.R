@@ -281,7 +281,7 @@ get.Pb207U235.ratios <- function(x,exterr=FALSE){
         Y <- x$x[,'Pb207Pb206']
         sY <- x$x[,'errPb207Pb206']
         rhoXY <- x$x[,'rhoXY']
-        covXY <- rhoXY/(sX*sY)
+        covXY <- rhoXY*sX*sY
         out[,'Pb207U235'] <- R*Y/X
         relerr2 <- (sX/X)^2 -2*covXY/(X*Y) + (sY/Y)^2
         if (exterr) relerr2 <- relerr2 + (sR/R)^2
@@ -388,9 +388,18 @@ get.Pb206U238.age.default <- function(x,sx=0,exterr=TRUE,...){
     }
     out
 }
-get.Pb206U238.age.UPb <- function(x,i,exterr=TRUE,...){
+get.Pb206U238.age.UPb <- function(x,i=NA,exterr=TRUE,...){
     r68 <- get.Pb206U238.ratios(x)
-    get.Pb206U238.age(r68[i,'Pb206U238'],r68[i,'errPb206U238'],exterr=exterr)
+    if (is.na(i)){
+        ns <- length(x)
+        out <- matrix(0,ns,2)
+        for (j in 1:ns){
+            out[j,] <- get.Pb206U238.age.UPb(x,i=j,exterr=exterr,...)
+        }
+    } else {
+        out <- get.Pb206U238.age(r68[i,'Pb206U238'],r68[i,'errPb206U238'],exterr=exterr)
+    }
+    out
 }
 get.Pb206U238.age.wetherill <- function(x,exterr=TRUE,...){
     i <- 'Pb206U238'
@@ -420,7 +429,7 @@ get.Pb207Pb206.age.default <- function(x,sx=0,exterr=TRUE,...){
     if (is.na(x)){
         t.76 <- NA
     } else {
-        fit <- stats::optimize(Pb207Pb206.misfit,c(0,5000),x=x)
+        fit <- stats::optimize(Pb207Pb206.misfit,c(0,1e4),x=x)
         t.76 <- fit$minimum
     }
     J <- matrix(0,1,4)
@@ -464,27 +473,28 @@ get.Pb207Pb206.age.terawasserburg <- function(x,exterr=TRUE,...){
 # x is an object of class \code{UPb}
 # returns a matrix of 7/5, 6/8, 7/6
 # and concordia ages and their uncertainties.
-UPb.age <- function(x,exterr=TRUE,i=NA,sigdig=NA,wetherill=TRUE){
-    labels <- c('t.75','s[t.75]','t.68','s[t.68]',
-                't.76','s[t.76]','t.conc','s[t.conc]')
+UPb.age <- function(x,exterr=TRUE,i=NA,sigdig=NA,conc=TRUE){
+    labels <- c('t.75','s[t.75]','t.68','s[t.68]','t.76','s[t.76]')
+    if (conc) labels <- c(labels,'t.conc','s[t.conc]')
     if (!is.na(i)){
-        if (wetherill) samp <- wetherill(x,i)
-        else samp <- tera.wasserburg(x,i)
-        t.conc <- concordia.age(samp,exterr=exterr)
         t.75 <- get.Pb207U235.age(x,i,exterr=exterr)
         t.68 <- get.Pb206U238.age(x,i,exterr=exterr)
         t.76 <- get.Pb207Pb206.age(x,i,exterr=exterr)
         t.75.out <- roundit(t.75[1],t.75[2],sigdig=sigdig)
         t.68.out <- roundit(t.68[1],t.68[2],sigdig=sigdig)
         t.76.out <- roundit(t.76[1],t.76[2],sigdig=sigdig)
-        t.conc.out <- roundit(t.conc$age[1],t.conc$age[2],sigdig=sigdig)
-        out <- c(t.75.out,t.68.out,t.76.out,t.conc.out)
+        out <- c(t.75.out,t.68.out,t.76.out)
+        if (conc){
+            t.conc <- concordia.age(x,i,exterr=exterr)
+            t.conc.out <- roundit(t.conc$age[1],t.conc$age[2],sigdig=sigdig)
+            out <- c(out,t.conc.out)
+        }
         names(out) <- labels
     } else {
         nn <- nrow(x$x)
-        out <- matrix(0,nn,8)
+        out <- matrix(0,nn,length(labels))
         for (i in 1:nn){
-            out[i,] <- UPb.age(x,i=i,exterr=exterr,sigdig=sigdig)
+            out[i,] <- UPb.age(x,i=i,exterr=exterr,sigdig=sigdig,conc=conc)
         }
         colnames(out) <- labels
     }
@@ -517,7 +527,7 @@ dD76dR <- function(t.76,l5,l8,R){
 
 filter.UPb.ages <- function(x,type=4,cutoff.76=1100,
                             cutoff.disc=c(-15,5),exterr=TRUE){
-    tt <- UPb.age(x,exterr=exterr)
+    tt <- UPb.age(x,exterr=exterr,conc=(type==5))
     do.76 <- tt[,'t.68'] > cutoff.76
     if (any(is.na(cutoff.disc))) {
         is.concordant <- rep(TRUE,nrow(x))
@@ -532,17 +542,17 @@ filter.UPb.ages <- function(x,type=4,cutoff.76=1100,
                         'apply a common-Pb correction.'))
     }
     if (type==1){
-        out <- tt[,c('t.75','s[t.75]')]
+        out <- tt[is.concordant,c('t.75','s[t.75]')]
     } else if (type==2){
-        out <- tt[,c('t.68','s[t.68]')]
+        out <- tt[is.concordant,c('t.68','s[t.68]')]
     } else if (type==3){
-        out <- tt[,c('t.76','s[t.76]')]
+        out <- tt[is.concordant,c('t.76','s[t.76]')]
     } else if (type==4){
         i.76 <- as.vector(which(do.76 & is.concordant))
         i.68 <- as.vector(which(!do.76 & is.concordant))
         out <- rbind(tt[i.68,c('t.68','s[t.68]')],tt[i.76,c('t.76','s[t.76]')])
     } else if (type==5){
-        out <- tt[,c('t.conc','s[t.conc]')]
+        out <- tt[is.concordant,c('t.conc','s[t.conc]')]
     }
     colnames(out) <- c('t','s[t]')
     out
@@ -590,7 +600,7 @@ common.Pb.stacey.kramers <- function(x){
             out <- Pb.correction.without.204(x,i74/i64)
         else
             out <- Pb.correction.with.204(x,i64,i74)
-        tt <- age(out)[,'t.conc']
+        tt <- get.Pb206U238.age(out)[,1]
     }
     out
 }

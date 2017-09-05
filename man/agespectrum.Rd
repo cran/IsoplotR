@@ -10,7 +10,8 @@ agespectrum(x, ...)
 
 \method{agespectrum}{default}(x, alpha = 0.05, plateau = TRUE,
   plateau.col = rgb(0, 1, 0, 0.5), non.plateau.col = rgb(0, 1, 1, 0.5),
-  sigdig = 2, line.col = "red", lwd = 2, title = TRUE, ...)
+  sigdig = 2, line.col = "red", lwd = 2, title = TRUE,
+  xlab = "cumulative fraction", ylab = "age [Ma]", ...)
 
 \method{agespectrum}{ArAr}(x, alpha = 0.05, plateau = TRUE,
   plateau.col = rgb(0, 1, 0, 0.5), non.plateau.col = rgb(0, 1, 1, 0.5),
@@ -52,6 +53,10 @@ if \code{plateau=TRUE}).}
 
 \item{title}{add a title to the plot? If \code{FALSE}, returns a
 list with plateau parameters.}
+
+\item{xlab}{x-axis label}
+
+\item{ylab}{y-axis label}
 
 \item{exterr}{propagate the external (decay constant and
 calibration factor) uncertainties?}

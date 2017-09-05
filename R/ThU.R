@@ -1,4 +1,4 @@
-get.ThU.age <- function(U234U238,sU234U238,Th230U238,sTh230U238,cov4808,
+get.ThU.age <- function(Th230U238,sTh230U238,U234U238=1,sU234U238=0,cov4808=0,
                         exterr=TRUE,cor=FALSE){
     l0 <- lambda('Th230')
     l4 <- lambda('U234')
@@ -57,6 +57,22 @@ get.ThU.age <- function(U234U238,sU234U238,Th230U238,sTh230U238,cov4808,
     out
 }
 
+get.Th230Th232_0x <- function(tt,Th230Th232,errTh230Th232=0){
+    l0 <- settings('lambda','Th230')[1]
+    Th230Th232_0x <- Th230Th232 * exp(l0*tt)
+    errTh230Th232_0x <- errTh230Th232/Th230Th232
+    c(Th230Th232_0x,errTh230Th232_0x)
+}
+
+get.Th230Th232 <- function(tt,Th230Th232_0x,U238Th232){
+    l0 <- settings('lambda','Th230')[1]
+    Th230Th232_0x * exp(-l0*tt) + U238Th232 * (1 - exp(-l0*tt))
+}
+
+get.U238Th232 <- function(tt,Th230Th232_0x,Th230Th232){
+    l0 <- settings('lambda','Th230')[1]
+    (Th230Th232 - Th230Th232_0x * exp(-l0*tt)) / (1 - exp(-l0*tt))
+}
 
 k1 <- function(tt,l0,l4){
     (1-exp((l4[1]-l0[1])*tt))*l0[1]/(l4[1]-l0[1])
@@ -116,6 +132,14 @@ get.U234U238 <- function(tt,U234U238_0){
 }
 
 ThU.age <- function(x,exterr=FALSE,i=NA,i2i=FALSE,sigdig=NA,cor=TRUE){
+    if (x$format %in% c(1,2))
+        out <- get.ThU.age.corals(x,exterr=exterr,i=i,i2i=i2i,sigdig=sigdig,cor=cor)
+    else
+        out <- get.ThU.age.volcanics(x,exterr=exterr,i=i,i2i=i2i,sigdig=sigdig)
+    out
+}
+
+get.ThU.age.corals <- function(x,exterr=FALSE,i=NA,i2i=FALSE,sigdig=NA,cor=TRUE){
     ns <- length(x)
     d <- data2evolution(x)
     if (i2i){
@@ -134,9 +158,9 @@ ThU.age <- function(x,exterr=FALSE,i=NA,i2i=FALSE,sigdig=NA,cor=TRUE){
         if (i2i){ # project onto 08-48 plane
             a0 <- osmond[j,'Y'] - fit$par['b']*osmond[j,'X']
             A0 <- osmond[j,'Z'] - fit$par['B']*osmond[j,'X']
-            out[j,] <- get.ThU.age(a0,sa,A0,sA,covAa,exterr=exterr,cor=cor)
+            out[j,] <- get.ThU.age(A0,sA,a0,sa,covAa,exterr=exterr,cor=cor)
         } else {
-            out[j,] <- get.ThU.age(a,sa,A,sA,covAa,exterr=exterr,cor=cor)
+            out[j,] <- get.ThU.age(A,sA,a,sa,covAa,exterr=exterr,cor=cor)
         }
     }
     if (!is.na(sigdig)){
@@ -144,6 +168,25 @@ ThU.age <- function(x,exterr=FALSE,i=NA,i2i=FALSE,sigdig=NA,cor=TRUE){
         out[,c(3,4)] <- roundit(out[,3],out[,4],sigdig=sigdig)
         out[,5] <- signif(out[,5],sigdig)
     }
+    if (!is.na(i)) out <- out[i,]
+    out
+}
+
+get.ThU.age.volcanics <- function(x,exterr=FALSE,i=NA,i2i=FALSE,sigdig=NA){
+    ns <- length(x)
+    d <- data2evolution(x,isochron=i2i)
+    Th230U238 <- (d$x[,'Th230Th232'] - d$Th230Th232_0)/d$x[,'U238Th232']
+    d08.d02 <- 1/d$x[,'U238Th232']
+    d08.d82 <- -(d$x[,'Th230Th232'] - d$Th230Th232_0)/d$x[,'U238Th232']^2
+    sTh230U238 <- sqrt( (d08.d02*d$x[,'errTh230Th232'])^2 +
+                        (d08.d82*d$x[,'errU238Th232'])^2 )
+    out <- matrix(0,ns,2)
+    colnames(out) <- c('t','s[t]')
+    for (j in 1:ns){
+        tst <- get.ThU.age(Th230U238[j],sTh230U238[j],exterr=exterr)
+        out[j,] <- tst[c('t','s[t]')]
+    }
+    if (!is.na(sigdig)) out <- roundit(out[,1],out[,2],sigdig=sigdig)
     if (!is.na(i)) out <- out[i,]
     out
 }
