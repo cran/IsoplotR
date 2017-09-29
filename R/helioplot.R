@@ -11,7 +11,8 @@
 #'     white ellipse?
 #' @param show.numbers show the grain numbers inside the error
 #'     ellipses?
-#' @param alpha confidence cutoff for the error ellipses
+#' @param alpha probability cutoff for the error ellipses and
+#'     confidence intervals
 #' @param contour.col two-element vector with the fill colours to be
 #'     assigned to the minimum and maximum age contour
 #' @param levels a vector with additional values to be displayed as
@@ -31,9 +32,9 @@
 #'     ternary diagram if \code{fact=NA}, these will be determined
 #'     automatically
 #' @param ... optional arguments to the generic \code{plot} function
-#' @references
-#' Vermeesch, P., 2010. HelioPlot, and the treatment of overdispersed
-#' (U-Th-Sm)/He data. Chemical Geology, 271(3), pp.108-111.
+#' @references Vermeesch, P., 2010. HelioPlot, and the treatment of
+#'     overdispersed (U-Th-Sm)/He data. Chemical Geology, 271(3),
+#'     pp.108-111.
 #' @examples
 #' data(examples)
 #' helioplot(examples$UThHe)
@@ -45,7 +46,7 @@ helioplot <- function(x,logratio=TRUE,show.central.comp=TRUE,
                       contour.col=c('white','red'),levels=NA,
                       ellipse.col=c("#00FF0080","#0000FF80"),
                       sigdig=2,xlim=NA,ylim=NA,fact=NA,...){
-    fit <- central.UThHe(x)
+    fit <- central.UThHe(x,alpha=alpha)
     if (logratio) {
         plot_logratio_contours(x,contour.col=contour.col,
                                xlim=xlim,ylim=ylim,...)
@@ -178,10 +179,19 @@ plot_helioplot_contours <- function(x,fact=c(1,1,1),
 }
 
 helioplot_title <- function(fit,sigdig=2){
-    rounded.age <- roundit(fit$age[1],fit$age[2],sigdig=sigdig)
-    line1 <- substitute('central age ='~a%+-%b~'[Ma] (1'~sigma~')',
-                        list(a=rounded.age[1], b=rounded.age[2]))
-    line2 <- substitute('MSWD (concordance) ='~a~', p('~chi^2*')='~b,
+    rounded.age <- roundit(fit$age[1],fit$age[2:4],sigdig=sigdig)
+    expr <- quote('central age =')
+    args <- quote(~a%+-%b~'|'~c)
+    list1 <- list(a=rounded.age[1],
+                  b=rounded.age[2],
+                  c=rounded.age[3])
+    if (fit$mswd>1){
+        args <- quote(~a%+-%b~'|'~c~'|'~d)
+        list1$d <- rounded.age[4]
+    }
+    call1 <- substitute(e~a,list(e=expr,a=args))
+    line1 <- do.call(substitute,list(eval(call1),list1))
+    line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
                         list(a=signif(fit$mswd,2),
                              b=signif(fit$p.value,2)))
     graphics::mtext(line1,line=1)
@@ -199,7 +209,7 @@ SS.UThHe.uvw <- function(UVW,x){
         SSi <- X %*% Ei %*% t(X)
         if (is.finite(SSi)) SS <- SS + SSi
     }
-    SS
+    as.numeric(SS)
 }
 SS.UThHe.uv <- function(UV,x){
     ns <- nrow(x)
@@ -211,7 +221,7 @@ SS.UThHe.uv <- function(UV,x){
         SSi <- X %*% Ei %*% t(X)
         if (is.finite(SSi)) SS <- SS + SSi
     }
-    SS
+    as.numeric(SS)
 }
 
 get.logratio.contours <- function(x,xlim=NA,ylim=NA,res=50){

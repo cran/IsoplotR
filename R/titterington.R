@@ -4,7 +4,7 @@
 #'
 #' @param x a \code{[9 x n]} matrix with the following columns:
 #'     \code{X, sX, Y, sY, Z, sZ}, \code{rhoXY, rhoXZ, rhoYZ}.
-#'
+#' @param alpha cutoff value for confidence intervals
 #' @return a four-element list of vectors containing:
 #'     \describe{
 #' 
@@ -17,14 +17,30 @@
 #'     \item{cov}{\code{[4 x 4]}-element covariance matrix of \code{par}}
 #' 
 #'     \item{mswd}{the mean square of the residuals (a.k.a `reduced
-#'                 Chi-square') statistic} }
+#'                 Chi-square') statistic}
 #'
+#'     \item{p.value}{p-value of a Chi-square test for linearity}
+#'
+#'     \item{df}{the number of degrees of freedom for the Chi-square
+#'     test (3\eqn{n}-3)}
+#'
+#'     }
+#' @examples
+#' d <- matrix(c(0.1677,0.0047,1.105,0.014,0.782,0.015,0.24,0.51,0.33,
+#'               0.2820,0.0064,1.081,0.013,0.798,0.015,0.26,0.63,0.32,
+#'               0.3699,0.0076,1.038,0.011,0.819,0.015,0.27,0.69,0.30,
+#'               0.4473,0.0087,1.051,0.011,0.812,0.015,0.27,0.73,0.30,
+#'               0.5065,0.0095,1.049,0.010,0.842,0.015,0.27,0.76,0.29,
+#'               0.5520,0.0100,1.039,0.010,0.862,0.015,0.27,0.78,0.28),
+#'             nrow=6,ncol=9)
+#' colnames(d) <- c('X','sX','Y','sY','Z','sZ','rXY','rXZ','rYZ')
+#' titterington(d)
 #' @references
 #' Ludwig, K.R. and Titterington, D.M., 1994. Calculation
 #' of \eqn{^{230}}Th/U isochrons, ages, and errors. Geochimica et
 #' Cosmochimica Acta, 58(22), pp.5031-5042.
 #' @export
-titterington <- function(x){
+titterington <- function(x,alpha=0.05){
     ns <- nrow(x)
     fitXY <- york(x[,c(1,2,3,4,7)])
     a <- fitXY$a[1]
@@ -46,6 +62,7 @@ titterington <- function(x){
     names(out$par) <- parnames
     rownames(out$cov) <- parnames
     colnames(out$cov) <- parnames
+    out$tfact <- stats::qt(1-alpha/2,out$df)
     out
 }
 
@@ -69,10 +86,10 @@ mswd.tit <- function(abAB,dat){
         x <- X + beta/alpha
         S <- S + alpha*(X-x)^2 + 2*beta*(X-x) + gamma
     }
-    df <- 2*ns-4
     out <- list()
-    out$mswd <- S/df
-    out$p.value <- as.numeric(1-stats::pchisq(S,df))
+    out$df <- 2*ns-4
+    out$mswd <- S/out$df
+    out$p.value <- as.numeric(1-stats::pchisq(S,out$df))
     out
 }
 

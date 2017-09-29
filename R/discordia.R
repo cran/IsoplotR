@@ -1,88 +1,35 @@
 # returns the lower and upper intercept age (for Wetherill concordia)
 # or the lower intercept age and 207Pb/206Pb intercept (for Tera-Wasserburg)
-concordia.intersection.ludwig <- function(x,wetherill=TRUE,exterr=FALSE){
-    out <- list()
+concordia.intersection.ludwig <- function(x,wetherill=TRUE,
+                                          exterr=FALSE,alpha=0.05){
     fit <- ludwig(x,exterr=exterr)
-    out$x <- c(0,0)
-    J <- matrix(0,2,3)
-    E <- matrix(0,3,3)
+    out <- fit[c('mswd','p.value','df')]
+    tfact <- stats::qt(1-alpha/2,fit$df)
     if (wetherill){
-        tt <- fit$par[1]
-        names(out$x) <- c('t[l]','t[u]')
-        buffer <- 1 # start searching 1Ma above or below first intercept age
-        l5 <- lambda('U235')[1]
-        l8 <- lambda('U238')[1]
-        R <- iratio('U238U235')[1]
-        if (x$format<4){
-            a0 <- 1
-            b0 <- fit$par['76i']
-            E[c(1,3),c(1,3)] <- fit$cov
-        } else {
-            a0 <- fit$par['64i']
-            b0 <- fit$par['74i']
-            E <- fit$cov
-        }
-        disc.slope <- a0/(b0*R)
-        conc.slope <- (l8*exp(l8*tt))/(l5*exp(l5*tt))
-        if (conc.slope > disc.slope){
-            search.range <- c(tt+buffer,10000)
-            tl <- tt
-            tu <- stats::uniroot(intersection.misfit.ludwig,
-                                 interval=search.range,
-                                 t2=tt,a0=a0,b0=b0)$root
-        } else {
-            search.range <- c(-1000,tt-buffer)
-            tl <- stats::uniroot(intersection.misfit.ludwig,
-                                 interval=search.range,
-                                 t2=tt,a0=a0,b0=b0)$root
-            tu <- tt
-        }
-        l5 <- lambda('U235')[1]
-        l8 <- lambda('U238')[1]
-        R <- iratio('U238U235')[1]
-        XX <- exp(l5*tu) - exp(l5*tl)
-        YY <- exp(l8*tu) - exp(l8*tl)
-        BB <- a0/(b0*R)
-        D <- (YY-BB*XX)^2
-        dXX.dtl <- -l5*exp(l5*tl)
-        dXX.dtu <-  l5*exp(l5*tu)
-        dYY.dtl <- -l8*exp(l8*tl)
-        dYY.dtu <-  l8*exp(l8*tu)
-        dBB.da0 <-  1/(b0*R)
-        dBB.db0 <- -BB/b0
-        dD.dtl <- 2*(YY-BB*XX)*(dYY.dtl-BB*dXX.dtl)
-        dD.dtu <- 2*(YY-BB*XX)*(dYY.dtu-BB*dXX.dtu)
-        dD.da0 <- 2*(YY-BB*XX)*(-dBB.da0*XX)
-        dD.db0 <- 2*(YY-BB*XX)*(-dBB.db0*XX)
-        if (conc.slope > disc.slope){
-            J[1,1] <- 1
-            J[2,1] <- -dD.dtl/dD.dtu
-            J[2,2] <- -dD.da0/dD.dtu
-            J[2,3] <- -dD.db0/dD.dtu
-        } else {
-            J[1,1] <- -dD.dtu/dD.dtl
-            J[1,2] <- -dD.da0/dD.dtl
-            J[1,3] <- -dD.db0/dD.dtl
-            J[2,1] <- 1
-        }
-        out$x['t[l]'] <- tl
-        out$x['t[u]'] <- tu
-        out$cov <- J %*% E %*% t(J)
+        labels <- c('t[l]','t[u]')
+        out <- c(out,twfit2wfit(fit,x))
     } else if (x$format<4){
+        labels <- c('t[l]','76')
         out$x <- fit$par
-        names(out$x) <- c('t[l]','76')
         out$cov <- fit$cov
     } else {
-        names(out$x) <- c('t[l]','76')
-        out$x['t[l]'] <- fit$par['t']
-        out$x['76'] <- fit$par['74i']/fit$par['64i']
+        labels <- c('t[l]','76')
+        out$x <- c(fit$par['t'],
+                   fit$par['74i']/fit$par['64i'])
+        J <- matrix(0,2,3)
         J[1,1] <- 1
-        J[2,2] <- -out$x['76']/fit$par['64i']
+        J[2,2] <- -fit$par['74i']/fit$par['64i']^2
         J[2,3] <- 1/fit$par['64i']
         out$cov <- J %*% fit$cov %*% t(J)
     }
-    out$mswd <- fit$mswd
-    out$p.value <- fit$p.value
+    names(out$x) <- labels
+    out$err <- matrix(NA,3,2)
+    colnames(out$err) <- labels
+    rownames(out$err) <- c('s','ci','disp')
+    out$err['s',] <- sqrt(diag(out$cov))
+    out$err['ci',] <- tfact*out$err['s',]
+    if (fit$mswd>1)
+        out$err['disp',] <- tfact*sqrt(fit$mswd)*out$err['s',]
     out
 }
 concordia.intersection.york <- function(x,exterr=FALSE){
@@ -108,6 +55,74 @@ concordia.intersection.york.ab <- function(a,b,exterr=FALSE){
     out
 }
 
+# extract the lower and upper discordia intercept from the parameters
+# of a Ludwig fit (initial Pb ratio and lower intercept age)
+twfit2wfit <- function(fit,x){
+    tt <- fit$par[1]
+    buffer <- 1 # start searching 1Ma above or below first intercept age
+    l5 <- lambda('U235')[1]
+    l8 <- lambda('U238')[1]
+    R <- iratio('U238U235')[1]
+    E <- matrix(0,3,3)
+    J <- matrix(0,2,3)
+    if (x$format<4){
+        a0 <- 1
+        b0 <- fit$par['76i']
+        E[c(1,3),c(1,3)] <- fit$cov
+    } else {
+        a0 <- fit$par['64i']
+        b0 <- fit$par['74i']
+        E <- fit$cov
+    }
+    disc.slope <- a0/(b0*R)
+    conc.slope <- (l8*exp(l8*tt))/(l5*exp(l5*tt))
+    if (conc.slope > disc.slope){
+        search.range <- c(tt+buffer,10000)
+        tl <- tt
+        tu <- stats::uniroot(intersection.misfit.ludwig,
+                             interval=search.range,
+                             t2=tt,a0=a0,b0=b0)$root
+    } else {
+        search.range <- c(-1000,tt-buffer)
+        tl <- stats::uniroot(intersection.misfit.ludwig,
+                             interval=search.range,
+                             t2=tt,a0=a0,b0=b0)$root
+        tu <- tt
+    }
+    l5 <- lambda('U235')[1]
+    l8 <- lambda('U238')[1]
+    R <- iratio('U238U235')[1]
+    XX <- exp(l5*tu) - exp(l5*tl)
+    YY <- exp(l8*tu) - exp(l8*tl)
+    BB <- a0/(b0*R)
+    D <- (YY-BB*XX)^2
+    dXX.dtl <- -l5*exp(l5*tl)
+    dXX.dtu <-  l5*exp(l5*tu)
+    dYY.dtl <- -l8*exp(l8*tl)
+    dYY.dtu <-  l8*exp(l8*tu)
+    dBB.da0 <-  1/(b0*R)
+    dBB.db0 <- -BB/b0
+    dD.dtl <- 2*(YY-BB*XX)*(dYY.dtl-BB*dXX.dtl)
+    dD.dtu <- 2*(YY-BB*XX)*(dYY.dtu-BB*dXX.dtu)
+    dD.da0 <- 2*(YY-BB*XX)*(-dBB.da0*XX)
+    dD.db0 <- 2*(YY-BB*XX)*(-dBB.db0*XX)
+    if (conc.slope > disc.slope){
+        J[1,1] <- 1
+        J[2,1] <- -dD.dtl/dD.dtu
+        J[2,2] <- -dD.da0/dD.dtu
+        J[2,3] <- -dD.db0/dD.dtu
+    } else {
+        J[1,1] <- -dD.dtu/dD.dtl
+        J[1,2] <- -dD.da0/dD.dtl
+        J[1,3] <- -dD.db0/dD.dtl
+        J[2,1] <- 1
+    }
+    out <- list()
+    out$x <- c(tl,tu)
+    out$cov <- J %*% E %*% t(J)
+    out
+}
+
 # used by common Pb correction:
 project.concordia <- function(m76,m86,i76){
     t68 <- get.Pb206U238.age(1/m86)[1]
@@ -129,10 +144,10 @@ project.concordia <- function(m76,m86,i76){
         go.ahead <- TRUE
     } else if (neg & below){  # it is not clear what to do with samples
         for (tt in seq(from=10,to=5000,by=10)){
-            misfit <- intersection.misfit.york(tend,a=a,b=b)
+            misfit <- intersection.misfit.york(tt,a=a,b=b)
             if (misfit<0){    # that plot in the 'forbidden zone' above
                 tend <- tt    # Wetherill concordia or below T-W concordia
-                found <- TRUE # IsoplotR will still project them on
+                go.ahead <- TRUE # IsoplotR will still project them on
                 break         # the concordia line.
             }
         }
@@ -181,22 +196,35 @@ discordia.plot <- function(fit,wetherill){
     graphics::lines(X,Y)
 }
 
+# this would be much easier in unicode but that doesn't render in PDF:
 discordia.title <- function(fit,wetherill,sigdig=2){
+    lower.age <- roundit(fit$x[1],fit$err[,1],sigdig=sigdig)
+    list1 <- list(a=lower.age[1],b=lower.age[2],c=lower.age[3])
+    if (fit$mswd>1) args <- quote(a%+-%b~'|'~c~'|'~d)
+    else args <- quote(a%+-%b~'|'~c)
     if (wetherill){
-        lower.age <- roundit(fit$x[1],sqrt(fit$cov[1,1]),sigdig=sigdig)
-        upper.age <- roundit(fit$x[2],sqrt(fit$cov[2,2]),sigdig=sigdig)
-        line1 <- substitute('lower intercept ='~a%+-%b~'[Ma]',
-                            list(a=lower.age[1], b=lower.age[2]))
-        line2 <- substitute('upper intercept ='~a%+-%b~'[Ma]',
-                            list(a=upper.age[1], b=upper.age[2]))
+        upper.age <- roundit(fit$x[2],fit$err[,2],sigdig=sigdig)
+        expr1 <- quote('lower intercept =')
+        expr2 <- quote('upper intercept =')
+        list2 <- list(a=upper.age[1],b=upper.age[2],c=upper.age[3])
+        if (fit$mswd>1){
+            list1$d <- lower.age[4]
+            list2$d <- upper.age[4]
+        }
     } else {
-        lower.age <- roundit(fit$x[1],sqrt(fit$cov[1,1]),sigdig=sigdig)
-        intercept <- roundit(fit$x[2],sqrt(fit$cov[2,2]),sigdig=sigdig)
-        line1 <- substitute('age ='~a%+-%b~'[Ma]',
-                            list(a=lower.age[1], b=lower.age[2]))
-        line2 <- substitute('('^207*'Pb/'^206*'Pb)'[o]~'='~a%+-%b,
-                            list(a=intercept[1], b=intercept[2]))
+        intercept <- roundit(fit$x[2],fit$err[,2],sigdig=sigdig)
+        expr1 <- quote('age =')
+        expr2 <- quote('('^207*'Pb/'^206*'Pb)'[o]~'=')
+        list2 <- list(a=intercept[1],b=intercept[2],c=intercept[3])
+        if (fit$mswd>1){
+            list1$d <- lower.age[4]
+            list2$d <- intercept[4]
+        }
     }
+    call1 <- substitute(e~a,list(e=expr1,a=args))
+    call2 <- substitute(e~a,list(e=expr2,a=args))
+    line1 <- do.call('substitute',list((call1),list1))
+    line2 <- do.call('substitute',list((call2),list2))
     line3 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
                         list(a=signif(fit$mswd,sigdig),
                              b=signif(fit$p.value,sigdig)))

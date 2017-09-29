@@ -11,7 +11,7 @@ ludwig(x, ...)
 
 \method{ludwig}{default}(x, ...)
 
-\method{ludwig}{UPb}(x, exterr = FALSE, ...)
+\method{ludwig}{UPb}(x, exterr = FALSE, alpha = 0.05, ...)
 }
 \arguments{
 \item{x}{an object of class \code{UPb}}
@@ -19,6 +19,26 @@ ludwig(x, ...)
 \item{...}{optional arguments}
 
 \item{exterr}{propagate external sources of uncertainty (e.g., decay constant)?}
+
+\item{alpha}{cutoff value for confidence intervals}
+}
+\value{
+\describe{
+
+\item{par}{a two-element vector with the lower concordia intercept
+and initial \eqn{^{207}}Pb/\eqn{^{206}}Pb-ratio.}
+
+\item{cov}{the covariance matrix of \code{par}}
+
+\item{df}{the degrees of freedom of the model fit (\eqn{3n-3},
+where \eqn{n} is the number of aliquots).}
+
+\item{mswd}{the mean square of weighted deviates (a.k.a. reduced
+Chi-square statistic) for the fit.}
+
+\item{p.value}{p-value of a Chi-square test for the linear fit}
+
+}
 }
 \description{
 Implements the maximum likelihood algorithm of Ludwig (1998)

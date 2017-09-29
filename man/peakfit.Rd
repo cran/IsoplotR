@@ -17,36 +17,39 @@
 \usage{
 peakfit(x, ...)
 
-\method{peakfit}{default}(x, k = "auto", sigdig = 2, log = TRUE, ...)
+\method{peakfit}{default}(x, k = "auto", sigdig = 2, log = TRUE,
+  alpha = 0.05, ...)
 
 \method{peakfit}{fissiontracks}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, ...)
+  log = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{UPb}(x, k = 1, type = 4, cutoff.76 = 1100,
-  cutoff.disc = c(-15, 5), exterr = TRUE, sigdig = 2, log = TRUE, ...)
+  cutoff.disc = c(-15, 5), exterr = TRUE, sigdig = 2, log = TRUE,
+  alpha = 0.05, ...)
 
 \method{peakfit}{PbPb}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
-  i2i = TRUE, ...)
+  i2i = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{ArAr}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
-  i2i = FALSE, ...)
+  i2i = FALSE, alpha = 0.05, ...)
 
 \method{peakfit}{ReOs}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
-  i2i = TRUE, ...)
+  i2i = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{SmNd}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
-  i2i = TRUE, ...)
+  i2i = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{RbSr}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
-  i2i = TRUE, ...)
+  i2i = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{LuHf}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
-  i2i = TRUE, ...)
+  i2i = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{ThU}(x, k = 1, exterr = FALSE, sigdig = 2, log = TRUE,
-  i2i = TRUE, ...)
+  i2i = TRUE, alpha = 0.05, ...)
 
-\method{peakfit}{UThHe}(x, k = 1, sigdig = 2, log = TRUE, ...)
+\method{peakfit}{UThHe}(x, k = 1, sigdig = 2, log = TRUE, alpha = 0.05,
+  ...)
 }
 \arguments{
 \item{x}{either a \code{[2 x n]} matrix with measurements and their
@@ -66,6 +69,8 @@ legend in which the peak fitting results are to be displayed.}
 
 \item{log}{take the logs of the data before applying the mixture
 model?}
+
+\item{alpha}{cutoff value for confidence intervals}
 
 \item{exterr}{propagate the external sources of uncertainty into
 the component age errors?}
@@ -102,12 +107,34 @@ method). When applied to data of class \code{ThU}, setting
 \code{i2i} to \code{TRUE} applies a detrital Th-correction.}
 }
 \value{
-a list with the following items: \describe{ \item{peaks}{a
-    vector of peak locations} \item{props}{a vector of peak
-    proportions} \item{peaks.err}{the standard errors of the peak
-    locations} \item{props.err}{the standard errors of the peak
-    proportions} \item{legend}{a vector of text expressions to be
-    used in a figure legend} }
+returns a list with the following items:
+
+\describe{
+
+\item{peaks}{a \code{3 x k} matrix with the following rows:
+
+\code{t}: the ages of the \code{k} peaks
+
+\code{s[t]}: the estimated uncertainties of \code{t}
+
+\code{ci[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
+\code{t}}
+
+\item{props}{a \code{2 x k} matrix with the following rows:
+
+\code{p}: the proportions of the \code{k} peaks
+
+\code{s[p]}: the estimated uncertainties of \code{p}}
+
+\item{L}{the log-likelihood of the fit}
+
+\item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of the
+t-distribution with \eqn{(n-2k+1)} degrees of freedom}
+
+\item{legend}{a vector of text expressions to be used in a figure
+    legend}
+
+}
 }
 \description{
 Implements the discrete mixture modelling algorithms of Galbraith

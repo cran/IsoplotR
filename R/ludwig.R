@@ -4,7 +4,7 @@
 #' Implements the maximum likelihood algorithm of Ludwig (1998)
 #'
 #' @param x an object of class \code{UPb}
-#'
+#' @param alpha cutoff value for confidence intervals
 #' @param ... optional arguments
 #'
 # @param x a \eqn{3n}-element vector \eqn{[X Y Z]}, where \eqn{X},
@@ -12,6 +12,24 @@
 #     (isotopic ratio) values.
 # @param covmat a \eqn{[3n x 3n]}-element covariance matrix of
 #     \code{x}
+#' @return
+#' \describe{
+#'
+#' \item{par}{a two-element vector with the lower concordia intercept
+#' and initial \eqn{^{207}}Pb/\eqn{^{206}}Pb-ratio.}
+#'
+#' \item{cov}{the covariance matrix of \code{par}}
+#'
+#' \item{df}{the degrees of freedom of the model fit (\eqn{3n-3},
+#' where \eqn{n} is the number of aliquots).}
+#'
+#' \item{mswd}{the mean square of weighted deviates (a.k.a. reduced
+#' Chi-square statistic) for the fit.}
+#'
+#' \item{p.value}{p-value of a Chi-square test for the linear fit}
+#'
+#' }
+#'
 #' @examples
 #' f <- system.file("UPb4.csv",package="IsoplotR")
 #' d <- read.data(f,method="U-Pb",format=4)
@@ -27,11 +45,12 @@ ludwig.default <- function(x,...){ stop( "No default method available (yet)." ) 
 #' @param exterr propagate external sources of uncertainty (e.g., decay constant)?
 #' @rdname ludwig
 #' @export
-ludwig.UPb <- function(x,exterr=FALSE,...){
+ludwig.UPb <- function(x,exterr=FALSE,alpha=0.05,...){
     ta0 <- concordia.intersection.york(x,exterr=FALSE)$x
     if (x$format<4) init <- ta0
     else init <- c(ta0[1],10,10)
-    fit <- stats::optim(init,fn=LL.lud.UPb,method="BFGS",x=x,exterr=exterr)
+    fit <- stats::optim(init,fn=LL.lud.UPb,
+                        method="BFGS",x=x,exterr=exterr)
     out <- list()
     out$par <- fit$par
     out$cov <- tryCatch({ # analytical
@@ -60,12 +79,13 @@ ludwig.UPb <- function(x,exterr=FALSE,...){
 
 mswd.lud <- function(pars,x){
     ns <- length(x)
-    SS <- 2*LL.lud.UPb(pars,x=x,exterr=FALSE)
-    if (x$format<4) df <- ns-2
-    else df <- 2*ns-2
+    # Mistake in Ludwig (1998)? Multiply the following by 2?
+    SS <- LL.lud.UPb(pars,x=x,exterr=FALSE)
     out <- list()
-    out$mswd <- SS/df
-    out$p.value <- as.numeric(1-stats::pchisq(SS,df))
+    if (x$format<4) out$df <- ns-2
+    else out$df <- 2*ns-2
+    out$mswd <- as.vector(SS/out$df)
+    out$p.value <- as.numeric(1-stats::pchisq(SS,out$df))
     out
 }
 

@@ -260,7 +260,8 @@ age_to_Pb207Pb206_ratio <- function(tt,st=0){
     R <- (1/U)*(exp(l5*tt)-1)/(exp(l8*tt)-1)
     N <- l5*exp(l5*tt)*(exp(l8*tt)-1) - l8*exp(l8*tt)*(exp(l5*tt)-1)
     D <- (exp(l8*tt)-1)^2
-    R.err <- (1/U)*(N/D)
+    J <- (1/U)*(N/D)
+    R.err <- abs(J*st)
     out <- cbind(R,R.err)
     colnames(out) <- c('76','s[76]')
     out
@@ -433,11 +434,11 @@ get.Pb207Pb206.age.default <- function(x,sx=0,exterr=TRUE,...){
         t.76 <- fit$minimum
     }
     J <- matrix(0,1,4)
-    J[1,1] <- -(-1)/dD76dt(t.76,l5,l8,R)                      # d76/dt
+    J[1,1] <- -(-1)/dD76dt(t.76,l5,l8,R)                      # dt/d76
     if (exterr) {
-        J[1,2] <- -dD76dl5(t.76,l5,l8,R)/dD76dt(t.76,l5,l8,R) # d76/dl5
-        J[1,3] <- -dD76dl8(t.76,l5,l8,R)/dD76dt(t.76,l5,l8,R) # d76/dl8
-        J[1,4] <- -dD76dR(t.76,l5,l8,R)/dD76dt(t.76,l5,l8,R)  # d76/dR
+        J[1,2] <- -dD76dl5(t.76,l5,l8,R)/dD76dt(t.76,l5,l8,R) # dt/dl5
+        J[1,3] <- -dD76dl8(t.76,l5,l8,R)/dD76dt(t.76,l5,l8,R) # dt/dl8
+        J[1,4] <- -dD76dR(t.76,l5,l8,R)/dD76dt(t.76,l5,l8,R)  # dt/dR
     }
     E <- matrix(0,4,4)
     E[1,1] <- sx^2
@@ -516,7 +517,8 @@ dD76dl5 <- function(t.76,l5,l8,R){
 
 dD76dl8 <- function(t.76,l5,l8,R){
     el8t1 <- exp(l8*t.76)-1
-    t.76*exp(l5*t.76)/(R*el8t1)
+    el5t1 <- exp(l5*t.76)-1
+    -t.76*exp(l8*t.76)*el5t1/(R*el8t1^2)
 }
 
 dD76dR <- function(t.76,l5,l8,R){
@@ -567,6 +569,7 @@ common.Pb.correction <- function(x,option=1){
     else if (option == 2) out <- common.Pb.isochron(x)
     else if (option == 3) out <- common.Pb.nominal(x)
     else out <- x
+    out$x.raw <- x$x
     out
 }
 common.Pb.isochron <- function(x){
@@ -586,16 +589,17 @@ common.Pb.isochron <- function(x){
     out
 }
 common.Pb.stacey.kramers <- function(x){
-    sk.206.204 <- 18.700
-    sk.207.204 <- 15.628
+    sk.206.204 <- 11.152
+    sk.207.204 <- 12.998
     sk.238.204 <- 9.74
     U238U235 <- settings('iratio','U238U235')[1]
     l5 <- lambda('U235')[1]
     l8 <- lambda('U238')[1]
+    ti <- 3700
     tt <- 1000
     for (i in 1:5){
-        i64 <- sk.206.204 - sk.238.204*(exp(l8*tt)-1)
-        i74 <- sk.207.204 - sk.238.204*(exp(l5*tt)-1)/U238U235
+        i64 <- sk.206.204 + sk.238.204*(exp(l8*(ti-tt))-1)
+        i74 <- sk.207.204 + sk.238.204*(exp(l5*(ti-tt))-1)/U238U235
         if (x$format < 4)
             out <- Pb.correction.without.204(x,i74/i64)
         else

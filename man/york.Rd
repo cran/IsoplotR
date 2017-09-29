@@ -4,24 +4,35 @@
 \alias{york}
 \title{Linear regression of X,Y-variables with correlated errors}
 \usage{
-york(x)
+york(x, alpha = 0.05)
 }
 \arguments{
 \item{x}{a 5-column matrix with the X-values, the analytical
 uncertainties of the X-values, the Y-values, the analytical
 uncertainties of the Y-values, and the correlation coefficients
 of the X- and Y-values.}
+
+\item{alpha}{cutoff value for confidence intervals}
 }
 \value{
 a four-element list of vectors containing:
     \describe{
+
     \item{a}{the intercept of the straight line fit and its
     standard error}
-    \item{b}{the slope of the fit and its standard
-    error}
+
+    \item{b}{the slope of the fit and its standard error}
+
     \item{cov.ab}{the covariance of the slope and intercept}
+
     \item{mswd}{the mean square of the residuals (a.k.a
     `reduced Chi-square') statistic}
+
+    \item{df}{degrees of freedom of the linear fit \eqn{(2n-2)}}
+
+    \item{p.value}{p-value of a Chi-square value with \code{df}
+    degrees of freedom}
+
     }
 }
 \description{

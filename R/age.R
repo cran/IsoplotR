@@ -123,8 +123,7 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \code{settings('iratio','Pb206Pb204')} and
 #' \code{settings('iratio','Pb207Pb204')}
 #'
-#' @return 
-#'
+#' @return
 #' \enumerate{
 #'
 #' \item if \code{x} is a scalar or a vector, returns the age using
@@ -143,34 +142,70 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' returns a list with the following items:
 #'
 #' \describe{
+#'
 #' \item{x}{ a named vector with the (weighted mean) U-Pb composition }
 #' 
 #' \item{cov}{ the covariance matrix of the (mean) U-Pb composition }
 #' 
-#' \item{age}{ the concordia age (in Ma) }
+#' \item{age}{a 4-element vector with:
+#'
+#' \code{t}: the concordia age (in Ma)
+#'
+#' \code{s[t]}: the estimated uncertainty of \code{t}
+#'
+#' \code{ci[t]}: the 95\% confidence interval of \code{t} for the
+#' appropriate degrees of freedom
+#'
+#' \code{disp[t]}: the 95\% confidence interval for \code{t} augmented
+#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.}
 #' 
-#' \item{age.err}{ the standard error of the concordia age }
+#' \item{mswd}{ a vector with three items (\code{equivalence},
+#' \code{concordance} and \code{combined}) containing the MSWD (Mean
+#' of the Squared Weighted Deviates, a.k.a the reduced Chi-squared
+#' statistic outside of geochronology) of isotopic equivalence, age
+#' concordance and combined goodness of fit, respectively. }
 #' 
-#' \item{mswd}{ a list with two items (\code{equivalence} and
-#' \code{concordance}) containing the MSWD (Mean of the Squared
-#' Weighted Deviates, a.k.a the reduced Chi-squared statistic outside
-#' of geochronology) of isotopic equivalence and age concordance,
-#' respectively. }
+#' \item{p.value}{ a vector with three items (\code{equivalence},
+#' \code{concordance} and \code{combined}) containing the p-value of
+#' the Chi-square test for isotopic equivalence, age concordance and
+#' combined goodness of fit, respectively. }
 #' 
-#' \item{p.value}{ a list with two items (\code{equivalence} and
-#' \code{concordance}) containing the p-value of the Chi-square test
-#' for isotopic equivalence and age concordance, respectively. }
+#' \item{df}{ the number of degrees of freedom used for the
+#' \code{mswd} calculation.  These values are useful when expanding
+#' the analytical uncertainties when \code{mswd>1}.}
+#'
 #' }
 #' 
 #' \item if \code{x} has class \code{UPb} and \code{type=3},
 #' returns a list with the following items:
 #'
 #' \describe{
+#'
 #' \item{x}{ a two element vector with the upper and lower intercept
 #' ages (if \code{wetherill=TRUE}) or the lower intercept age and
 #' \eqn{^{207}}Pb/\eqn{^{206}}Pb intercept (for Tera-Wasserburg) }
 #' 
 #' \item{cov}{ the covariance matrix of the elements in \code{x} }
+#'
+#' \item{err}{ a \code{3 x 2} matrix with the following rows:
+#'
+#' \code{s}: the estimated standard deviation for \code{x}
+#' 
+#' \code{ci}: the 95\% confidence interval of \code{x} for the
+#' appropriate degrees of freedom
+#'
+#' \code{disp[t]}: the 95\% confidence interval for \code{x} augmented
+#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.}
+#'
+#' \item{df}{ the degrees of freedom of the concordia fit (concordance
+#' + equivalence)}
+#'
+#' \item{p.value}{ p-value of a Chi-square test for age homogeneity }
+#'
+#' \item{mswd}{ mean square of the weighted deviates -- a
+#' goodness-of-fit measure. \code{mswd > 1} indicates overdispersion
+#' w.r.t the analytical uncertainties.}
+#'
 #' }
 #'
 #' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
@@ -196,16 +231,43 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #'
 #' \item{p.value}{the p-value of a Chi-square test for linearity}
 #'
-#' \item{y0}{the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
+#' \item{y0}{a 4-element vector containing:
+#'
+#' \code{t}: the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
 #' \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{187}}Os/\eqn{^{188}}Os,
 #' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio and its standard error.}
+#' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio.
+#'
+#' \code{s[t]}: the estimated standard deviation of \code{t}
+#'
+#' \code{ci[t]}: the 95\% confidence interval of \code{t} for the
+#' appropriate degrees of freedom
+#'
+#' \code{disp[t]}: the 95\% confidence interval for \code{t} augmented
+#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.}
 #' 
-#' \item{age}{the \eqn{^{207}}Pb/\eqn{^{206}}Pb,
+#' \item{age}{a 4-element vector containing:
+#'
+#' \code{y}: the \eqn{^{207}}Pb/\eqn{^{206}}Pb,
 #' \eqn{^{40}}Ar/\eqn{^{39}}Ar, \eqn{^{187}}Os/\eqn{^{187}}Re,
 #' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf age and its standard error.}
-#'     
+#' \eqn{^{176}}Hf/\eqn{^{177}}Hf age and its standard error.
+#'
+#' \code{s[y]}: the estimated standard deviation of \code{y}
+#'
+#' \code{ci[y]}: the 95\% confidence interval of \code{y} for the
+#' appropriate degrees of freedom
+#'
+#' \code{disp[y]}: the 95\% confidence interval for \code{y} augmented
+#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.}
+#'
+#' \item{tfact}{ the t-value for \code{df} degrees of freedom, which
+#' is used for the construction of \code{ci[t]} and \code{ci[y]} }
+#'
+#' \item{df}{ the degrees of freedom for the isochron fit}
+#'
+#' \item{model}{ copied from the input parameters }
+#'
 #' }
 #'
 #' \item if \code{x} has class \code{ThU} and \code{isochron=FALSE},
@@ -237,10 +299,33 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #'
 #' \item{p.value}{the p-value of a Chi-square test for linearity.}
 #'
-#' \item{y0}{the initial \eqn{^{234}U/^{238}U}-ratio and its standard
-#' error.}
+#' \item{y0}{a 4-element vector containing:
 #'
-#' \item{age}{the Th-U isochron age and its standard error.}
+#' \code{y}: the initial \eqn{^{234}U/^{238}U}-ratio
+#'
+#' \code{s[y]}: the estimated standard deviation of \code{y}
+#'
+#' \code{ci[y]}: the 95\% confidence interval of \code{y} for the
+#' appropriate degrees of freedom
+#'
+#' \code{disp[y]}: the 95\% confidence interval for \code{y} augmented
+#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.  }
+#'
+#' \item{age}{a 4-element vector containing:
+#'
+#' \code{t}: the Th-U isochron age
+#'
+#' \code{s[t]}: the estimated standard deviation of \code{t}
+#'
+#' \code{ci[t]}: the 95\% confidence interval of \code{t} for the
+#' appropriate degrees of freedom
+#'
+#' \code{disp[t]}: the 95\% confidence interval for \code{t} augmented
+#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.  }
+#'
+#' \item{df}{the degrees of freedom for the isochron fit.}
+#'
+#' \item{tfact}{ the t-value for \code{df} degrees of freedom }
 #'
 #' }
 #'
@@ -252,7 +337,7 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item{uvw}{ a three-element list with the weighted mean log[U/He],
 #' log[Th/He] and log[Sm/He] compositions. }
 #'
-#' \item{covmat}{ a 3x3 covariance matrix for \code{uvw}}
+#' \item{covmat}{ a \code{3 x 3} covariance matrix for \code{uvw}}
 #'
 #' \item{mswd}{ the reduced Chi-square value for the
 #' log[U/He]-log[Th/He] compositions. }
@@ -260,8 +345,23 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item{p.value}{ the p-value of concordance between the
 #' log[U/He]-log[Th/He] compositions. }
 #'
-#' \item{age}{ two-element vector with the central age and its
-#' standard error. }
+#' \item{age}{ a 4-element vector containing:
+#'
+#' \code{t}: the central age age, i.e. the U-Th-He age corresponding
+#' to the composition given by \code{uvw}
+#'
+#' \code{s[t]}: the estimated standard deviation of \code{t}
+#'
+#' \code{ci[t]}: the 95\% confidence interval of \code{t} for the
+#' appropriate degrees of freedom
+#'
+#' \code{disp[t]}: the 95\% confidence interval for \code{t} augmented
+#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.  }
+#'
+#'
+#' \item{df}{the degrees of freedom for the data fit.}
+#'
+#' \item{tfact}{ the t-value for \code{df} degrees of freedom }
 #'
 #' }
 #'
@@ -280,12 +380,17 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item{p.value}{ the p-value of concordance between the fission
 #' track ages. }
 #'
-#' \item{age}{ a two-element vector with the central age and its
-#' standard error. }
+#' \item{age}{ a three-element vector with the central age, its
+#' standard error and a 95\% confidence interval for the appropriate
+#' degrees of freedom. }
 #'
 #' \item{disp}{ the (over)dispersion of the single grain ages beyond
 #' the formal analytical uncertainties. }
+#'
+#' \item{df}{ degrees of freedom for the Chi-square test}
+#'
 #' }
+#'
 #' }
 #' 
 #' @examples
@@ -295,7 +400,7 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' print(age(examples$UPb,type=2))
 #' @rdname age
 #' @export
-age.UPb <- function(x,type=1,wetherill=TRUE, exterr=TRUE,i=NA,
+age.UPb <- function(x,type=1,wetherill=TRUE,exterr=TRUE,i=NA,
                     sigdig=NA,common.Pb=0,...){
     if (common.Pb %in% c(1,2,3))
         X <- common.Pb.correction(x,option=common.Pb)
@@ -385,10 +490,13 @@ age.RbSr <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
 }
 #' @rdname age
 #' @export
-age.LuHf <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
-    age.PD(x,'Lu176',isochron=isochron,i2i=i2i,exterr=exterr,i=i,sigdig=sigdig,...)
+age.LuHf <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,
+                     sigdig=NA,...){
+    age.PD(x,'Lu176',isochron=isochron,i2i=i2i,exterr=exterr,i=i,
+           sigdig=sigdig,...)
 }
-age.PD <- function(x,nuclide,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
+age.PD <- function(x,nuclide,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,
+                   sigdig=NA,...){
     if (isochron) out <- isochron(x,plot=FALSE,sigdig=sigdig)
     else out <- PD.age(x,nuclide,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
     out

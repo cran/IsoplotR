@@ -7,29 +7,33 @@
 #' @param x an object of class \code{UThHe} or \code{fissiontracks},
 #'     OR a 2-column matrix with (strictly positive) values and
 #'     uncertainties
+#' @param alpha cutoff value for confidence intervals
 #' @param ... optional arguments
-#' @return a list containing the following items:
+#' @return if \code{x} has class \code{UThHe}, a list containing the
+#'     following items:
 #'
 #' \describe{
+#' \item{age}{a four-element vector with:
 #'
-#' \item{mswd}{the reduced Chi-square statistic of data concordance,
-#' i.e. \eqn{mswd=SS/(2n-2)}, where \eqn{SS} is the sum of squares
-#' of the log[U/He]-log[Th/He] compositions and \eqn{n} is the number
-#' of samples. If \code{x} has class \code{fissiontracks}, then
-#' \eqn{mswd=X^2/(n-1)}, where \eqn{X^2} is a Chi-square statistic of
-#' the EDM data or ICP ages.}
+#' \code{t}: the central age
 #'
-#' \item{p.value}{the p-value of a Chi-square test with \eqn{n-2}
-#' degrees of freedom}
+#' \code{s[t]}: the standard error of \code{s[t]}
 #'
-#' \item{age}{a two-column vector with the central age and its
-#' standard error.}
+#' \code{ci[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
+#' \code{t} for the appropriate number of degrees of freedom
 #'
+#' \code{disp[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval
+#' enhanced by a factor of \eqn{\sqrt{MSWD}}.
 #' }
 #'
-#' Additionally, if \code{x} has class \code{UThHe}:
+#' \item{mswd}{the reduced Chi-square statistic of data concordance,
+#' i.e. \eqn{mswd=SS/df}, where \eqn{SS} is the sum of squares of
+#' the log[U/He]-log[Th/He] compositions}
 #'
-#' \describe{
+#' \item{df}{the degrees of freedom (\eqn{2n-2})}
+#'
+#' \item{p.value}{the p-value of a Chi-square test with \code{df}
+#' degrees of freedom}
 #'
 #' \item{uvw}{(if the input data table contains Sm) or \strong{uv} (if
 #' it doesn't): the geometric mean log[U/He], log[Th/He] (,
@@ -37,14 +41,37 @@
 #'
 #' \item{covmat}{the covariance matrix of \code{uvw} or \code{uv}}
 #'
+#' \item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of the t-
+#' distribution for \code{df} degrees of freedom}
+#'
 #' }
 #'
-#' OR, if \code{x} has class \code{fissiontracks}:
+#' OR, otherwise:
 #'
 #' \describe{
 #'
-#' \item{disp}{the (over)dispersion of the ages (value between 0 and
-#' 1)}
+#' \item{age}{a three-element vector with:
+#'
+#' \code{t}: the central age
+#'
+#' \code{s[t]}: the standard error of \code{s[t]}
+#'
+#' \code{ci[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
+#' \code{t} for the appropriate number of degrees of freedom }
+#'
+#' \item{disp}{a two-element vector with the overdispersion (standard
+#' deviation) of the excess scatter, and the corresponding
+#' \eqn{100(1-\alpha/2)\%} confidence interval for the appropriate
+#' degrees of freedom.}
+#'
+#' \item{mswd}{the reduced Chi-square statistic of data concordance,
+#' i.e. \eqn{mswd=X^2/df}, where \eqn{X^2} is a Chi-square statistic
+#' of the EDM data or ages}
+#'
+#' \item{df}{the degrees of freedom (\eqn{n-2})}
+#'
+#' \item{p.value}{the p-value of a Chi-square test with \code{df}
+#' degrees of freedom}
 #'
 #' }
 #'
@@ -64,7 +91,7 @@
 central <- function(x,...){ UseMethod("central",x) }
 #' @rdname central
 #' @export
-central.default <- function(x,...){
+central.default <- function(x,alpha=0.05,...){
     sigma <- 0.15 # convenient starting value
     zu <- log(x[,1])
     su <- x[,2]/x[,1]
@@ -76,23 +103,28 @@ central.default <- function(x,...){
     }
     tt <- exp(mu)
     st <- tt/sqrt(sum(wu,na.rm=TRUE))
-    df <- length(zu)-1
     Chi2 <- sum((zu/su)^2,na.rm=TRUE)-(sum(zu/su^2,na.rm=TRUE)^2)/
         sum(1/su^2,na.rm=TRUE)
     out <- list()
-    out$age <- c(tt,st)
-    out$disp <- sigma
-    out$mswd <- Chi2/df
-    out$p.value <- 1-stats::pchisq(Chi2,df)
+    # remove two d.o.f. for mu and sigma
+    out$df <- length(zu)-2
+    # add back one d.o.f. for the homogeneity test
+    out$mswd <- Chi2/(out$df+1)
+    out$p.value <- 1-stats::pchisq(Chi2,out$df+1)
+    out$age <- c(tt,st,stats::qt(1-alpha/2,out$df)*st)
+    out$disp <- c(sigma,stats::qnorm(1-alpha/2)*sigma)
+    names(out$age) <- c('t','s[t]','ci[t]')
+    names(out$disp) <- c('s','ci')
     out
 }
 #' @rdname central
 #' @export
-central.UThHe <- function(x,...){
+central.UThHe <- function(x,alpha=0.05,...){
     out <- list()
     ns <- nrow(x)
-    df <- 2*(ns-1)
     doSm <- doSm(x)
+    out$age <- rep(NA,4)
+    names(out$age) <- c('t','s[t]','ci[t]','disp[t]')
     if (doSm){
         uvw <- UThHe2uvw(x)
         fit <- stats::optim(c(0,0,0),SS.UThHe.uvw,method='BFGS',
@@ -101,26 +133,48 @@ central.UThHe <- function(x,...){
         out$covmat <- solve(fit$hessian)
         nms <- c('u','v','w')
         cc <- uvw2UThHe(out$uvw,out$covmat)
-        out$age <- get.UThHe.age(cc['U'],cc['sU'],cc['Th'],cc['sTh'],
-                                 cc['He'],cc['sHe'],cc['Sm'],cc['sSm'])
+        out$age[c('t','s[t]')] <- get.UThHe.age(cc['U'],cc['sU'],
+                                                cc['Th'],cc['sTh'],
+                                                cc['He'],cc['sHe'],
+                                                cc['Sm'],cc['sSm'])
     } else {
         uv <- UThHe2uv(x)
         fit <- stats::optim(c(0,0),SS.UThHe.uv,method='BFGS',
                             hessian=TRUE,x=x)
         out$uvw <- fit$par
+        SS <- SS.UThHe.uv(out$uv[1:2],x)
         out$covmat <- solve(fit$hessian)
         nms <- c('u','v')
-        cc <- uv2UThHe(out$uv,out$covmat)
-        out$age <- get.UThHe.age(cc['U'],cc['sU'],
-                                 cc['Th'],cc['sTh'],
-                                 cc['He'],cc['sHe'])
+        cc <- uv2UThHe(out$uvw,out$covmat)
+        out$age[c('t','s[t]')] <-
+            get.UThHe.age(cc['U'],cc['sU'],
+                          cc['Th'],cc['sTh'],
+                          cc['He'],cc['sHe'])
     }
+    # the overdispersion calculation does not use Sm
     SS <- SS.UThHe.uv(out$uvw[1:2],x)
+    out$df <- 2*(ns-1)
+    out$mswd <- SS/out$df
+    out$tfact <- stats::qt(1-alpha/2,out$df)
+    if (doSm){
+        cco <- uvw2UThHe(out$uvw,out$mswd*out$covmat)
+        out$age['disp[t]'] <-
+            out$tfact*get.UThHe.age(cco['U'],cco['sU'],
+                                    cco['Th'],cco['sTh'],
+                                    cco['He'],cco['sHe'],
+                                    cco['Sm'],cco['sSm'])[2]
+    } else {
+        cco <- uv2UThHe(out$uvw,out$mswd*out$covmat)
+        out$age['disp[t]'] <-
+            out$tfact*get.UThHe.age(cco['U'],cco['sU'],
+                                    cco['Th'],cco['sTh'],
+                                    cco['He'],cco['sHe'])[2]
+    }
+    out$age['ci[t]'] <- out$tfact*out$age['s[t]']
     names(out$uvw) <- nms
     colnames(out$covmat) <- nms
     rownames(out$covmat) <- nms
-    out$mswd <- SS/df
-    out$p.value <- 1-stats::pchisq(SS,df)
+    out$p.value <- 1-stats::pchisq(SS,out$df)
     out
 }
 #' @param mineral setting this parameter to either \code{apatite} or
@@ -129,7 +183,7 @@ central.UThHe <- function(x,...){
 #'     results if \code{x$format=2}.)
 #' @rdname central
 #' @export
-central.fissiontracks <- function(x,mineral=NA,...){
+central.fissiontracks <- function(x,mineral=NA,alpha=0.05,...){
     out <- list()
     if (x$format<2){
         L8 <- lambda('U238')[1]
@@ -140,7 +194,6 @@ central.fissiontracks <- function(x,mineral=NA,...){
         Ni <- sum(Nij)
         num <- (Nsj*Ni-Nij*Ns)^2
         den <- Nsj+Nij
-        df <- length(Nsj)-1
         Chi2 <- sum(num/den)/(Ns*Ni)
         mj <- Nsj+Nij
         pj <- Nsj/mj
@@ -154,13 +207,18 @@ central.fissiontracks <- function(x,mineral=NA,...){
         st <- tt * sqrt( 1/(sum(wj)*(theta*(1-theta))^2) +
                          (x$rhoD[2]/x$rhoD[1])^2 +
                          (x$zeta[2]/x$zeta[1])^2 )
-        out$age <- c(tt,st)
-        out$disp <- sigma
-        out$mswd <- Chi2/df
-        out$p.value <- 1-stats::pchisq(Chi2,df)
+        # remove two d.o.f. for mu and sigma
+        out$df <- length(Nsj)-2
+        # add back one d.o.f. for homogeneity test
+        out$mswd <- Chi2/(out$df+1)
+        out$p.value <- 1-stats::pchisq(Chi2,out$df+1)
+        out$age <- c(tt,st,stats::qt(1-alpha/2,out$df)*st)        
+        out$disp <- c(sigma,stats::qnorm(1-alpha/2)*sigma)
+        names(out$age) <- c('t','s[t]','ci[t]')
+        names(out$disp) <- c('s','ci')
     } else if (x$format>1){
         tst <- age(x,exterr=FALSE,mineral=mineral)
-        out <- central.default(tst)
+        out <- central.default(tst,alpha=alpha)
     }
     out
 }

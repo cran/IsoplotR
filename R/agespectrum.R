@@ -15,12 +15,14 @@
 #' 
 #' an object of class \code{ArAr}
 #' 
-#' @param alpha the confidence limits of the error bars/boxes.
+#' @param alpha the confidence limits of the error bars/boxes and
+#'     confidence intervals.
 #' @param plateau logical flag indicating whether a plateau age should
 #'     be calculated. If \code{plateau=TRUE}, the function will
 #'     compute the weighted mean of the largest succession of steps
 #'     that yield values passing the Chi-square test for age
-#'     homogeneity.
+#'     homogeneity.  If \code{TRUE}, returns a list with plateau
+#'     parameters.
 #' @param plateau.col the fill colour of the rectangles used to mark
 #'     the steps belonging to the age plateau.
 #' @param non.plateau.col if \code{plateau=TRUE}, the steps that do
@@ -30,25 +32,54 @@
 #'     if \code{plateau=TRUE}).
 #' @param line.col colour of the isochron line
 #' @param lwd line width
-#' @param title add a title to the plot? If \code{FALSE}, returns a
-#'     list with plateau parameters.
+#' @param title add a title to the plot?
 #' @param xlab x-axis label
 #' @param ylab y-axis label
 #' @param ... optional parameters to the generic \code{plot} function
-#' @return if \code{title=FALSE}, returns a list with the following
+#' @return if \code{plateau=TRUE}, returns a list with the following
 #'     items:
 #'
 #' \describe{
-#' \item{mean}{a 2-element vector with the plateau mean and standard error}
+#' \item{mean}{a 3-element vector with:
+#'
+#' \code{x}: the plateau mean
+#'
+#' \code{s[x]}: the estimated standard deviation of \code{x}
+#'
+#' \code{ci[x]}: the 100(1-\eqn{\alpha})\% confidence interval of
+#' \code{t} for the appropriate degrees of freedom
+#' }
+#'
+#' \item{disp}{a 2-element vector with:
+#'
+#' \code{s}: the standard deviation of the overdispersion
+#'
+#' \code{ci}: the 100(1-\eqn{\alpha})\% confidence interval of
+#' the overdispersion for the appropriate degrees of freedom
+#' }
+#'
+#' \item{df}{the degrees of freedom for the weighted mean plateau fit}
 #'
 #' \item{mswd}{the mean square of the weighted deviates of the plateau}
 #'
-#' \item{p.value}{the p-value of a Chi-square test with \eqn{n-1}
+#' \item{p.value}{the p-value of a Chi-square test with \eqn{df=n-2}
 #' degrees of freedom, where \eqn{n} is the number of steps in the
-#' plateau.}
+#' plateau and 2 degrees of freedom have been removed to estimate the
+#' mean and the dispersion.}
 #'
 #' \item{fract}{the fraction of \eqn{^{39}}Ar contained in the
-#' plateau} }
+#' plateau}
+#'
+#' \item{tfact}{the t-factor for \code{df} degrees of freedom
+#' evaluated at \eqn{100(1-\alpha/2)}\% confidence}
+#'
+#' \item{plotpar}{plot parameters for the weighted mean, which are not
+#' used in the age spectrum}
+#'
+#' \item{i}{indices of the steps that are retained for the plateau age
+#' calculation}
+#'
+#' }
 #' @rdname agespectrum
 #' @export
 agespectrum <- function(x,...){ UseMethod("agespectrum",x) }
@@ -72,6 +103,7 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
     minY <- min(Y-fact*sY,na.rm=TRUE)
     graphics::plot(c(0,1),c(minY,maxY),type='n',xlab=xlab,ylab=ylab,...)
     plat <- plateau(x,alpha=alpha)
+    plat$valid <- NULL
     if (plateau) {
         colour <- rep(non.plateau.col,ns)
         colour[plat$i] <- plateau.col
@@ -80,15 +112,21 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
         colour <- rep(plateau.col,ns)
     }
     for (i in 1:ns){
-        graphics::rect(X[i],Y[i]-fact*sY[i],X[i+1],Y[i]+fact*sY[i],col=colour[i])
-        if (i<ns) graphics::lines(rep(X[i+1],2),c(Y[i]-fact*sY[i],Y[i+1]+fact*sY[i+1]))
+        graphics::rect(X[i],Y[i]-fact*sY[i],
+                       X[i+1],Y[i]+fact*sY[i],
+                       col=colour[i])
+        if (i<ns) graphics::lines(rep(X[i+1],2),
+                                  c(Y[i]-fact*sY[i],Y[i+1]+fact*sY[i+1]))
     }
-    if (plateau & title) graphics::title(plateau.title(plat,sigdig=sigdig,Ar=FALSE))
-    else return(plat)
+    if (plateau){
+        if (title) graphics::title(plateau.title(plat,sigdig=sigdig,Ar=FALSE))
+        return(plat)
+    }
 }
-#' @param i2i `isochron to intercept': calculates the initial (aka `inherited',
-#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio from an
-#'     isochron fit. Setting \code{i2i} to \code{FALSE} uses the
+#' @param i2i `isochron to intercept':
+#'     calculates the initial (aka `inherited',
+#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio from
+#'     an isochron fit. Setting \code{i2i} to \code{FALSE} uses the
 #'     default values stored in \code{settings('iratio',...)}
 #' @param exterr propagate the external (decay constant and
 #'     calibration factor) uncertainties?
@@ -106,19 +144,24 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
     X <- cbind(x$x[,'Ar39'],tt)
     x.lab <- expression(paste("cumulative ",""^"39","Ar fraction"))
     plat <- agespectrum.default(X,alpha=alpha,xlab=x.lab,ylab='age [Ma]',
-                                plateau=plateau,sigdig=sigdig,line.col=line.col,
+                                plateau=plateau,sigdig=sigdig,
+                                line.col=line.col,
                                 lwd=lwd,title=FALSE,...)
-    # calculate the weighted mean Ar40Ar39 ratio from the weighted mean age
-    R <- get.ArAr.ratio(plat$mean[1],plat$mean[2],x$J[1],0,exterr=FALSE)
-    # recalculate the weighted mean age, this time
-    # taking into account decay and J uncertainties
-    plat$mean <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=exterr)
     if (plateau){
-        graphics::title(plateau.title(plat,sigdig=sigdig,Ar=TRUE))
+        out <- plat
+        # calculate the weighted mean Ar40Ar39 ratio from the weighted mean age
+        R <- get.ArAr.ratio(plat$mean['x'],plat$mean['s[x]'],x$J[1],0,exterr=FALSE)
+        # recalculate the weighted mean age, this time
+        # taking into account decay and J uncertainties
+        out$mean[1:2] <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=exterr)
+        out$mean[3] <- plat$tfact*out$mean[2]
+        graphics::title(plateau.title(out,sigdig=sigdig,Ar=TRUE))
+        return(out)
     }
 }
 
-# x is a three column vector with Ar39 cumulative fractions, ages and uncertainties
+# x is a three column vector with Ar39
+# cumulative fractions, ages and uncertainties
 plateau <- function(x,alpha=0.05){
     X <- x[,1]/sum(x[,1],na.rm=TRUE)
     YsY <- x[,c(2,3)]
@@ -137,12 +180,9 @@ plateau <- function(x,alpha=0.05){
             if (any(!valid)){
                 break;
             } else if (fract > out$fract){
-                avg <- weightedmean(YsY[i:j,],plot=FALSE,
+                out <- weightedmean(YsY[i:j,],plot=FALSE,
                                     detect.outliers=FALSE)
                 out$i <- i:j
-                out$mean <- avg$mean
-                out$mswd <- avg$mswd
-                out$p.value <- avg$p.value
                 out$fract <- fract
             }
         }
@@ -151,18 +191,16 @@ plateau <- function(x,alpha=0.05){
 }
 
 plateau.title <- function(fit,sigdig=2,Ar=TRUE){
-    rounded.mean <- roundit(fit$mean[1],fit$mean[2],sigdig=sigdig)
-    line1 <- substitute('mean ='~a%+-%b~' (1'~sigma~')',
-                        list(a=rounded.mean[1], b=rounded.mean[2]))
-    line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
-                        list(a=signif(fit$mswd,sigdig),
-                             b=signif(fit$p.value,sigdig)))
+    rounded.mean <- roundit(fit$mean[1],fit$mean[2:3],sigdig=sigdig)
+    line1 <- substitute('mean ='~a%+-%b~'|'~c,
+                        list(a=rounded.mean[1],
+                             b=rounded.mean[2],
+                             c=rounded.mean[3]))
     a <- signif(100*fit$fract,sigdig)
     if (Ar)
-        line3 <- bquote(paste("Includes ",.(a),"% of the",""^"39","Ar"))
+        line2 <- bquote(paste("Includes ",.(a),"% of the ",""^"39","Ar"))
     else
-        line3 <- bquote(paste("Includes ",.(a),"% of the spectrum"))
-    graphics::mtext(line1,line=2)
-    graphics::mtext(line2,line=1)
-    graphics::mtext(line3,line=0)
+        line2 <- bquote(paste("Includes ",.(a),"% of the spectrum"))
+    graphics::mtext(line1,line=1)
+    graphics::mtext(line2,line=0)
 }
