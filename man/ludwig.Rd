@@ -4,23 +4,42 @@
 \alias{ludwig}
 \alias{ludwig.default}
 \alias{ludwig.UPb}
-\title{Linear regression of X,Y,Z-variables with correlated errors, taking
+\title{Linear regression of U-Pb data with correlated errors, taking
 into account decay constant uncertainties.}
 \usage{
 ludwig(x, ...)
 
 \method{ludwig}{default}(x, ...)
 
-\method{ludwig}{UPb}(x, exterr = FALSE, alpha = 0.05, ...)
+\method{ludwig}{UPb}(x, exterr = FALSE, alpha = 0.05, model = 1, ...)
 }
 \arguments{
 \item{x}{an object of class \code{UPb}}
 
 \item{...}{optional arguments}
 
-\item{exterr}{propagate external sources of uncertainty (e.g., decay constant)?}
+\item{exterr}{propagate external sources of
+uncertainty (e.g., decay constants)?}
 
 \item{alpha}{cutoff value for confidence intervals}
+
+\item{model}{one of three regression models:
+
+\code{1}: fit a discordia line through the data using the maximum
+likelihood algorithm of Ludwig (1998), which assumes that the
+scatter of the data is solely due to the analytical
+uncertainties. In this case, \code{IsoplotR} will either calculate
+an upper and lower intercept age (for Wetherill concordia), or a
+lower intercept age and common
+(\eqn{^{207}}Pb/\eqn{^{206}}Pb)\eqn{_\circ}-ratio intercept (for
+Tera-Wasserburg). If \eqn{MSWD}>0, then the analytical
+uncertainties are augmented by a factor \eqn{\sqrt{MSWD}}.
+
+\code{2}: fit a discordia line ignoring the analytical uncertainties
+
+\code{3}: fit a discordia line using a modified maximum likelihood
+algorithm that includes accounts for any overdispersion by adding a
+geological (co)variance term.}
 }
 \value{
 \describe{
@@ -38,10 +57,28 @@ Chi-square statistic) for the fit.}
 
 \item{p.value}{p-value of a Chi-square test for the linear fit}
 
+\item{w}{the overdispersion, i.e., a two-element vector with the
+estimated standard deviation of the (assumedly) Normal distribution
+that underlies the true isochron; and the \eqn{100(1-\alpha)\%}
+confidence interval (only relevant if \code{model = 3}).}
+
 }
 }
 \description{
-Implements the maximum likelihood algorithm of Ludwig (1998)
+Implements the maximum likelihood algorithm for Total-Pb/U isochron
+regression of Ludwig (1998)
+}
+\details{
+The 3-dimensional regression algorithm of Ludwig and Titterington
+(1994) was modified by Ludwig (1998) to fit so-called `Total Pb-U
+isochrons'. These are constrained to a radiogenic endmember
+composition that falls on the \code{\link{concordia}} line. In its
+most sophisticated form, this algorithm does not only allow for
+correlated errors between variables, but also between
+aliquots. \code{IsoplotR} currently uses this algorithm to
+propagate decay constant uncertainties in the total Pb-U isochron
+ages. Future versions of the program will generalise this approach
+to other chronometers as well.
 }
 \examples{
 f <- system.file("UPb4.csv",package="IsoplotR")
@@ -51,4 +88,13 @@ fit <- ludwig(d)
 \references{
 Ludwig, K.R., 1998. On the treatment of concordant uranium-lead
 ages. Geochimica et Cosmochimica Acta, 62(4), pp.665-676.
+
+Ludwig, K.R. and Titterington, D.M., 1994. Calculation of
+\eqn{^{230}}Th/U isochrons, ages, and errors. Geochimica et
+Cosmochimica Acta, 58(22), pp.5031-5042.
+}
+\seealso{
+\code{\link{concordia}},
+\code{\link{titterington}},
+\code{\link{isochron}}
 }

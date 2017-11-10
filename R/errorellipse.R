@@ -1,13 +1,14 @@
 #' Get coordinates of error ellipse for plotting
 #'
-#' Construct an error ellipse age a given confidence level from its
+#' Constructs an error ellipse at a given confidence level from its
 #' centre and covariance matrix
 #'
 #' @param x x-coordinate (scalar) for the centre of the ellipse
 #' @param y y-coordinate (scalar) for the centre of the ellipse
-#' @param covmat covariance matrix of the x-y coordinates
+#' @param covmat the [\code{2 x 2}] covariance matrix of the x-y coordinates
 #' @param alpha the probability cutoff for the error ellipses
-#' @param n the resolution of the error ellipses
+#' @param n the resolution (number of segments) of the error ellipses
+#'
 #' @return an [\code{n x 2}] matrix of plot coordinates
 #' @examples
 #' x = 99; y = 101;
@@ -36,8 +37,8 @@ ellipse <- function(x,y,covmat,alpha=0.05,n=50){
 # x = matrix with columns X, sX, Y, sY, rXY
 scatterplot <- function(x,xlim=NA,ylim=NA,alpha=0.05,
                         show.numbers=FALSE,show.ellipses=1,levels=NA,
-                        ellipse.col=c("#00FF0080","#FF000080"),a=NA,
-                        b=NA,line.col='red',lwd=2, new.plot=TRUE,
+                        clabel="",ellipse.col=c("#00FF0080","#FF000080"),a=NA,
+                        b=NA,line.col='red',lwd=2,new.plot=TRUE,
                         empty=FALSE,...){
     colnames(x) <- c('X','sX','Y','sY','rXY')
     if (any(is.na(xlim))) xlim <- get.limits(x[,'X'],x[,'sX'])
@@ -64,7 +65,7 @@ scatterplot <- function(x,xlim=NA,ylim=NA,alpha=0.05,
                 else graphics::points(x0[i],y0[i],pch=19,cex=0.25)
             }
         }
-        colourbar(z=levels,col=ellipse.col)
+        colourbar(z=levels,col=ellipse.col,clabel=clabel)
     } else {
         if (show.numbers) graphics::text(x0,y0,1:ns,adj=c(0,1))
         else graphics::points(x0,y0,pch=19,cex=0.5)

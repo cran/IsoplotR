@@ -5,9 +5,10 @@
 \title{Concordia diagram}
 \usage{
 concordia(x, tlim = NULL, alpha = 0.05, wetherill = TRUE,
-  show.numbers = FALSE, levels = NA, ellipse.col = c("#00FF0080",
-  "#FF000080"), concordia.col = "darksalmon", exterr = TRUE, show.age = 0,
-  sigdig = 2, common.Pb = 0, ticks = NULL, ...)
+  show.numbers = FALSE, levels = NA, clabel = clabel,
+  ellipse.col = c("#00FF0080", "#FF000080"), concordia.col = "darksalmon",
+  exterr = FALSE, show.age = 0, sigdig = 2, common.Pb = 0,
+  ticks = NULL, ...)
 }
 \arguments{
 \item{x}{an object of class \code{UPb}}
@@ -22,12 +23,15 @@ confidence intervals}
 \item{show.numbers}{logical flag (\code{TRUE} to show grain
 numbers)}
 
-\item{levels}{a vector with additional values to be displayed as
-different background colours within the error ellipses.}
+\item{levels}{a vector with \code{length(x)} values to be displayed
+as different background colours within the error ellipses.}
+
+\item{clabel}{label for the colour legend (only used if
+\code{levels} is not \code{NA}.}
 
 \item{ellipse.col}{a vector of two background colours for the error
-ellipses. If \code{levels=NA}, then only the first colour will
-be used. If \code{levels} is a vector of numbers, then
+ellipses. If \code{levels=NA}, then only the first colour is
+used. If \code{levels} is a vector of numbers, then
 \code{ellipse.col} is used to construct a colour ramp.}
 
 \item{concordia.col}{colour of the concordia line}
@@ -36,11 +40,25 @@ be used. If \code{levels} is a vector of numbers, then
 
 \item{show.age}{one of either:
 
-\code{0}: just plot the data but don't calculate the age
+\code{0}: plot the data without calculating an age
 
-\code{1}: calculate the concordia age
+\code{1}: fit a concordia composition and age
 
-\code{2}: fit a discordia line}
+\code{2}: fit a discordia line through the data using the maximum
+likelihood algorithm of Ludwig (1998), which assumes that the
+scatter of the data is solely due to the analytical
+uncertainties. In this case, \code{IsoplotR} will either calculate
+an upper and lower intercept age (for Wetherill concordia), or a
+lower intercept age and common
+(\eqn{^{207}}Pb/\eqn{^{206}}Pb)-ratio intercept (for
+Tera-Wasserburg). If \code{mswd}>0, then the analytical
+uncertainties are augmented by a factor \eqn{\sqrt{mswd}}.
+
+\code{3}: fit a discordia line ignoring the analytical uncertainties
+
+\code{4}: fit a discordia line using a modified maximum likelihood
+algorithm that includes accounts for any overdispersion by adding a
+geological (co)variance term.}
 
 \item{sigdig}{number of significant digits for the
 concordia/discordia age}
@@ -48,19 +66,106 @@ concordia/discordia age}
 \item{common.Pb}{apply a common lead correction using one of three
     methods:
 
-\code{1}: use the isochron intercept as the initial Pb-composition
-
-\code{2}: use the Stacey-Kramer two-stage model to infer the initial
+\code{1}: use the Stacey-Kramer two-stage model to infer the initial
 Pb-composition
+
+\code{2}: use the isochron intercept as the initial Pb-composition
 
 \code{3}: use the Pb-composition stored in
 \code{settings('iratio','Pb206Pb204')} and
 \code{settings('iratio','Pb207Pb204')}}
 
 \item{ticks}{an optional vector of age ticks to be added to the
-concordia line.}
+concordia line to override \code{IsoplotR}'s default spacing,
+which is based on \code{R}'s \code{pretty} function.}
 
 \item{...}{optional arguments to the generic \code{plot} function}
+}
+\value{
+if \code{show.age=1}, returns a list with the following items:
+
+\describe{
+
+\item{x}{ a named vector with the (weighted mean) U-Pb composition }
+
+\item{cov}{ the covariance matrix of the (weighted mean) U-Pb composition }
+
+\item{mswd}{ a vector with three items (\code{equivalence},
+\code{concordance} and \code{combined}) containing the MSWD (Mean
+of the Squared Weighted Deviates, a.k.a the reduced Chi-squared
+statistic) of isotopic equivalence, age concordance and combined
+goodness of fit, respectively. }
+
+\item{p.value}{ a vector with three items (\code{equivalence},
+\code{concordance} and \code{combined}) containing the p-value of
+the Chi-square test for isotopic equivalence, age concordance and
+combined goodness of fit, respectively. }
+
+\item{df}{ a three-element vector with the number of degrees of
+freedom used for the \code{mswd} calculation.  These values are
+useful when expanding the analytical uncertainties if
+\code{mswd>1}.
+
+}
+
+\item{age}{a 4-element vector with:
+
+\code{t}: the concordia age (in Ma)
+
+\code{s[t]}: the estimated uncertainty of \code{t}
+
+\code{ci[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
+interval of \code{t} for the appropriate degrees of freedom
+
+\code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
+interval for \code{t} augmented by \eqn{\sqrt{mswd}} to account for
+overdispersed datasets.}
+
+}
+
+if \code{show.age=2}, \code{3} or \code{4}, returns a list with the
+following items:
+
+\describe{
+
+\item{model}{ the fitting model (\code{=show.age-1}).}
+
+\item{x}{ a two element vector with the upper and lower intercept
+ages (if \code{wetherill=TRUE}) or the lower intercept age and
+\eqn{^{207}}Pb/\eqn{^{206}}Pb intercept (if
+\code{wetherill=FALSE}).}
+
+\item{cov}{ the covariance matrix of the elements in \code{x}.}
+
+\item{err}{ a \code{[2 x 2]} or \code{[3 x 2]} matrix with the
+following rows:
+
+\code{s}: the estimated standard deviation for \code{x}
+
+\code{ci}: the studentised \eqn{100(1-\alpha)\%} confidence
+interval of \code{x} for the appropriate degrees of freedom
+
+\code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
+interval for \code{x} augmented by \eqn{\sqrt{mswd}} to account for
+overdispersed datasets (only reported if \code{show.age=2}).  }
+
+\item{df}{ the degrees of freedom of the concordia fit (concordance
++ equivalence)}
+
+\item{p.value}{ p-value of a Chi-square test for age homogeneity
+(only reported if \code{ type=3}).}
+
+\item{mswd}{ mean square of the weighted deviates -- a
+goodness-of-fit measure. \code{mswd > 1} indicates overdispersion
+w.r.t the analytical uncertainties (not reported if
+\code{show.age=3}).}
+
+\item{w}{ two-element vector with the standard deviation of the
+(assumedly) Normal overdispersion term and the corresponding
+\eqn{100(1-\alpha)\%} confidence interval (only important if
+\code{show.age=4}).}
+
+}
 }
 \description{
 Plots U-Pb data on Wetherill and Tera-Wasserburg concordia
@@ -77,9 +182,32 @@ the lower intercept age and the \eqn{^{207}}Pb/\eqn{^{206}}Pb
 intercept (for Tera-Wasserburg), taking into account error
 correlations and decay constant uncertainties.
 }
+\details{
+The concordia diagram is a graphical means of assessing the
+internal consistency of U-Pb data. It sets out the measured
+\eqn{^{206}}Pb/\eqn{^{238}}U- and
+\eqn{^{207}}Pb/\eqn{^{235}}U-ratios against each other (`Wetherill'
+diagram) or, equivalently, the \eqn{^{207}}Pb/\eqn{^{206}}Pb- and
+\eqn{^{206}}Pb/\eqn{^{238}}U-ratios (`Tera-Wasserburg'
+diagram). The space of concordant isotopic compositions is marked
+by a curve, the `concordia line'. Isotopic ratio measurements are
+shown as 100(1-\code{alpha})\% confidence ellipses. Concordant
+samples plot near to, or overlap with, the concordia line. They
+represent the pinnacle of geochronological robustness. Samples that
+plot away from the concordia line but are aligned along a linear
+trend form an isochron (or `discordia' line) that can be used
+to infer the composition of the non-radiogenic
+(`common') lead or to constrain the timing of prior lead loss.
+}
 \examples{
-data(examples) 
-concordia(examples$UPb)
+data(examples)
+concordia(examples$UPb,show.age=2)
+
+dev.new()
+concordia(examples$UPb,wetherill=FALSE,
+          xlim=c(24.9,25.4),ylim=c(0.0508,0.0518),
+          ticks=249:254,exterr=TRUE)#' data(examples)
+
 }
 \references{
 Ludwig, K.R., 1998. On the treatment of concordant

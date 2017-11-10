@@ -4,17 +4,37 @@
 \alias{helioplot}
 \title{Visualise U-Th-He data on a logratio plot or ternary diagram}
 \usage{
-helioplot(x, logratio = TRUE, show.central.comp = TRUE,
+helioplot(x, logratio = TRUE, model = 1, show.central.comp = TRUE,
   show.numbers = FALSE, alpha = 0.05, contour.col = c("white", "red"),
-  levels = NA, ellipse.col = c("#00FF0080", "#0000FF80"), sigdig = 2,
-  xlim = NA, ylim = NA, fact = NA, ...)
+  levels = NA, clabel = "", ellipse.col = c("#00FF0080", "#0000FF80"),
+  sigdig = 2, xlim = NA, ylim = NA, fact = NA, ...)
 }
 \arguments{
 \item{x}{an object of class \code{UThHe}}
 
 \item{logratio}{Boolean flag indicating whether the data should be
-shown on bivariate log[He/Th] vs. log[U/He] diagramme, or a
-U-Th-He ternary diagramme.}
+shown on bivariate log[He/Th] vs. log[U/He] diagram, or a
+U-Th-He ternary diagram.}
+
+\item{model}{choose one of the following statistical models:
+
+\code{1}: weighted mean. This model assumes that the scatter between
+the data points is solely caused by the analytical uncertainty. If
+the assumption is correct, then the MSWD value should be
+approximately equal to one. There are three strategies to deal with
+the case where MSWD>1. The first of these is to assume that the
+analytical uncertainties have been underestimated by a factor
+\eqn{\sqrt{MSWD}}.
+
+\code{2}: unweighted mean. A second way to deal with over- or
+underdispersed datasets is to simply ignore the analytical
+uncertainties.
+
+\code{3}: weighted mean with overdispersion: instead of attributing
+any overdispersion (MSWD > 1) to underestimated analytical
+uncertainties (model 1), it can also be attributed to the presence
+of geological uncertainty, which manifests itself as an added
+(co)variance term.}
 
 \item{show.central.comp}{show the geometric mean composition as a
 white ellipse?}
@@ -31,6 +51,8 @@ assigned to the minimum and maximum age contour}
 \item{levels}{a vector with additional values to be displayed as
 different background colours within the error ellipses.}
 
+\item{clabel}{label of the colour scale}
+
 \item{ellipse.col}{a vector of two background colours for the error
 ellipses. If \code{levels=NA}, then only the first colour will
 be used. If \code{levels} is a vector of numbers, then
@@ -46,7 +68,7 @@ determined automatically.}
 logratio plot. If \code{ylim=NA}, the axis limits are
 determined automatically.}
 
-\item{fact}{three-element vector with the scaling factors of the
+\item{fact}{three-element vector with scaling factors of the
 ternary diagram if \code{fact=NA}, these will be determined
 automatically}
 
@@ -56,6 +78,56 @@ automatically}
 Plot U-Th(-Sm)-He data on a (log[He/Th] vs. log[U/He]) logratio
 plot or U-Th-He ternary diagram
 }
+\details{
+U, Th, Sm and He are \emph{compositional} data.  This means that it
+is not so much the absolute concentrations of these elements that
+bear the chronological information, but rather their relative
+proportions. The space of all possible U-Th-He compositions fits
+within the constraints of a ternary diagram or `helioplot'
+(Vermeesch, 2008, 2010). If Sm is included as well, then this
+expands to a three-dimensional tetrahaedral space (Vermeesch,
+2008).  Data that fit within these constrained spaces must be
+subjected to a logratio transformation prior to statistical
+analysis (Aitchison, 1986).  In the case of the U-Th-He-(Sm)-He
+system, this is achieved by first defining two (or three) new
+variables:
+
+\eqn{u \equiv \ln[U/He]}
+\eqn{v \equiv \ln[Th/He]}
+\eqn{(, w \equiv \ln[Sm/He] )}
+
+and then performing the desired statistical analysis (averaging,
+uncertainty propagation, ...) on the transformed data. Upon
+completion of the mathematical operations, the results can then be
+mapped back to U-Th-(Sm)-He space using an inverse logratio
+transformation:
+
+\eqn{[He] = 1/[e^{u}+e^{v}+(e^{w})+1]},
+\eqn{[U] = e^{u}/[e^{u}+e^{v}+(e^{w})+1]}\cr
+\eqn{[Th] = e^{v}/[e^{u}+e^{v}+(e^{w})+1]},
+\eqn{([Sm] = e^{w}/[e^{u}+e^{v}+(e^{w})+1])}.
+
+where \eqn{[He] + [U] + [Th] (+ [Sm]) = 1}. In the context of
+U-Th-(Sm)-He dating, the \emph{central} age is defined as the age
+that corresponds to the arithmetic mean composition in logratio
+space, which is equivalent to the geometric mean in compositional
+dataspace (Vermeesch, 2008).  \code{IsoplotR}'s \code{helioplot}
+function performs this calculation using the same algorithm that is
+used to obtain the weighted mean U-Pb composition for the
+\code{\link{concordia}} age calculation. Overdispersion is treated
+similarly as in a regression context (see \code{\link{isochron}}).
+Thus, there are options to augment the uncertainties with a factor
+\eqn{\sqrt{MSWD}} (model 1); to ignore the analytical uncertainties
+altogether (model 2); or to add a constant overdispersion term to
+the analytical uncertainties (model 3).  The \code{helioplot}
+function visualises U-Th-(Sm)-He data on either a ternary diagram
+or a bivariate \eqn{\ln[Th/U]} vs. \eqn{\ln[U/He]} contour
+plot. These diagrams provide a convenient way to simultaneously
+display the isotopic composition of samples as well as their
+chronological meaning. In this respect, they fulfil the same
+purpose as the U-Pb \code{\link{concordia}} diagram and the
+U-series \code{\link{evolution}} plot.
+}
 \examples{
 data(examples)
 helioplot(examples$UThHe)
@@ -63,7 +135,15 @@ dev.new()
 helioplot(examples$UThHe,logratio=FALSE)
 }
 \references{
-Vermeesch, P., 2010. HelioPlot, and the treatment of
-    overdispersed (U-Th-Sm)/He data. Chemical Geology, 271(3),
-    pp.108-111.
+Aitchison, J., 1986, The statistical analysis of compositional
+data: London, Chapman and Hall, 416 p.
+
+Vermeesch, P., 2008. Three new ways to calculate average (U-Th)/He
+ages. Chemical Geology, 249(3), pp.339-347.
+
+Vermeesch, P., 2010. HelioPlot, and the treatment of overdispersed
+    (U-Th-Sm)/He data. Chemical Geology, 271(3), pp.108-111.
+}
+\seealso{
+\code{\link{radialplot}}
 }

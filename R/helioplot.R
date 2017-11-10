@@ -3,10 +3,60 @@
 #' Plot U-Th(-Sm)-He data on a (log[He/Th] vs. log[U/He]) logratio
 #' plot or U-Th-He ternary diagram
 #'
+#' @details
+#' U, Th, Sm and He are \emph{compositional} data.  This means that it
+#' is not so much the absolute concentrations of these elements that
+#' bear the chronological information, but rather their relative
+#' proportions. The space of all possible U-Th-He compositions fits
+#' within the constraints of a ternary diagram or `helioplot'
+#' (Vermeesch, 2008, 2010). If Sm is included as well, then this
+#' expands to a three-dimensional tetrahaedral space (Vermeesch,
+#' 2008).  Data that fit within these constrained spaces must be
+#' subjected to a logratio transformation prior to statistical
+#' analysis (Aitchison, 1986).  In the case of the U-Th-He-(Sm)-He
+#' system, this is achieved by first defining two (or three) new
+#' variables:
+#'
+#' \eqn{u \equiv \ln[U/He]}
+#' \eqn{v \equiv \ln[Th/He]}
+#' \eqn{(, w \equiv \ln[Sm/He] )}
+#'
+#' and then performing the desired statistical analysis (averaging,
+#' uncertainty propagation, ...) on the transformed data. Upon
+#' completion of the mathematical operations, the results can then be
+#' mapped back to U-Th-(Sm)-He space using an inverse logratio
+#' transformation:
+#'
+#' \eqn{[He] = 1/[e^{u}+e^{v}+(e^{w})+1]},
+#' \eqn{[U] = e^{u}/[e^{u}+e^{v}+(e^{w})+1]}\cr
+#' \eqn{[Th] = e^{v}/[e^{u}+e^{v}+(e^{w})+1]},
+#' \eqn{([Sm] = e^{w}/[e^{u}+e^{v}+(e^{w})+1])}.
+#'
+#' where \eqn{[He] + [U] + [Th] (+ [Sm]) = 1}. In the context of
+#' U-Th-(Sm)-He dating, the \emph{central} age is defined as the age
+#' that corresponds to the arithmetic mean composition in logratio
+#' space, which is equivalent to the geometric mean in compositional
+#' dataspace (Vermeesch, 2008).  \code{IsoplotR}'s \code{helioplot}
+#' function performs this calculation using the same algorithm that is
+#' used to obtain the weighted mean U-Pb composition for the
+#' \code{\link{concordia}} age calculation. Overdispersion is treated
+#' similarly as in a regression context (see \code{\link{isochron}}).
+#' Thus, there are options to augment the uncertainties with a factor
+#' \eqn{\sqrt{MSWD}} (model 1); to ignore the analytical uncertainties
+#' altogether (model 2); or to add a constant overdispersion term to
+#' the analytical uncertainties (model 3).  The \code{helioplot}
+#' function visualises U-Th-(Sm)-He data on either a ternary diagram
+#' or a bivariate \eqn{\ln[Th/U]} vs. \eqn{\ln[U/He]} contour
+#' plot. These diagrams provide a convenient way to simultaneously
+#' display the isotopic composition of samples as well as their
+#' chronological meaning. In this respect, they fulfil the same
+#' purpose as the U-Pb \code{\link{concordia}} diagram and the
+#' U-series \code{\link{evolution}} plot.
+#'
 #' @param x an object of class \code{UThHe}
 #' @param logratio Boolean flag indicating whether the data should be
-#'     shown on bivariate log[He/Th] vs. log[U/He] diagramme, or a
-#'     U-Th-He ternary diagramme.
+#'     shown on bivariate log[He/Th] vs. log[U/He] diagram, or a
+#'     U-Th-He ternary diagram.
 #' @param show.central.comp show the geometric mean composition as a
 #'     white ellipse?
 #' @param show.numbers show the grain numbers inside the error
@@ -17,6 +67,7 @@
 #'     assigned to the minimum and maximum age contour
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours within the error ellipses.
+#' @param clabel label of the colour scale
 #' @param ellipse.col a vector of two background colours for the error
 #'     ellipses. If \code{levels=NA}, then only the first colour will
 #'     be used. If \code{levels} is a vector of numbers, then
@@ -28,45 +79,81 @@
 #' @param ylim optional limits of the y-axis (log[Th/He]) of the
 #'     logratio plot. If \code{ylim=NA}, the axis limits are
 #'     determined automatically.
-#' @param fact three-element vector with the scaling factors of the
+#' @param fact three-element vector with scaling factors of the
 #'     ternary diagram if \code{fact=NA}, these will be determined
 #'     automatically
+#' @param model choose one of the following statistical models:
+#'
+#' \code{1}: weighted mean. This model assumes that the scatter between
+#' the data points is solely caused by the analytical uncertainty. If
+#' the assumption is correct, then the MSWD value should be
+#' approximately equal to one. There are three strategies to deal with
+#' the case where MSWD>1. The first of these is to assume that the
+#' analytical uncertainties have been underestimated by a factor
+#' \eqn{\sqrt{MSWD}}.
+#'
+#' \code{2}: unweighted mean. A second way to deal with over- or
+#' underdispersed datasets is to simply ignore the analytical
+#' uncertainties.
+#'
+#' \code{3}: weighted mean with overdispersion: instead of attributing
+#' any overdispersion (MSWD > 1) to underestimated analytical
+#' uncertainties (model 1), it can also be attributed to the presence
+#' of geological uncertainty, which manifests itself as an added
+#' (co)variance term.
 #' @param ... optional arguments to the generic \code{plot} function
-#' @references Vermeesch, P., 2010. HelioPlot, and the treatment of
-#'     overdispersed (U-Th-Sm)/He data. Chemical Geology, 271(3),
-#'     pp.108-111.
+#' @seealso \code{\link{radialplot}}
+#' @references
+#' Aitchison, J., 1986, The statistical analysis of compositional
+#' data: London, Chapman and Hall, 416 p.
+#'
+#' Vermeesch, P., 2008. Three new ways to calculate average (U-Th)/He
+#' ages. Chemical Geology, 249(3), pp.339-347.
+#'
+#' Vermeesch, P., 2010. HelioPlot, and the treatment of overdispersed
+#'     (U-Th-Sm)/He data. Chemical Geology, 271(3), pp.108-111.
 #' @examples
 #' data(examples)
 #' helioplot(examples$UThHe)
 #' dev.new()
 #' helioplot(examples$UThHe,logratio=FALSE)
 #' @export
-helioplot <- function(x,logratio=TRUE,show.central.comp=TRUE,
+helioplot <- function(x,logratio=TRUE,model=1,show.central.comp=TRUE,
                       show.numbers=FALSE,alpha=0.05,
                       contour.col=c('white','red'),levels=NA,
-                      ellipse.col=c("#00FF0080","#0000FF80"),
+                      clabel="",ellipse.col=c("#00FF0080","#0000FF80"),
                       sigdig=2,xlim=NA,ylim=NA,fact=NA,...){
-    fit <- central.UThHe(x,alpha=alpha)
+    fit <- central.UThHe(x,alpha=alpha,model=model)
+    print(fit)
+    ellipse.cols <- set.ellipse.colours(ns=length(x),levels=levels,
+                                        col=ellipse.col)
     if (logratio) {
         plot_logratio_contours(x,contour.col=contour.col,
                                xlim=xlim,ylim=ylim,...)
-        plot_logratio_ellipses(x,alpha=alpha,levels=levels,
-                               ellipse.col=ellipse.col,
-                               show.numbers=show.numbers)
+        if (model!=2) plot_logratio_ellipses(x,ellipse.cols=ellipse.cols,
+                                             alpha=alpha,
+                                             levels=levels,
+                                             show.numbers=show.numbers)
     } else {
         if (all(is.na(fact))) fact <- getfact(x,fit)
         plot_helioplot_contours(x,fact=fact,contour.col=contour.col,
                                 xlim=xlim,ylim=ylim)
-        plot_helioplot_ellipses(x,fact=fact,alpha=alpha,
-                                levels=levels,ellipse.col=ellipse.col,
-                                show.numbers=show.numbers)
+        if (model!=2) plot_helioplot_ellipses(x,ellipse.cols=ellipse.cols,
+                                              fact=fact, alpha=alpha,
+                                              levels=levels,
+                                              show.numbers=show.numbers)
     }
     if (show.central.comp){
         plot_central_ellipse(fit,fact=fact,logratio=logratio,
                              alpha=alpha,doSm=doSm(x))
         graphics::title(helioplot_title(fit,sigdig=sigdig))
     }
-    colourbar(z=levels,col=ellipse.col)
+    if (model==2){
+        u <- log(x[,'U']/x[,'He'])
+        v <- log(x[,'Th']/x[,'He'])
+        plot_points(u,v,bg=ellipse.cols,show.numbers=show.numbers,...)
+    }
+    invisible(colourbar(z=levels,col=ellipse.col,clabel=clabel))
 }
 
 plot_logratio_frame <- function(lims,...){
@@ -86,11 +173,9 @@ plot_helioplot_frame <- function(lims,fact=c(1,1,1),fill.col=NA,...){
     graphics::text(corners[1:3,],labels=labels,pos=c(3,1,1))
 }
 
-plot_logratio_ellipses <- function(x,alpha=0.05,show.numbers=FALSE,levels=NA,
-                                   ellipse.col=c("#00FF0080","#0000FF80")){
-    ns <- nrow(x)
-    ellipse.cols <- set.ellipse.colours(ns=ns,levels=levels,col=ellipse.col)
-    for (i in 1:ns){
+plot_logratio_ellipses <- function(x,ellipse.cols,alpha=0.05,
+                                   show.numbers=FALSE,levels=NA){
+    for (i in 1:nrow(x)){
         uvc <- UThHe2uv.covmat(x,i)
         x0 <- uvc$uv[1]
         y0 <- uvc$uv[2]
@@ -100,12 +185,10 @@ plot_logratio_ellipses <- function(x,alpha=0.05,show.numbers=FALSE,levels=NA,
         else graphics::points(x0,y0,pch=19,cex=0.25)
     }
 }
-plot_helioplot_ellipses <- function(x,fact=c(1,1,1),alpha=0.05,
-                                    show.numbers=FALSE,levels=NA,
-                                    ellipse.col=c("#00FF0080","#0000FF80")){
-    ns <- nrow(x)
-    ellipse.cols <- set.ellipse.colours(ns=ns,levels=levels,col=ellipse.col)
-    for (i in 1:ns){
+plot_helioplot_ellipses <- function(x,ellipse.cols,fact=c(1,1,1),
+                                    alpha=0.05, show.numbers=FALSE,
+                                    levels=NA){
+    for (i in 1:nrow(x)){
         uvc <- UThHe2uv.covmat(x,i)
         x0 <- uvc$uv[1]
         y0 <- uvc$uv[2]
@@ -127,12 +210,12 @@ plot_central_ellipse <- function(fit,fact=c(1,1,1),logratio=TRUE,
     ell <- ellipse(x=fit$uvw[1],y=fit$uvw[2],
                    covmat=fit$covmat[1:2,1:2],alpha=alpha)
     if (logratio){
-        graphics::polygon(ell,col='white')
+        graphics::polygon(ell,col="#FFFFFFBF")
     } else {
         HeUTh <- uv2HeUTh(ell)
         xyz <- renormalise(HeUTh,fact=fact)
         xy <- xyz2xy(xyz)
-        graphics::polygon(xy,col='white')            
+        graphics::polygon(xy,col="#FFFFFFBF")
     }
 }
 
@@ -185,43 +268,29 @@ helioplot_title <- function(fit,sigdig=2){
     list1 <- list(a=rounded.age[1],
                   b=rounded.age[2],
                   c=rounded.age[3])
-    if (fit$mswd>1){
+    if (fit$model==1 && fit$mswd>1){
         args <- quote(~a%+-%b~'|'~c~'|'~d)
         list1$d <- rounded.age[4]
+        line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
+                            list(a=signif(fit$mswd,2),
+                                 b=signif(fit$p.value,2)))
+        line1line <- 1
+        graphics::mtext(line2,line=0)
+    } else if (fit$model==2){
+        line1line <- 0
+    } else if (fit$model==3){
+        rounded.disp <- signif(100*fit$w,sigdig)
+        list2 <- list(a=rounded.disp[1],b=rounded.disp[2])
+        expr2 <- quote('dispersion =')
+        args2 <- quote(a~'|'~b~'%')
+        call2 <- substitute(e~a,list(e=expr2,a=args2))
+        line2 <- do.call(substitute,list(eval(call2),list2))
+        line1line <- 1
+        graphics::mtext(line2,line=0)
     }
     call1 <- substitute(e~a,list(e=expr,a=args))
     line1 <- do.call(substitute,list(eval(call1),list1))
-    line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
-                        list(a=signif(fit$mswd,2),
-                             b=signif(fit$p.value,2)))
-    graphics::mtext(line1,line=1)
-    graphics::mtext(line2,line=0)
-}
-
-# UVW = central composition
-SS.UThHe.uvw <- function(UVW,x){
-    ns <- nrow(x)
-    SS <- 0
-    for (i in 1:ns){
-        uvwc <- UThHe2uvw.covmat(x,i)
-        X <- UVW-uvwc$uvw
-        Ei <- solve(uvwc$covmat)
-        SSi <- X %*% Ei %*% t(X)
-        if (is.finite(SSi)) SS <- SS + SSi
-    }
-    as.numeric(SS)
-}
-SS.UThHe.uv <- function(UV,x){
-    ns <- nrow(x)
-    SS <- 0
-    for (i in 1:ns){
-        uvc <- UThHe2uv.covmat(x,i)
-        X <- UV-uvc$uv
-        Ei <- solve(uvc$covmat)
-        SSi <- X %*% Ei %*% t(X)
-        if (is.finite(SSi)) SS <- SS + SSi
-    }
-    as.numeric(SS)
+    graphics::mtext(line1,line=line1line)
 }
 
 get.logratio.contours <- function(x,xlim=NA,ylim=NA,res=50){
@@ -235,7 +304,7 @@ get.logratio.contours <- function(x,xlim=NA,ylim=NA,res=50){
     doSm <- doSm(x)
     out$lims <- get.logratioplot.limits(x)
     if (doSm){
-        uvw <- UThHe2uvw(x)        
+        uvw <- UThHe2uvw(x)
         w <- mean(uvw[,'w'],na.rm=TRUE)
         Sm <- geomean.Sm(x)
     } else {
@@ -370,18 +439,27 @@ get.logratioplot.limits <- function(x,nse=3){
 
 # x is an object of class UThHe
 UThHe2uvw <- function(x){
-    if (hasClass(x,'UThHe'))
-        out <- log(x[,c('U','Th','Sm')])-log(x[,'He'])
-    else
+    if (hasClass(x,'UThHe')){
+        logHe <- log(x[,'He'])
+        u <- log(x[,'U']) - logHe
+        v <- log(x[,'Th']) - logHe
+        w <- log(x[,'Sm']) - logHe
+        out <- cbind(u,v,w)
+    } else {
         out <- matrix(log(x[c('U','Th','Sm')])-log(x['He']),1,3)
+    }
     colnames(out) <- c('u','v','w')
     out
 }
 UThHe2uv <- function(x){
-    if (hasClass(x,'UThHe'))
-        out <- log(x[,c('U','Th')])-log(x[,'He'])
-    else
+    if (hasClass(x,'UThHe')){
+        logHe <- log(x[,'He'])
+        u <- log(x[,'U']) - logHe
+        v <- log(x[,'Th']) - logHe
+        out <- cbind(u,v)
+    } else {
         out <- matrix(log(x[c('U','Th')])-log(x['He']),1,2)
+    }
     colnames(out) <- c('u','v')
     out
 }
@@ -454,7 +532,25 @@ uv2HeUTh <- function(uv){
     cbind(He,U,Th)
 }
 
-UThHe2uvw.covmat <- function(x,i){
+# UVW = central composition
+SS.UThHe.uvw <- function(UVW,x,w=0){
+    doSm <- (length(UVW)>2)
+    SS <- 0
+    for (i in 1:length(x)){
+        if (doSm){
+            uvwc <- UThHe2uvw.covmat(x,i,w=w)
+            X <- UVW-uvwc$uvw
+        } else {
+            uvwc <- UThHe2uv.covmat(x,i,w=w)
+            X <- UVW-uvwc$uv
+        }
+        Ei <- solve(uvwc$covmat)
+        SSi <- X %*% Ei %*% t(X)
+        if (is.finite(SSi)) SS <- SS + SSi
+    }
+    as.numeric(SS)
+}
+UThHe2uvw.covmat <- function(x,i,w=0){
     U <- x[i,'U']
     sU <- x[i,'errU']
     Th <- x[i,'Th']
@@ -475,13 +571,13 @@ UThHe2uvw.covmat <- function(x,i){
     J[2,4] <- -1/He # dv.dHe
     J[3,3] <- 1/Sm  # dw.dSm
     J[3,4] <- -1/He # dw.dHe
-    out$covmat <- J %*% E %*% t(J)
+    out$covmat <- (J %*% E %*% t(J)) + diag(3)*w^2
     names(out$uvw) <- c("u","v","w")
     rownames(out$covmat) <- c("u","v","w")
     colnames(out$covmat) <- c("u","v","w")
     out
 }
-UThHe2uv.covmat <- function(x,i){
+UThHe2uv.covmat <- function(x,i,w=0){
     out <- list()
     U <- x[i,'U']
     sU <- x[i,'errU']
@@ -498,7 +594,7 @@ UThHe2uv.covmat <- function(x,i){
     J[1,3] <- -1/He # du.dHe
     J[2,2] <- 1/Th  # dv.dTh
     J[2,3] <- -1/He # dv.dHe
-    out$covmat <- J %*% E %*% t(J)
+    out$covmat <- (J %*% E %*% t(J)) + diag(2)*w^2
     names(out$uv) <- c("u","v")
     rownames(out$covmat) <- c("u","v")
     colnames(out$covmat) <- c("u","v")

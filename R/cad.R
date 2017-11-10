@@ -2,11 +2,34 @@
 #'
 #' Plot a dataset as a Cumulative Age Distribution (CAD), also known
 #' as a `empirical cumulative distribution function'.
-#' 
+#'
+#' @details
+#' Empirical cumulative distribution functions or cumulative age
+#' distributions CADs are the most straightforward way to visualise
+#' the probability distribution of multiple dates.  Suppose that we
+#' have a set of \eqn{n} dates \eqn{t_i}. The the CAD is a step
+#' function that sets out the rank order of the dates against their
+#' numerical value:
+#'
+#' \eqn{CAD(t) = \sum_i 1(t<t_i)/n}
+#'
+#' where 1(\eqn{\ast}) = 1 if \eqn{\ast} is true and 1(\eqn{\ast}) = 0
+#' if \eqn{\ast} is false. CADs have two desirable properties
+#' (Vermeesch, 2007). First, they do not require any pre-treatment or
+#' smoothing of the data. This is not the case for histograms or
+#' kernel density estimates. Second, it is easy to superimpose several
+#' CADs on the same plot. This facilitates the intercomparison of
+#' multiple samples. The interpretation of CADs is straightforward but
+#' not very intuitive. The prominence of individual age components is
+#' proportional to the steepness of the CAD. This is different from
+#' probability density estimates such as histograms, in which such
+#' components stand out as peaks.
+#'
 #' @param x a numerical vector OR an object of class \code{UPb},
 #'     \code{PbPb}, \code{ArAr}, \code{UThHe}, \code{fissiontracks},
 #'     \code{ReOs}, \code{RbSr}, \code{SmNd}, \code{LuHf}, \code{ThU}
 #'     or \code{detritals}
+#' @seealso \code{\link{kde}}, \code{\link{radialplot}}
 #' @rdname cad
 #' @export
 cad <- function(x,...){ UseMethod("cad",x) }
@@ -103,12 +126,16 @@ cad.UPb <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
 #' @references Vermeesch, P., 2007. Quantitative geomorphology of the
 #'     White Mountains (California) using detrital apatite fission
 #'     track thermochronology. Journal of Geophysical Research: Earth
-#'     Surface, 112(F3). 
+#'     Surface, 112(F3).
 #' @rdname cad
 #' @export
-cad.PbPb <- function(x,pch=NA,verticals=TRUE,
-                     xlab='age [Ma]',col='black',i2i=FALSE,...){
-    tt <- PbPb.age(x,i2i=i2i)[,1]
+cad.PbPb <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                     col='black',common.Pb=1,...){
+    if (common.Pb %in% c(1,2,3))
+        X <- common.Pb.correction(x,option=common.Pb)
+    else
+        X <- x
+    tt <- PbPb.age(X)[,1]
     cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
 }
 #' @rdname cad

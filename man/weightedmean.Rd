@@ -28,7 +28,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{PbPb}(x, detect.outliers = TRUE, plot = TRUE,
   rect.col = rgb(0, 1, 0, 0.5), outlier.col = rgb(0, 1, 1, 0.5),
-  sigdig = 2, alpha = 0.05, exterr = TRUE, i2i = FALSE, ...)
+  sigdig = 2, alpha = 0.05, exterr = TRUE, common.Pb = 1, ...)
 
 \method{weightedmean}{ThU}(x, detect.outliers = TRUE, plot = TRUE,
   rect.col = rgb(0, 1, 0, 0.5), outlier.col = rgb(0, 1, 1, 0.5),
@@ -110,7 +110,7 @@ between the \eqn{^{206}}Pb/\eqn{^{238}}U and
 \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 \code{cutoff.disc=NA} if you do not want to use this filter.}
 
-\item{exterr}{propagate decay constant uncertainty?}
+\item{exterr}{propagate decay constant uncertainties?}
 
 \item{common.Pb}{apply a common lead correction using one of three
     methods:
@@ -124,43 +124,48 @@ Pb-composition
 \code{settings('iratio','Pb206Pb204')} and
 \code{settings('iratio','Pb207Pb204')}}
 
-\item{i2i}{`isochron to intercept': calculates the initial
-(aka `inherited', `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
-\eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
-\eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
-\eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
-fit. Setting \code{i2i} to \code{FALSE} uses the default values
-stored in \code{settings('iratio',...)}  or zero (for the Pb-Pb
-method). When applied to data of class \code{ThU}, setting
-\code{i2i} to \code{TRUE} applies a detrital Th-correction.}
+\item{i2i}{`isochron to intercept': calculates the initial (aka
+`inherited', `excess', or `common')
+\eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
+\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
+\eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
+ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
+uses the default values stored in
+\code{settings('iratio',...)}. When applied to data of class
+\code{ThU}, setting \code{i2i} to \code{TRUE} applies a
+detrital Th-correction.}
 }
 \value{
-returns a list with the following items:
+Returns a list with the following items:
+
 \describe{
+
 \item{mean}{a three element vector with:
 
 \code{x}: the weighted mean
 
 \code{s[x]}: the estimated analytical uncertainty of \code{x}
 
-\code{ci[x]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-\code{x} given the appropriate degrees of freedom
+\code{ci[x]}: the studentised \eqn{100(1-\alpha)\%} confidence
+interval for \code{x}.
+
 }
 
-\item{disp}{a two element vector with the (over)dispersion the
-corresponding \eqn{100(1-\alpha/2)\%} confidence interval.}
+\item{disp}{a two element vector with the (over)dispersion and its
+corresponding \eqn{100(1-\alpha)\%} confidence interval.}
+
+\item{df}{the degrees of freedom for the Chi-square test
+(\eqn{n-2})}
+
+\item{tfact}{the \eqn{100(1-\alpha/2)} percentile of a
+t-distribution with \code{df+1} degrees of freedom}
 
 \item{mswd}{the Mean Square of the Weighted Deviates
 (a.k.a. `reduced Chi-square' statistic)}
 
-\item{p.value}{the p-value of a Chi-square test with n-1 degrees
-of freedom, testing the null hypothesis that the underlying
+\item{p.value}{the p-value of a Chi-square test with \eqn{df}
+degrees of freedom, testing the null hypothesis that the underlying
 population is not overdispersed.}
-
-\item{df}{the degrees of freedom for the Chi-square test}
-
-\item{tfact}{the \eqn{100(1-\alpha/2)} percentile of a
-t-distribution with \code{df} degrees of freedom}
 
 \item{valid}{vector of logical flags indicating which steps are
 included into the weighted mean calculation}
@@ -171,17 +176,65 @@ diagram}
 }
 \description{
 Models the data as a Normal distribution with two sources of
-variance.  Estimates the mean and 'overdispersion' using the method
+variance.  Estimates the mean and `overdispersion' using the method
 of Maximum Likelihood. Computes the MSWD of a Normal fit without
-overdispersion. Implements Chauvenet's Criterion to detect and
-reject outliers. Only propagates the analytical uncertainty
-associated with decay constants and J-factors after computing the
-weighted mean isotopic composition.
+overdispersion. Implements a modified Chauvenet Criterion to detect
+and reject outliers. Only propagates the analytical uncertainty
+associated with decay constants and \eqn{\zeta} and J-factors after
+computing the weighted mean isotopic composition.
+}
+\details{
+Let \eqn{\{t_1, ..., t_n\}} be a set of n age estimates
+determined on different aliquots of the same sample, and let
+\eqn{\{s[t_1], ..., s[t_n]\}} be their analytical
+uncertainties. \code{IsoplotR} then calculates the weighted mean of
+these data assuming a Normal distribution with two sources of
+variance:
+
+\eqn{t_i \sim N(\mu, \sigma^2 = s[t_i]^2 + \omega^2 )}
+
+where \eqn{\mu} is the mean, \eqn{\sigma^2} is the total variance
+and \eqn{\omega} is the 'overdispersion'. This equation can be
+solved for \eqn{\mu} and \eqn{\omega} by the method of maximum
+likelihood. IsoplotR uses a modified version of Chauvenet's
+criterion for outlier detection:
+
+\enumerate{
+
+\item Compute the error-weighted mean (\eqn{\mu}) of the \eqn{n}
+age determinations \eqn{t_i} using their analytical uncertainties
+\eqn{s[t_i]}
+
+\item For each \eqn{t_i}, compute the probability \eqn{p_i} that
+that \eqn{|t-\mu|>|t_i-\mu|} for \eqn{t \sim
+N(0,\sqrt{s[t_i]^2+\omega^2) }}
+
+\item Let \eqn{p_j \equiv \min(p_1, ..., p_n)}. If
+\eqn{p_j<0.05/n}, then reject the j\eqn{^{th}} date, reduce \eqn{n}
+by one (i.e., \eqn{n \rightarrow n-1}) and repeat steps 1 through 3
+until the surviving dates pass the third step.  }
+
+If the analtyical uncertainties are small compared to the scatter
+between the dates (i.e. if \eqn{\omega \gg s[t]} for all \eqn{i}),
+then this generalised algorithm reduces to the conventional
+Chauvenet criterion. If the analytical uncertainties are large and
+the data do not exhibit any overdispersion, then the heuristic
+outlier detection method is equivalent to Ludwig (2003)'s `2-sigma'
+method.
 }
 \examples{
 ages <- c(251.9,251.59,251.47,251.35,251.1,251.04,250.79,250.73,251.22,228.43)
 errs <- c(0.28,0.28,0.63,0.34,0.28,0.63,0.28,0.4,0.28,0.33)
 weightedmean(cbind(ages,errs))
+
 data(examples)
-weightedmean(examples$ArAr)
+weightedmean(examples$LudwigMean)
+}
+\references{
+Ludwig, K. R. User's manual for Isoplot 3.00: a geochronological
+toolkit for Microsoft Excel. Berkeley Geochronology Center Special
+Publication, 2003.
+}
+\seealso{
+\code{\link{central}}
 }

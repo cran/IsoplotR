@@ -1,30 +1,50 @@
 #' Linear regression of X,Y,Z-variables with correlated errors
 #'
-#' Implements the maximum likelihood algorithm of Ludwig and Titterington (1994)
+#' Implements the maximum likelihood algorithm of Ludwig and
+#' Titterington (1994) for linear regression of three dimensional data
+#' with correlated uncertainties.
 #'
-#' @param x a \code{[9 x n]} matrix with the following columns:
+#' @details
+#' Ludwig and Titterington (1994)'s 3-dimensional linear regression
+#' algorithm for data with correlated uncertainties is an extension of
+#' the 2-dimensional algorithm by Titterington and Halliday (1979),
+#' which itself is equivalent to the algorithm of York et al. (2004).
+#' Given \eqn{n} triplets of (approximately) collinear measurements
+#' \eqn{X_i}, \eqn{Y_i} and \eqn{Z_i} (for \eqn{1 \leq i \leq n}),
+#' their uncertainties \eqn{s[X_i]}, \eqn{s[Y_i]} and \eqn{s[Z_i]},
+#' and their covariances cov[\eqn{X_i,Y_i}], cov[\eqn{X_i,Z_i}] and
+#' cov[\eqn{Y_i,Z_i}], the \code{titterington} function fits two
+#' slopes and intercepts with their uncertainties. It computes the
+#' MSWD as a measure of under/overdispersion.  Overdispersed datasets
+#' (MSWD>1) can be dealt with in the same three ways that are
+#' described in the documentation of the \code{\link{isochron}}
+#' function.
+#'
+#' @param x an \code{[n x 9]} matrix with the following columns:
 #'     \code{X, sX, Y, sY, Z, sZ}, \code{rhoXY, rhoXZ, rhoYZ}.
 #' @param alpha cutoff value for confidence intervals
-#' @return a four-element list of vectors containing:
+#' @return A four-element list of vectors containing:
+#'
 #'     \describe{
-#' 
 #'     \item{par}{4-element vector \code{c(a,b,A,B)} where \code{a} is
 #'               the intercept of the \code{X-Y} regression, \code{b}
 #'               is the slope of the \code{X-Y} regression, \code{A}
 #'               is the intercept of the \code{X-Z} regression, and
 #'               \code{B} is the slope of the \code{X-Z} regression.}
-#' 
+#'
 #'     \item{cov}{\code{[4 x 4]}-element covariance matrix of \code{par}}
-#' 
+#'
 #'     \item{mswd}{the mean square of the residuals (a.k.a `reduced
 #'                 Chi-square') statistic}
 #'
 #'     \item{p.value}{p-value of a Chi-square test for linearity}
 #'
-#'     \item{df}{the number of degrees of freedom for the Chi-square
-#'     test (3\eqn{n}-3)}
+#'     \item{df}{the number of degrees of freedom for the
+#'               Chi-square test (3\eqn{n}-3)}
 #'
-#'     }
+#'     \item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of the
+#'                  t-distribution with \eqn{(n-2k+1)} degrees of freedom}
+#' }
 #' @examples
 #' d <- matrix(c(0.1677,0.0047,1.105,0.014,0.782,0.015,0.24,0.51,0.33,
 #'               0.2820,0.0064,1.081,0.013,0.798,0.015,0.26,0.63,0.32,
@@ -35,17 +55,27 @@
 #'             nrow=6,ncol=9)
 #' colnames(d) <- c('X','sX','Y','sY','Z','sZ','rXY','rXZ','rYZ')
 #' titterington(d)
+#' @seealso \code{\link{york}}, \code{\link{isochron}}, \code{\link{ludwig}}
 #' @references
 #' Ludwig, K.R. and Titterington, D.M., 1994. Calculation
 #' of \eqn{^{230}}Th/U isochrons, ages, and errors. Geochimica et
 #' Cosmochimica Acta, 58(22), pp.5031-5042.
+#'
+#' Titterington, D.M. and Halliday, A.N., 1979. On the fitting of
+#' parallel isochrons and the method of maximum likelihood. Chemical
+#' Geology, 26(3), pp.183-195.
+#'
+#' York, D., Evensen, N.M., Martinez, M.L. and De Basebe Delgado, J., 2004.
+#' Unified equations for the slope, intercept, and standard
+#' errors of the best straight line. American Journal of Physics,
+#' 72(3), pp.367-375.
 #' @export
 titterington <- function(x,alpha=0.05){
     ns <- nrow(x)
-    fitXY <- york(x[,c(1,2,3,4,7)])
+    fitXY <- york(subset(x,select=c(1,2,3,4,7)))
     a <- fitXY$a[1]
     b <- fitXY$b[1]
-    fitXZ <- york(x[,c(1,2,5,6,8)])
+    fitXZ <- york(subset(x,select=c(1,2,5,6,8)))
     A <- fitXZ$a[1]
     B <- fitXZ$b[1]
     init <- c(a,b,A,B)

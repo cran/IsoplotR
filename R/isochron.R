@@ -1,9 +1,74 @@
 #' Calculate and plot isochrons
 #'
-#' Plots cogenetic Ar-Ar, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os, Lu-Hf, U-Th-He or Th-U
-#' data as X-Y scatterplots, fits an isochron curve through them using
-#' the \code{york} function, and computes the corresponding isochron
-#' age, including decay constant uncertainties.
+#' Plots cogenetic Ar-Ar, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os, Lu-Hf, U-Th-He
+#' or Th-U data as X-Y scatterplots, fits an isochron curve through
+#' them using the \code{york} function, and computes the corresponding
+#' isochron age, including decay constant uncertainties.
+#'
+#' @details
+#' Given several aliquots from a single sample, isochrons allow the
+#' non-radiogenic component of the daughter nuclide to be quantified
+#' and separated from the radiogenic component. In its simplest form,
+#' an isochron is obtained by setting out the amount of radiogenic
+#' daughter against the amount of radioactive parent, both normalised
+#' to a non-radiogenic isotope of the daughter element, and fitting a
+#' straight line through these points by least squares regression
+#' (Nicolaysen, 1961). The slope and intercept then yield the
+#' radiogenic daughter-parent ratio and the non-radiogenic daughter
+#' composition, respectively. There are several ways to fit an
+#' isochron.  The easiest of these is ordinary least squares
+#' regression, which weighs all data points equally. In the presence
+#' of quantifiable analytical uncertainty, it is equally
+#' straightforward to use the inverse of the y-errors as weights.  It
+#' is significantly more difficult to take into account uncertainties
+#' in both the x- and the y-variable (York, 1966). \code{IsoplotR}
+#' does so for its U-Th-He isochron calculations. The York (1966)
+#' method assumes that the analytical uncertainties of the x- and
+#' y-variables are independent from each other. This assumption is
+#' rarely met in geochronology.  York (1968) addresses this issue with
+#' a bivariate error weighted linear least squares algorithm that
+#' accounts for covariant errors in both variables. This algorithm was
+#' further improved by York et al. (2004) to ensure consistency with
+#' the maximum likelihood approach of Titterington and Halliday
+#' (1979).
+#'
+#' \code{IsoplotR} uses the York et al. (2004) algorithm for its
+#' \eqn{^{40}}Ar/\eqn{^{39}}Ar, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os and Lu-Hf
+#' isochrons. The maximum likelihood algorithm of Titterington and
+#' Halliday (1979) was generalised from two to three dimensions by
+#' Ludwig and Titterington (1994) for U-series disequilibrium dating.
+#' Also this algorithm is implemented in \code{IsoplotR}.  The extent
+#' to which the observed scatter in the data can be explained by the
+#' analytical uncertainties can be assessed using the Mean Square of
+#' the Weighted Deviates (MSWD, McIntyre et al., 1966), which is
+#' defined as:
+#'
+#' \eqn{MSWD = ([X - \hat{X}] \Sigma_{X}^{-1} [X - \hat{X}]^T)/df}
+#'
+#' where \eqn{X} are the data, \eqn{\hat{X}} are the fitted values,
+#' and \eqn{\Sigma_X} is the covariance matrix of \eqn{X}, and \eqn{df
+#' = k(n-1)} are the degrees of freedom, where \eqn{k} is the
+#' dimensionality of the linear fit. MSWD values that are far smaller
+#' or greater than 1 indicate under- or overdispersed measurements,
+#' respectively. Underdispersion can be attributed to overestimated
+#' analytical uncertainties. \code{IsoplotR} provides three
+#' alternative strategies to deal with overdispersed data:
+#'
+#' \enumerate{
+#'
+#' \item Attribute the overdispersion to an underestimation of the
+#' analytical uncertainties. In this case, the excess scatter can be
+#' accounted for by inflating those uncertainties by a \emph{factor}
+#' \eqn{\sqrt{MSWD}}.
+#'
+#' \item Ignore the analytical uncertainties and perform an ordinary
+#' least squares regression.
+#'
+#' \item Attribute the overdispersion to the presence of `geological
+#' scatter'.  In this case, the excess scatter can be accounted for by
+#' adding an overdispersion \emph{term} that lowers the MSWD to unity.
+#'
+#' }
 #'
 #' @param x EITHER a matrix with the following five columns:
 #'
@@ -26,9 +91,9 @@
 #' an object of class \code{ArAr}, \code{PbPb}, \code{ReOs},
 #' \code{RbSr}, \code{SmNd}, \code{LuHf}, \code{UThHe} or \code{ThU}.
 #'
-#' @param xlim 2-element vector with the plot limits of the x-axis
+#' @param xlim 2-element vector with the x-axis limits
 #'
-#' @param ylim 2-element vector with the plot limits of the y-axis
+#' @param ylim 2-element vector with the y-axis limits
 #'
 #' @param alpha confidence cutoff for the error ellipses and
 #'     confidence intervals
@@ -40,6 +105,8 @@
 #'
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours within the error ellipses.
+#'
+#' @param clabel label for the colour scale
 #'
 #' @param ellipse.col a vector of two background colours for the error
 #'     ellipses. If \code{levels=NA}, then only the first colour will
@@ -56,46 +123,75 @@
 #'
 #' \enumerate{
 #'
-#' \item{Error weighted least squares regression}
+#' \item{Error-weighted least squares regression}
 #'
 #' \item{Ordinary least squares regression}
 #'
-#' }
+#' \item{Error-weighted least squares with overdispersion term}
 #'
+#' }
+#' @seealso
+#' \code{\link{york}},
+#' \code{\link{titterington}},
+#' \code{\link{ludwig}}
 #' @param ... optional arguments to be passed on to the generic plot
 #'     function if \code{model=2}
-#' @references Nicolaysen, L.O., 1961. Graphic interpretation of
-#'     discordant age measurements on metamorphic rocks. Annals of the
-#'     New York Academy of Sciences, 91(1), pp.198-206.
-#'
+#' @references
 #' Ludwig, K.R. and Titterington, D.M., 1994. Calculation of
-#'     \eqn{^{230}}Th/U isochrons, ages, and errors. Geochimica et
-#'     Cosmochimica Acta, 58(22), pp.5031-5042.
+#' \eqn{^{230}}Th/U isochrons, ages, and errors. Geochimica et
+#' Cosmochimica Acta, 58(22), pp.5031-5042.
+#'
+#' Nicolaysen, L.O., 1961. Graphic interpretation of discordant age
+#' measurements on metamorphic rocks. Annals of the New York Academy
+#' of Sciences, 91(1), pp.198-206.
+#'
+#' Titterington, D.M. and Halliday, A.N., 1979. On the fitting of
+#' parallel isochrons and the method of maximum likelihood. Chemical
+#' Geology, 26(3), pp.183-195.
+#'
+#' York, D., 1966. Least-squares fitting of a straight line. Canadian
+#' Journal of Physics, 44(5), pp.1079-1086.
+#'
+#' York, D., 1968. Least squares fitting of a straight line with
+#' correlated errors. Earth and Planetary Science Letters, 5,
+#' pp.320-324.
+#'
+#' York, D., Evensen, N.M., Martinez, M.L. and De Basebe Delgado, J., 2004.
+#' Unified equations for the slope, intercept, and standard
+#' errors of the best straight line. American Journal of Physics,
+#' 72(3), pp.367-375.
+#'
 #' @rdname isochron
 #' @export
 isochron <- function(x,...){ UseMethod("isochron",x) }
 #' @rdname isochron
 #' @export
 isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
-                             show.numbers=FALSE,levels=NA,
+                             show.numbers=FALSE,levels=NA,clabel="",
                              ellipse.col=c("#00FF0080","#FF000080"),
                              line.col='red',lwd=2,title=TRUE,model=1,...){
-    X <- x[,1:5]
+    X <- subset(x,select=1:5)
     colnames(X) <- c('X','sX','Y','sY','rXY')
     fit <- regression(X,model=model)
     out <- regression_init(fit,alpha=alpha)
     scatterplot(X,xlim=xlim,ylim=ylim,alpha=alpha,
-                show.ellipses=1*(model==1),show.numbers=show.numbers,
-                levels=levels,ellipse.col=ellipse.col,a=fit$a[1],
-                b=fit$b[1],line.col=line.col,lwd=lwd)
+                show.ellipses=1*(model!=2),show.numbers=show.numbers,
+                levels=levels,clabel=clabel,ellipse.col=ellipse.col,
+                a=fit$a[1], b=fit$b[1],line.col=line.col,lwd=lwd)
     if (title)
         graphics::title(isochrontitle(out,sigdig=sigdig),xlab='X',ylab='Y')
 }
 #' @param plot if \code{FALSE}, suppresses the graphical output
 #'
-#' @param inverse if \code{TRUE} and \code{x} has class \code{ArAr},
-#'     plots \eqn{^{36}}Ar/\eqn{^{40}}Ar
-#'     vs. \eqn{^{39}}Ar/\eqn{^{40}}Ar.
+#' @param inverse
+#' if \code{FALSE} and \code{x} has class \code{ArAr}, plots
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar vs. \eqn{^{39}}Ar/\eqn{^{36}}Ar.
+#'
+#' if \code{FALSE} and \code{x} has class \code{PbPb}, plots
+#' \eqn{^{207}}Pb/\eqn{^{204}}Pb vs. \eqn{^{206}}Pb/\eqn{^{204}}Pb.
+#'
+#' if \code{TRUE} and \code{x} has class \code{ArAr}, plots
+#'     \eqn{^{36}}Ar/\eqn{^{40}}Ar vs. \eqn{^{39}}Ar/\eqn{^{40}}Ar.
 #'
 #' if \code{TRUE} and \code{x} has class \code{PbPb}, plots
 #' \eqn{^{207}}Pb/\eqn{^{206}}Pb vs. \eqn{^{204}}Pb/\eqn{^{206}}Pb.
@@ -103,15 +199,16 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' @param exterr propagate external sources of uncertainty
 #' (J, decay constant)?
 #'
-#' @return if \code{x} has class \code{PbPb}, \code{ArAr},
-#'     \code{RbSr}, \code{SmNd}, \code{ReOs} or \code{LuHf}, or
-#'     \code{UThHe}, returns a list with the following items:
+#' @return
+#' If \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
+#' \code{SmNd}, \code{ReOs} or \code{LuHf}, or \code{UThHe}, returns a
+#' list with the following items:
 #'
 #' \describe{
 #'
 #' \item{a}{the intercept of the straight line fit and its standard
 #' error.}
-#' 
+#'
 #' \item{b}{the slope of the fit and its standard error.}
 #'
 #' \item{cov.ab}{the covariance of the slope and intercept}
@@ -122,48 +219,48 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #'
 #' \code{y}: the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
 #' \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{187}}Os/\eqn{^{188}}Os,
-#' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+#' \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
 #' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio.
 #'
 #' \code{s[y]}: the propagated uncertainty of \code{y}
 #'
-#' \code{ci[y]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-#' \code{y} given the appropriate degrees of freedom.
+#' \code{ci[y]}: the studentised \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{y}.
 #'
-#' \code{disp[y]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-#' \code{y} enhanced by \eqn{\sqrt{mswd}} (only applicable if \code{
-#' model=1}).
-#' }
-#' 
+#' \code{disp[y]}: the studentised \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{y} enhanced by \eqn{\sqrt{mswd}} (only
+#' applicable if \code{ model=1}).  }
+#'
 #' \item{age}{a four-element list containing:
 #'
 #' \code{t}: the \eqn{^{207}}Pb/\eqn{^{206}}Pb,
 #' \eqn{^{40}}Ar/\eqn{^{39}}Ar, \eqn{^{187}}Os/\eqn{^{187}}Re,
-#' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+#' \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
 #' \eqn{^{176}}Hf/\eqn{^{177}}Hf age.
 #'
 #' \code{s[t]}: the propagated uncertainty of \code{t}
 #'
-#' \code{ci[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-#' \code{t} given the appropriate degrees of freedom.
+#' \code{ci[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{t}.
 #'
-#' \code{disp[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-#' \code{t} enhanced by \eqn{\sqrt{mswd}} (only applicable if \code{
-#' model=1}).  }
+#' \code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{t} enhanced by \eqn{\sqrt{mswd}} (only
+#' applicable if \code{ model=1}).  }
 #'
 #' \item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of a
 #' t-distribution with \code{df} degrees of freedom.}
 #'
-#' }
+#' \item{mswd}{the mean square of the residuals (a.k.a `reduced
+#'     Chi-square') statistic (omitted if \code{model=2}).}
 #'
-#' additionally, if \code{model=1}:
+#' \item{p.value}{the p-value of a Chi-square test for linearity
+#' (omitted if \code{model=2})}
 #'
-#' \describe{
-#'
-#' \item{mswd}{the mean square of the residuals (a.k.a
-#'     `reduced Chi-square') statistic (omitted if \code{model=2}).}
-#'
-#' \item{p.value}{the p-value of a Chi-square test for linearity}
+#' \item{w}{the overdispersion term, i.e. a two-element vector with
+#' the standard deviation of the (assumedly) Normally distributed
+#' geological scatter that underlies the measurements, and the
+#' corresponding studentised \eqn{100(1-\alpha)\%} confidence interval
+#' (only returned if \code{model=3}).}
 #'
 #' }
 #'
@@ -171,11 +268,11 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #'
 #' \describe{
 #'
-#' \item{par}{if \code{type=1} or \code{type=3}: the best fitting
+#' \item{par}{if \code{x$type=1} or \code{x$type=3}: the best fitting
 #' \eqn{^{230}}Th/\eqn{^{232}}Th intercept,
 #' \eqn{^{230}}Th/\eqn{^{238}}U slope, \eqn{^{234}}U/\eqn{^{232}}Th
 #' intercept and \eqn{^{234}}U/\eqn{^{238}}U slope, OR, if
-#' \code{type=2} or \code{type=4}: the best fitting
+#' \code{x$type=2} or \code{x$type=4}: the best fitting
 #' \eqn{^{234}}U/\eqn{^{238}}U intercept,
 #' \eqn{^{230}}Th/\eqn{^{232}}Th slope, \eqn{^{234}}U/\eqn{^{238}}U
 #' intercept and \eqn{^{234}}U/\eqn{^{232}}Th slope.  }
@@ -191,7 +288,7 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' intercept; if \code{type=3}: the \eqn{^{234}}Th/\eqn{^{232}}Th
 #' intercept; if \code{type=4}: the \eqn{^{234}}Th/\eqn{^{238}}U
 #' intercept and its propagated uncertainty.}
-#' 
+#'
 #' \item{b}{if \code{type=1}: the \eqn{^{230}}Th/\eqn{^{238}}U slope;
 #' if \code{type=2}: the \eqn{^{230}}Th/\eqn{^{232}}Th slope; if
 #' \code{type=3}: the \eqn{^{234}}U/\eqn{^{238}}U slope; if
@@ -199,11 +296,14 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' propagated uncertainty.}
 #'
 #' \item{cov.ab}{the covariance between \code{a} and \code{b}.}
-#' 
+#'
 #' \item{mswd}{the mean square of the residuals (a.k.a `reduced
 #'     Chi-square') statistic.}
 #'
 #' \item{p.value}{the p-value of a Chi-square test for linearity.}
+#'
+#' \item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of a
+#' t-distribution with \code{df} degrees of freedom.}
 #'
 #' \item{y0}{a four-element vector containing:
 #'
@@ -211,23 +311,30 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #'
 #' \code{s[y]}: the propagated uncertainty of \code{y}
 #'
-#' \code{ci[y]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-#' \code{y}
+#' \code{ci[y]}: the studentised \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{y}.
 #'
-#' \code{disp[y]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-#' \code{y} enhanced by \eqn{\sqrt{mswd}}.}
+#' \code{disp[y]}: the studentised \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{y} enhanced by \eqn{\sqrt{mswd}}.}
 #'
-#' \item{age}{a four-element vector containing:
+#' \item{age}{a three (or four) element vector containing:
 #'
 #' \code{t}: the initial \eqn{^{234}}U/\eqn{^{238}}U-ratio
 #'
 #' \code{s[t]}: the propagated uncertainty of \code{t}
 #'
-#' \code{ci[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-#' \code{t}
+#' \code{ci[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{t}
 #'
-#' \code{disp[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-#' \code{t} enhanced by \eqn{\sqrt{mswd}}.}
+#' \code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{t} enhanced by \eqn{\sqrt{mswd}} (only reported
+#' if \code{model=1}).}
+#'
+#' \item{w}{the overdispersion term, i.e. a two-element vector with
+#' the standard deviation of the (assumedly) Normally distributed
+#' geological scatter that underlies the measurements, and the
+#' corresponding \eqn{100(1-\alpha)\%} confidence interval (only
+#' returned if \code{model=3}).}
 #'
 #' \item{d}{a matrix with the following columns: the X-variable for
 #' the isochron plot, the analytical uncertainty of X, the Y-variable
@@ -244,10 +351,14 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' data(examples)
 #' isochron(examples$ArAr)
 #'
+#' fit <- isochron(examples$PbPb,inverse=FALSE,plot=FALSE)
+#'
+#' dev.new()
+#' isochron(examples$ThU,type=4)
 #' @rdname isochron
 #' @export
 isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
-                          show.numbers=FALSE,levels=NA,
+                          show.numbers=FALSE,levels=NA,clabel="",
                           ellipse.col=c("#00FF0080","#FF000080"),
                           inverse=TRUE,line.col='red',lwd=2,plot=TRUE,
                           exterr=TRUE,model=1,...){
@@ -283,22 +394,21 @@ isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
             out$tfact*get.ArAr.age(R09,sqrt(out$mswd)*sR09,
                                    x$J[1],x$J[2],exterr=exterr)[2]
     }
-    show.ellipses <- (model!=2)
     if (plot) {
         scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
-                    show.ellipses=show.ellipses,
+                    show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
-                    ellipse.col=ellipse.col,a=fit$a[1],b=fit$b[1],
-                    line.col=line.col,lwd=lwd,...)
+                    clabel=clabel,ellipse.col=ellipse.col,a=fit$a[1],
+                    b=fit$b[1],line.col=line.col,lwd=lwd,...)
         graphics::title(isochrontitle(out,sigdig=sigdig,type='Ar-Ar'),
                         xlab=x.lab,ylab=y.lab)
     }
-    out
+    invisible(out)
 }
 #' @rdname isochron
 #' @export
 isochron.PbPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
-                          show.numbers=FALSE,levels=NA,
+                          show.numbers=FALSE,levels=NA,clabel="",
                           ellipse.col=c("#00FF0080","#FF000080"),
                           inverse=TRUE,line.col='red',lwd=2,plot=TRUE,
                           exterr=TRUE,model=1,...){
@@ -328,81 +438,81 @@ isochron.PbPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     }
     if (plot) {
         scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
-                    show.ellipses=1*(model==1),
+                    show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
-                    ellipse.col=ellipse.col,a=fit$a[1],b=fit$b[1],
-                    line.col=line.col,lwd=lwd,...)
+                    clabel=clabel,ellipse.col=ellipse.col,a=fit$a[1],
+                    b=fit$b[1],line.col=line.col,lwd=lwd,...)
         graphics::title(isochrontitle(out,sigdig=sigdig,type='Pb-Pb'),
                         xlab=x.lab,ylab=y.lab)
     }
-    out
+    invisible(out)
 }
 #' @rdname isochron
 #' @export
 isochron.RbSr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
-                          show.numbers=FALSE,levels=NA,
+                          show.numbers=FALSE,levels=NA,clabel="",
                           ellipse.col=c("#00FF0080","#FF000080"),
                           line.col='red',lwd=2,plot=TRUE,exterr=TRUE,
                           model=1,...){
     isochron_PD(x,'Rb87',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
-                levels=levels,ellipse.col=ellipse.col,
+                levels=levels,clabel=clabel,ellipse.col=ellipse.col,
                 line.col=line.col,lwd=lwd,plot=plot,exterr=exterr,
                 model=model,...)
 }
 #' @rdname isochron
 #' @export
 isochron.ReOs <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
-                          show.numbers=FALSE,levels=NA,
+                          show.numbers=FALSE,levels=NA,clabel="",
                           ellipse.col=c("#00FF0080","#FF000080"),
                           line.col='red',lwd=2,plot=TRUE,exterr=TRUE,
                           model=1,...){
     isochron_PD(x,'Re187',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
-                levels=levels,ellipse.col=ellipse.col,
+                levels=levels,clabel=clabel,ellipse.col=ellipse.col,
                 line.col=line.col,lwd=lwd,plot=plot,exterr=exterr,
                 model=model,...)
 }
 #' @rdname isochron
 #' @export
 isochron.SmNd <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
-                          show.numbers=FALSE,levels=NA,
+                          show.numbers=FALSE,levels=NA,clabel="",
                           ellipse.col=c("#00FF0080","#FF000080"),
                           line.col='red',lwd=2,plot=TRUE,exterr=TRUE,
                           model=1,...){
     isochron_PD(x,'Sm147',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
-                levels=levels,ellipse.col=ellipse.col,
+                levels=levels,clabel=clabel,ellipse.col=ellipse.col,
                 line.col=line.col,lwd=lwd,plot=plot,exterr=exterr,
                 model=model,...)
 }
 #' @rdname isochron
 #' @export
 isochron.LuHf <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
-                          show.numbers=FALSE,levels=NA,
+                          show.numbers=FALSE,levels=NA,clabel="",
                           ellipse.col=c("#00FF0080","#FF000080"),
                           line.col='red',lwd=2,plot=TRUE,exterr=TRUE,
                           model=1,...){
     isochron_PD(x,'Lu176',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
-                levels=levels,ellipse.col=ellipse.col,
+                levels=levels,clabel=clabel,ellipse.col=ellipse.col,
                 line.col=line.col,lwd=lwd,plot=plot,exterr=exterr,
                 model=model,...)
 }
 #' @param type following the classification of
 #' Ludwig and Titterington (1994), one of either:
-#' 
+#'
 #' \enumerate{
-#' 
+#'
 #' \item `Rosholt type-II' isochron, setting out
 #' \eqn{^{230}}Th/\eqn{^{232}}Th vs. \eqn{^{238}}U/\eqn{^{232}}Th
-#' 
+#'
 #' \item `Osmond type-II' isochron, setting out \eqn{^{230}}Th/\eqn{^{238}}U
 #' vs. \eqn{^{232}}Th/\eqn{^{238}}U
 #'
 #' \item `Rosholt type-II' isochron, setting out \eqn{^{234}}U/\eqn{^{232}}Th
 #' vs. \eqn{^{238}}U/\eqn{^{232}}Th
-#' 
+#'
 #' \item `Osmond type-II' isochron, setting out \eqn{^{234}}U/\eqn{^{238}}U
 #' vs. \eqn{^{232}}Th/\eqn{^{238}}U
 #'
@@ -411,7 +521,7 @@ isochron.LuHf <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' @export
 isochron.ThU <- function (x,type=2,xlim=NA,ylim=NA,alpha=0.05,
                           sigdig=2,show.numbers=FALSE,levels=NA,
-                          ellipse.col=c("#00FF0080","#FF000080"),
+                          clabel="",ellipse.col=c("#00FF0080","#FF000080"),
                           line.col='red',lwd=2,plot=TRUE,exterr=TRUE,
                           model=1,...){
     if (x$format %in% c(1,2)){
@@ -425,14 +535,14 @@ isochron.ThU <- function (x,type=2,xlim=NA,ylim=NA,alpha=0.05,
     }
     if (plot){
         scatterplot(out$d,xlim=xlim,ylim=ylim,alpha=alpha,
-                    show.ellipses=1*(model==1),
+                    show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
-                    ellipse.col=ellipse.col,a=out$a[1],b=out$b[1],
-                    line.col=line.col,lwd=lwd,...)
+                    clabel=clabel,ellipse.col=ellipse.col,a=out$a[1],
+                    b=out$b[1],line.col=line.col,lwd=lwd,...)
         graphics::title(isochrontitle(out,sigdig=sigdig,type=intercept.type),
                         xlab=out$xlab,ylab=out$ylab)
     }
-    out
+    invisible(out)
 }
 #' @rdname isochron
 #' @export
@@ -452,12 +562,12 @@ isochron.UThHe <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     }
     if (plot) {
         scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
-                    show.ellipses=2*(model==1),show.numbers=show.numbers,
+                    show.ellipses=2*(model!=2),show.numbers=show.numbers,
                     a=fit$a[1],b=fit$b[1],line.col=line.col,lwd=lwd,...)
         graphics::title(isochrontitle(out,sigdig=sigdig,type='U-Th-He'),
                         xlab="P",ylab="He")
     }
-    out
+    invisible(out)
 }
 
 isochron_ThU_3D <- function(x,type=2,model=1,
@@ -526,7 +636,7 @@ isochron_ThU_3D <- function(x,type=2,model=1,
     }
     out$xlab <- xlab
     out$ylab <- ylab
-    out$d <- d[,id]
+    out$d <- subset(d,select=id)
     out
 }
 isochron_ThU_2D <- function(x,type=2,model=1,
@@ -571,7 +681,7 @@ isochron_ThU_2D <- function(x,type=2,model=1,
 
 isochron_PD <- function(x,nuclide,xlim=NA,ylim=NA,alpha=0.05,
                         sigdig=2,show.numbers=FALSE,levels=NA,
-                        ellipse.col=c("#00FF0080","#FF000080"),
+                        clabel="",ellipse.col=c("#00FF0080","#FF000080"),
                         line.col='red',lwd=2,plot=TRUE,exterr=TRUE,
                         model=1,...){
     if (identical(nuclide,'Sm147')){
@@ -603,51 +713,74 @@ isochron_PD <- function(x,nuclide,xlim=NA,ylim=NA,alpha=0.05,
     }
     if (plot){
         scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
-                    show.ellipses=1*(model==1),
+                    show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
-                    ellipse.col=ellipse.col, a=fit$a[1],b=fit$b[1],
-                    line.col=line.col,lwd=lwd,...)
+                    clabel=clabel,ellipse.col=ellipse.col,a=fit$a[1],
+                    b=fit$b[1],line.col=line.col,lwd=lwd,...)
         graphics::title(isochrontitle(out,sigdig=sigdig,type='PD'),
                         xlab=x.lab,ylab=y.lab)
     }
-    out
+    invisible(out)
 }
 
 isochron_init <- function(fit,alpha=0.05){
     out <- fit
-    out$age <- rep(NA,4)
-    out$y0 <- rep(NA,4)
     out$tfact <- stats::qt(1-alpha/2,out$df)
-    names(out$age) <- c('t','s[t]','ci[t]','disp[t]')
-    names(out$y0) <- c('y','s[y]','ci[y]','disp[y]')
+    if (fit$model==1){
+        out$age <- rep(NA,4)
+        out$y0 <- rep(NA,4)
+        names(out$age) <- c('t','s[t]','ci[t]','disp[t]')
+        names(out$y0) <- c('y','s[y]','ci[y]','disp[y]')
+    } else {
+        out$age <- rep(NA,3)
+        out$y0 <- rep(NA,3)
+        names(out$age) <- c('t','s[t]','ci[t]')
+        names(out$y0) <- c('y','s[y]','ci[y]')
+    }
+    if (fit$model==3){
+        out$w <- c(fit$w,fit$w*stats::qnorm(1-alpha/2))
+        names(out$w) <- c('s','ci')
+    }
     class(out) <- "isochron"
     out
 }
 regression_init <- function(fit,alpha=0.05){
     out <- fit
-    out$a <- rep(NA,4)
-    out$b <- rep(NA,4)
     out$tfact <- stats::qt(1-alpha/2,out$df)
-    names(out$a) <- c('a','s[a]','ci[a]','disp[a]')
-    names(out$b) <- c('b','s[b]','ci[b]','disp[b]')
+    if (fit$model==1){
+        out$a <- rep(NA,4)
+        out$b <- rep(NA,4)
+        names(out$a) <- c('a','s[a]','ci[a]','disp[a]')
+        names(out$b) <- c('b','s[b]','ci[b]','disp[b]')
+    } else {
+        out$a <- rep(NA,3)
+        out$b <- rep(NA,3)
+        names(out$a) <- c('a','s[a]','ci[a]')
+        names(out$b) <- c('b','s[b]','ci[b]')
+    }
     out$a[c('a','s[a]')] <- fit$a[c('a','s[a]')]
     out$b[c('b','s[b]')] <- fit$b[c('b','s[b]')]
     out$a['ci[a]'] <- out$tfact*fit$a['s[a]']
-    out$a['disp[a]'] <- out$tfact*sqrt(fit$mswd)*fit$a['s[a]']
     out$b['ci[b]'] <- out$tfact*fit$b['s[b]']
-    out$b['disp[b]'] <- out$tfact*sqrt(fit$mswd)*fit$b['s[b]']
+    if (fit$model==1){
+        out$a['disp[a]'] <- out$tfact*sqrt(fit$mswd)*fit$a['s[a]']
+        out$b['disp[b]'] <- out$tfact*sqrt(fit$mswd)*fit$b['s[b]']
+    } else if (fit$model==3){
+        out$w <- c(fit$w,stats::qnorm(1-alpha/2))
+        names(out$w) <- c('s','ci')
+    }
     class(out) <- "isochron"
     out
 }
 
 get.limits <- function(X,sX){
     minx <- min(X-3*sX,na.rm=TRUE)
-    maxx <- max(X+3*sX,na.rm=TRUE)    
+    maxx <- max(X+3*sX,na.rm=TRUE)
     c(minx,maxx)
 }
 
 isochrontitle <- function(fit,sigdig=2,type=NA){
-    if (fit$model!=2 && fit$mswd>1) args <- quote(a%+-%b~'|'~c~'|'~d)
+    if (fit$model==1 && fit$mswd>1) args <- quote(a%+-%b~'|'~c~'|'~d)
     else args <- quote(a%+-%b~'|'~c)
     if (is.na(type)){
         intercept <- roundit(fit$a[1],fit$a[2:4],sigdig=sigdig)
@@ -660,7 +793,7 @@ isochrontitle <- function(fit,sigdig=2,type=NA){
         list2 <- list(a=intercept[1],
                       b=intercept[2],
                       c=intercept[3])
-        if (fit$mswd>1){
+        if (fit$model==1 && fit$mswd>1){
             list1$d <- slope[4]
             list2$d <- intercept[4]
         }
@@ -674,20 +807,21 @@ isochrontitle <- function(fit,sigdig=2,type=NA){
         list2 <- list(a=rounded.intercept[1],
                       b=rounded.intercept[2],
                       c=rounded.intercept[3])
-        if (fit$model!=2 && fit$mswd>1){
+        if (fit$model==1 && fit$mswd>1){
             list1$d <- rounded.age[4]
             list2$d <- rounded.intercept[4]
         }
-        if (identical(type,'Ar-Ar'))
+        if (identical(type,'Ar-Ar')){
             expr2 <- quote('('^40*'Ar/'^36*'Ar)'[o]~'=')
-        else if (identical(type,'Pb-Pb'))
+        } else if (identical(type,'Pb-Pb')) {
             expr2 <- quote('('^207*'Pb/'^204*'Pb)'[o]~'=')
-        else if (identical(type,'Th-U-3D'))
+        } else if (identical(type,'Th-U-3D')) {
             expr2 <- quote('('^234*'U/'^238*'U)'[o]~'=')
-        else if (identical(type,'Th-U-2D'))
+        } else if (identical(type,'Th-U-2D')) {
             expr2 <- quote('('^230*'Th/'^232*'Th)'[o]^x*~'=')
-        else
-            expr2 <- quote('intercept =')
+        } else {
+            expr2 <- quote('y-intercept =')
+        }
     }
     call1 <- substitute(e~a,list(e=expr1,a=args))
     call2 <- substitute(e~a,list(e=expr2,a=args))
@@ -700,8 +834,18 @@ isochrontitle <- function(fit,sigdig=2,type=NA){
         graphics::mtext(line1,line=2)
         graphics::mtext(line2,line=1)
         graphics::mtext(line3,line=0)
-    } else {
+    } else if (fit$model==2){
         graphics::mtext(line1,line=1)
         graphics::mtext(line2,line=0)
+    } else if (fit$model==3){
+        rounded.disp <- signif(fit$w,sigdig)
+        list3 <- list(a=rounded.disp[1],b=rounded.disp[2])
+        expr3 <- quote('y-dispersion =')
+        args3 <- quote(a~'|'~b)
+        call3 <- substitute(e~a,list(e=expr3,a=args3))
+        line3 <- do.call(substitute,list(eval(call3),list3))
+        graphics::mtext(line1,line=2)
+        graphics::mtext(line2,line=1)
+        graphics::mtext(line3,line=0)
     }
 }

@@ -1,9 +1,15 @@
 # returns the lower and upper intercept age (for Wetherill concordia)
 # or the lower intercept age and 207Pb/206Pb intercept (for Tera-Wasserburg)
 concordia.intersection.ludwig <- function(x,wetherill=TRUE,
-                                          exterr=FALSE,alpha=0.05){
-    fit <- ludwig(x,exterr=exterr)
-    out <- fit[c('mswd','p.value','df')]
+                                          exterr=FALSE,alpha=0.05,
+                                          model=1){
+    fit <- ludwig(x,exterr=exterr,model=model)
+    out <- list()
+    out$model <- model
+    out$mswd <- fit$mswd
+    out$w <- fit$w
+    out$p.value <- fit$p.value
+    out$df <- fit$df
     tfact <- stats::qt(1-alpha/2,fit$df)
     if (wetherill){
         labels <- c('t[l]','t[u]')
@@ -23,32 +29,45 @@ concordia.intersection.ludwig <- function(x,wetherill=TRUE,
         out$cov <- J %*% fit$cov %*% t(J)
     }
     names(out$x) <- labels
-    out$err <- matrix(NA,3,2)
-    colnames(out$err) <- labels
-    rownames(out$err) <- c('s','ci','disp')
+    if (model==1 && fit$mswd>1){
+        out$err <- matrix(NA,3,2)
+        rownames(out$err) <- c('s','ci','disp')
+        out$err['disp',] <- tfact*sqrt(fit$mswd)*sqrt(diag(out$cov))
+    } else {
+        out$err <- matrix(NA,2,2)
+        rownames(out$err) <- c('s','ci')
+    }
     out$err['s',] <- sqrt(diag(out$cov))
     out$err['ci',] <- tfact*out$err['s',]
-    if (fit$mswd>1)
-        out$err['disp',] <- tfact*sqrt(fit$mswd)*out$err['s',]
+    colnames(out$err) <- labels
     out
 }
 concordia.intersection.york <- function(x,exterr=FALSE){
     d <- data2york(x,wetherill=FALSE)
     fit <- york(d)
-    concordia.intersection.york.ab(fit$a[1],fit$b[1],exterr=exterr)
+    concordia.intersection.ab(fit$a[1],fit$b[1],exterr=exterr)
 }
-concordia.intersection.york.ab <- function(a,b,exterr=FALSE){
+concordia.intersection.ab <- function(a,b,exterr=FALSE,wetherill=FALSE){
     out <- list()
-    search.range <- c(1/10000,10000)
+    m <- 1/10000
+    M <- 10000
     out$x <- c(1,a) # tl, 7/6 intercept
-    names(out$x) <- c('t[l]','76i')
+    if (wetherill) names(out$x) <- c('t[l]','t[u]')
+    else names(out$x) <- c('t[l]','76i')
     if (b<0) { # negative slope => two intersections with concordia line
+        search.range <- c(m,M)
         midpoint <- stats::optimize(intersection.misfit.york,
                                     search.range,a=a,b=b)$minimum
-        search.range[2] <- midpoint
+        search.range <- c(m,midpoint)
         out$x['t[l]'] <- stats::uniroot(intersection.misfit.york,
                                         search.range,a=a,b=b)$root
+        if (wetherill){
+            search.range <- c(midpoint,M)
+            out$x['t[u]'] <- stats::uniroot(intersection.misfit.york,
+                                            search.range,a=a,b=b)$root
+        }   
     } else {
+        search.range <- c(m,M)
         out$x['t[l]'] <- stats::uniroot(intersection.misfit.york,
                                         search.range,a=a,b=b)$root
     }
@@ -182,7 +201,7 @@ intersection.misfit.york <- function(age,a,b){
     (exp(l5*age)-1)/(exp(l8*age)-1) - a*R - b*R/(exp(l8*age)-1)
 }
 
-discordia.plot <- function(fit,wetherill){
+discordia.line <- function(fit,wetherill){
     X <- c(0,0)
     Y <- c(0,0)
     if (wetherill){
@@ -200,14 +219,14 @@ discordia.plot <- function(fit,wetherill){
 discordia.title <- function(fit,wetherill,sigdig=2){
     lower.age <- roundit(fit$x[1],fit$err[,1],sigdig=sigdig)
     list1 <- list(a=lower.age[1],b=lower.age[2],c=lower.age[3])
-    if (fit$mswd>1) args <- quote(a%+-%b~'|'~c~'|'~d)
+    if (fit$model!=2 && fit$mswd>1) args <- quote(a%+-%b~'|'~c~'|'~d)
     else args <- quote(a%+-%b~'|'~c)
     if (wetherill){
         upper.age <- roundit(fit$x[2],fit$err[,2],sigdig=sigdig)
         expr1 <- quote('lower intercept =')
         expr2 <- quote('upper intercept =')
         list2 <- list(a=upper.age[1],b=upper.age[2],c=upper.age[3])
-        if (fit$mswd>1){
+        if (fit$model!=2 && fit$mswd>1){
             list1$d <- lower.age[4]
             list2$d <- upper.age[4]
         }
@@ -216,7 +235,7 @@ discordia.title <- function(fit,wetherill,sigdig=2){
         expr1 <- quote('age =')
         expr2 <- quote('('^207*'Pb/'^206*'Pb)'[o]~'=')
         list2 <- list(a=intercept[1],b=intercept[2],c=intercept[3])
-        if (fit$mswd>1){
+        if (fit$model!=2 && fit$mswd>1){
             list1$d <- lower.age[4]
             list2$d <- intercept[4]
         }
@@ -225,10 +244,23 @@ discordia.title <- function(fit,wetherill,sigdig=2){
     call2 <- substitute(e~a,list(e=expr2,a=args))
     line1 <- do.call('substitute',list((call1),list1))
     line2 <- do.call('substitute',list((call2),list2))
-    line3 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
-                        list(a=signif(fit$mswd,sigdig),
-                             b=signif(fit$p.value,sigdig)))
-    graphics::mtext(line1,line=2)
-    graphics::mtext(line2,line=1)
-    graphics::mtext(line3,line=0)
+    if (fit$model==1){
+        line3 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
+                            list(a=signif(fit$mswd,sigdig),
+                                 b=signif(fit$p.value,sigdig)))
+        graphics::mtext(line1,line=2)
+        graphics::mtext(line2,line=1)
+        graphics::mtext(line3,line=0)
+    } else if (fit$model==2){
+        graphics::mtext(line1,line=1)
+        graphics::mtext(line2,line=0)        
+    } else {
+        line3 <- substitute('overdispersion ='~a~'|'~b~
+                            '% of the initial Pb',
+                            list(a=signif(100*fit$w['s'],sigdig),
+                                 b=signif(100*fit$w['ci'],sigdig)))
+        graphics::mtext(line1,line=2)
+        graphics::mtext(line2,line=1)
+        graphics::mtext(line3,line=0)
+    }
 }

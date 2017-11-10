@@ -13,7 +13,7 @@ fission track and detrital datasets
 
 \code{UPb}: an object of class \code{UPb} containing a high
 precision U-Pb dataset of Kamo et al. (1996) packaged with Ken
-Ludwig's \code{Isoplot} program.
+Ludwig (2003)'s \code{Isoplot} program.
 
 \code{PbPb}: an object of class \code{PbPb} containing a Pb-Pb
 dataset from Connelley et al. (2017).
@@ -55,23 +55,21 @@ dating approach.
 \code{ThU}: an object of class \code{ThU} containing a synthetic
 `Osmond-type' dataset from Titterington and Ludwig (1994).
 
-\code{Namib}: an object of class \code{detritals} containing a
-detrital zircon U-Pb dataset of Vermeesch and Garzanti (2015).
+\code{LudwigMean}: an object of class \code{other} containing a
+collection of \eqn{^{206}}Pb/\eqn{^{238}}U-ages and errors of the
+example dataset by Ludwig (2003).
 
-\code{average}: an object of class \code{other} containing the
-\eqn{^{206}}Pb/\eqn{^{238}}U-ages and errors of dataset \code{UPb}.
+\code{LudwigKDE}: an object of class \code{'other'} containing the
+\eqn{^{206}}Pb/\eqn{^{238}}U-ages (but not the errors) of the
+example dataset by Ludwig (2003).
 
-\code{KDE}: an object of class \code{'other'} containing the
-\eqn{^{206}}Pb/\eqn{^{238}}U-ages (but not the errors) of dataset
-\code{UPb}.
+\code{LudwigSpectrum}: an object of class \code{'other'} containing
+the \eqn{^{39}}Ar abundances, \eqn{^{40}}Ar/\eqn{^{39}}Ar-ages and
+errors of the example dataset by Ludwig (2003).
 
-\code{spectrum}: an object of class \code{'other'} containing the
-\eqn{^{39}}Ar abundances, \eqn{^{40}}Ar/\eqn{^{39}}Ar-ages and errors of
-dataset \code{ArAr}.
-
-\code{MountTom}: an object of class \code{'other'} containing a
-dataset of dispersed zircon fission track ages from Brandon and
-Vance (1992).
+\code{LudwigMixture}: an object of class \code{'other'} containing
+a dataset of dispersed zircon fission track ages of the example
+dataset by Ludwig (2003).
 }
 \examples{
 data(examples)
@@ -88,21 +86,16 @@ helioplot(examples$UThHe)
 
 evolution(examples$ThU)
 
-kde(examples$Namib)
+kde(examples$DZ)
 
-radialplot(examples$MountTom)
+radialplot(examples$LudwigMixture)
 
-agespectrum(examples$spectrum)
+agespectrum(examples$LudwigSpectrum)
 
-weightedmean(examples$average)
+weightedmean(examples$LudwigMean)
 
 }
 \references{
-Brandon, M.T. and Vance, J.A., 1992. Tectonic evolution of the
-Cenozoic Olympic subduction complex, Washington State, as deduced
-from fission track ages for detrial zircons. American Journal of
-Science, 292, pp.565-565.
-
 Barfod, G.H., Albarede, F., Knoll, A.H., Xiao, S., Telouk, P.,
 Frei, R. and Baker, J., 2002. New Lu-Hf and Pb-Pb age constraints on
 the earliest animal fossils. Earth and Planetary Science Letters, 201(1),
@@ -125,9 +118,9 @@ Kamo, S.L., Czamanske, G.K. and Krogh, T.E., 1996. A minimum U-Pb
 age for Siberian flood-basalt volcanism. Geochimica et Cosmochimica
 Acta, 60(18), 3505-3511.
 
-Ludwig, K. R., and D. M. Titterington. "Calculation of \eqn{^{230}}Th/U
-isochrons, ages, and errors." Geochimica et Cosmochimica Acta
-58.22 (1994): 5031-5042.
+Ludwig, K. R., and D. M. Titterington., 1994.
+"Calculation of \eqn{^{230}}Th/U isochrons, ages, and errors."
+Geochimica et Cosmochimica Acta 58.22, 5031-5042.
 
 Ludwig, K. R., 2003. User's manual for Isoplot 3.00: a
 geochronological toolkit for Microsoft Excel. No. 4.

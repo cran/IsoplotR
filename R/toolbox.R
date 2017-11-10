@@ -89,7 +89,7 @@ errorprop <- function(J11,J12,J21,J22,E11,E22,E12){
     out <- matrix(0,length(J11),3)
     colnames(out) <- c('varX','varY','cov')
     out[,'varX'] <- J11*J11*E11 + J11*J12*E12 + J11*J12*E12 + J12*J12*E22
-    out[,'varY'] <- E11*J21*J21 + J21*J22*E12 + J21*J22*E12 + J22*J22*E22
+    out[,'varY'] <- J21*J21*E11 + J21*J22*E12 + J21*J22*E12 + J22*J22*E22
     out[,'cov'] <- J11*J21*E11 + J12*J21*E12 + J11*J22*E12 + J12*J22*E22
     out
 }
@@ -134,7 +134,7 @@ validLevels <- function(levels){
 }
 
 colourbar <- function(z=c(0,1),col=c("#00FF0080","#FF000080"),
-                      strip.width=0.02){
+                      strip.width=0.02,clabel=""){
     if (!validLevels(z)) return()
     ucoord <- graphics::par()$usr
     plotwidth <- (ucoord[2]-ucoord[1])
@@ -155,4 +155,14 @@ colourbar <- function(z=c(0,1),col=c("#00FF0080","#FF000080"),
     graphics::par(new=T)
     graphics::plot(rep(xe,length(z)),z,type='n',axes=F,xlab=NA,ylab=NA)
     graphics::axis(side=4)
+    graphics::mtext(text=clabel,side=3,adj=1)
+}
+
+plot_points <- function(x,y,bg='white',show.numbers=FALSE,...){
+    if ('pch' %in% graphics::par(list(...))) pch <- graphics::par()$pch
+    else pch <- 21
+    if ('cex' %in% graphics::par(list(...))) pch <- graphics::par()$cex
+    else cex <- 1.5
+    if (show.numbers) graphics::text(x,y,1:length(x),cex=cex,...)
+    else graphics::points(x,y,bg=bg,pch=pch,cex=cex,...)
 }

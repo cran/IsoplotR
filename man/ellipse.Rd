@@ -11,17 +11,17 @@ ellipse(x, y, covmat, alpha = 0.05, n = 50)
 
 \item{y}{y-coordinate (scalar) for the centre of the ellipse}
 
-\item{covmat}{covariance matrix of the x-y coordinates}
+\item{covmat}{the [\code{2 x 2}] covariance matrix of the x-y coordinates}
 
 \item{alpha}{the probability cutoff for the error ellipses}
 
-\item{n}{the resolution of the error ellipses}
+\item{n}{the resolution (number of segments) of the error ellipses}
 }
 \value{
 an [\code{n x 2}] matrix of plot coordinates
 }
 \description{
-Construct an error ellipse age a given confidence level from its
+Constructs an error ellipse at a given confidence level from its
 centre and covariance matrix
 }
 \examples{

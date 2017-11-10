@@ -6,23 +6,32 @@
 #' analytical uncertainty associated with decay constants and
 #' J-factors after computing the plateau composition.
 #'
+#' @details
+#' \code{IsoplotR} defines the `plateau age' as the weighted mean age
+#' of the longest sequence (in terms of cumulative \eqn{^{39}}Ar
+#' content) of consecutive heating steps that pass the modified
+#' Chauvenet criterion (see \code{\link{weightedmean}}).  Note that
+#' this definition is different (and simpler) than the one used by
+#' \code{Isoplot} (Ludwig, 2003). However, it is important to mention
+#' that all definitions of an age plateau are heuristic by nature and
+#' should not be used for quantitative inference.
+#'
 #' @param x
 #' a three-column matrix whose first column gives the amount
 #'     of \eqn{^{39}}Ar in each aliquot, and whose second and third
 #'     columns give the age and its uncertainty.
-#' 
+#'
 #' OR
-#' 
+#'
 #' an object of class \code{ArAr}
-#' 
-#' @param alpha the confidence limits of the error bars/boxes and
+#'
+#' @param alpha the confidence level of the error bars/boxes and
 #'     confidence intervals.
 #' @param plateau logical flag indicating whether a plateau age should
 #'     be calculated. If \code{plateau=TRUE}, the function will
 #'     compute the weighted mean of the largest succession of steps
-#'     that yield values passing the Chi-square test for age
-#'     homogeneity.  If \code{TRUE}, returns a list with plateau
-#'     parameters.
+#'     that pass the Chi-square test for age homogeneity.  If
+#'     \code{TRUE}, returns a list with plateau parameters.
 #' @param plateau.col the fill colour of the rectangles used to mark
 #'     the steps belonging to the age plateau.
 #' @param non.plateau.col if \code{plateau=TRUE}, the steps that do
@@ -30,13 +39,14 @@
 #' @param sigdig the number of significant digits of the numerical
 #'     values reported in the title of the graphical output (only used
 #'     if \code{plateau=TRUE}).
-#' @param line.col colour of the isochron line
-#' @param lwd line width
+#' @param line.col colour of the average age line
+#' @param lwd width of the average age line
 #' @param title add a title to the plot?
 #' @param xlab x-axis label
 #' @param ylab y-axis label
 #' @param ... optional parameters to the generic \code{plot} function
-#' @return if \code{plateau=TRUE}, returns a list with the following
+#'
+#' @return If \code{plateau=TRUE}, returns a list with the following
 #'     items:
 #'
 #' \describe{
@@ -70,16 +80,22 @@
 #' \item{fract}{the fraction of \eqn{^{39}}Ar contained in the
 #' plateau}
 #'
-#' \item{tfact}{the t-factor for \code{df} degrees of freedom
+#' \item{tfact}{the Student t-factor for \code{df} degrees of freedom
 #' evaluated at \eqn{100(1-\alpha/2)}\% confidence}
 #'
-#' \item{plotpar}{plot parameters for the weighted mean, which are not
-#' used in the age spectrum}
+#' \item{plotpar}{plot parameters for the weighted mean (see
+#' \code{\link{weightedmean}}), which are not used in the age
+#' spectrum}
 #'
 #' \item{i}{indices of the steps that are retained for the plateau age
 #' calculation}
 #'
 #' }
+#'
+#' @seealso \code{\link{weightedmean}}
+#' @references Ludwig, K. R. User's manual for Isoplot 3.00: a
+#'     geochronological toolkit for Microsoft Excel. Berkeley
+#'     Geochronology Center Special Publication, 2003.
 #' @rdname agespectrum
 #' @export
 agespectrum <- function(x,...){ UseMethod("agespectrum",x) }
@@ -120,7 +136,7 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
     }
     if (plateau){
         if (title) graphics::title(plateau.title(plat,sigdig=sigdig,Ar=FALSE))
-        return(plat)
+        return(invisible(plat))
     }
 }
 #' @param i2i `isochron to intercept':
@@ -156,7 +172,7 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
         out$mean[1:2] <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=exterr)
         out$mean[3] <- plat$tfact*out$mean[2]
         graphics::title(plateau.title(out,sigdig=sigdig,Ar=TRUE))
-        return(out)
+        return(invisible(out))
     }
 }
 
@@ -164,7 +180,7 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
 # cumulative fractions, ages and uncertainties
 plateau <- function(x,alpha=0.05){
     X <- x[,1]/sum(x[,1],na.rm=TRUE)
-    YsY <- x[,c(2,3)]
+    YsY <- subset(x,select=c(2,3))
     ns <- length(X)
     out <- list()
     out$mean <- YsY[1,1:2]

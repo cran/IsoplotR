@@ -7,6 +7,32 @@
 #' a \eqn{^{230}}Th/\eqn{^{232}}Th-\eqn{^{238}}U/\eqn{^{232}}Th diagram,
 #' calculates isochron ages.
 #'
+#' @details
+#'
+#' Similar to the \code{\link{concordia}} diagram (for U-Pb data) and
+#' the \code{\link{helioplot}} diagram (for U-Th-He data), the
+#' evolution diagram simultaneously displays the isotopic composition
+#' and age of U-series data. For carbonate data (Th-U formats 1 and
+#' 2), the Th-U evolution diagram consists of a scatter plot that sets
+#' out the \eqn{^{234}}U/\eqn{^{238}}U-activity ratios against the
+#' \eqn{^{230}}Th/\eqn{^{238}}U-activity ratios as error ellipses, and
+#' displays the initial \eqn{^{234}}U/\eqn{^{238}}U-activity ratios
+#' and ages as a set of intersecting lines.  Alternatively, the
+#' \eqn{^{234}}U/\eqn{^{238}}U-ratios can also be set out against the
+#' \eqn{^{230}}Th-\eqn{^{234}}U-\eqn{^{238}}U-ages.  In both types of
+#' evolution diagrams, \code{IsoplotR} provides the option to project
+#' the raw measurements along the best fitting isochron line and
+#' thereby remove the detrital \eqn{^{230}}Th-component. This
+#' procedure allows a visual assessment of the degree of homogeneity
+#' within a dataset, as is quantified by the MSWD.
+#'
+#' Neither the U-series evolution diagram, nor the
+#' \eqn{^{234}}U/\eqn{^{238}}U vs. age plot is applicable to igneous
+#' datasets (Th-U formats 3 and 4), in which \eqn{^{234}}U and
+#' \eqn{^{238}}U are in secular equilibrium.  For such datasets,
+#' \code{IsoplotR} produces an Osmond-style regression plot that is
+#' decorated with a fanning set of \code{\link{isochron}} lines.
+#'
 #' @param x an object of class \code{ThU}
 #' @param xlim x-axis limits
 #' @param ylim y-axis limits
@@ -20,6 +46,7 @@
 #'     numbers?
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours within the error ellipses.
+#' @param clabel label of the colour legend.
 #' @param ellipse.col a vector of two background colours for the error
 #'     ellipses. If \code{levels=NA}, then only the first colour will
 #'     be used. If \code{levels} is a vector of numbers, then
@@ -29,10 +56,43 @@
 #' @param exterr propagate the decay constant uncertainty in the
 #'     isochron age?
 #' @param sigdig number of significant digits for the isochron age
+#' @param model if \code{isochron=TRUE}, choose one of three
+#'     regression models:
+#'
+#' \code{1}: maximum likelihood regression, using either the modified
+#' error weighted least squares algorithm of York et al. (2004) for
+#' 2-dimensional data, or the Maximum Likelihood formulation of Ludwig
+#' and Titterington (1994) for 3-dimensional data. These algorithms
+#' take into account the analytical uncertainties and error
+#' correlations, under the assumption that the scatter between the
+#' data points is solely caused by the analytical uncertainty. If this
+#' assumption is correct, then the MSWD value should be approximately
+#' equal to one. There are three strategies to deal with the case
+#' where MSWD>1. The first of these is to assume that the analytical
+#' uncertainties have been underestimated by a factor
+#' \eqn{\sqrt{MSWD}}.
+#'
+#' \code{2}: ordinary least squares regression: a second way to deal
+#' with over- or underdispersed datasets is to simply ignore the
+#' analytical uncertainties.
+#'
+#' \code{3}: maximum likelihood regression with overdispersion:
+#' instead of attributing any overdispersion (MSWD > 1) to
+#' underestimated analytical uncertainties (model 1), one can also
+#' attribute it to the presence of geological uncertainty, which
+#' manifests itself as an added (co)variance term.
+#'
 #' @param ... optional arguments to the generic \code{plot} function
+#' @seealso \code{\link{isochron}}
+#'
 #' @examples
 #' data(examples)
 #' evolution(examples$ThU)
+#'
+#' dev.new()
+#' evolution(examples$ThU,transform=TRUE,
+#'           isochron=TRUE,model=1)
+#'
 #' @references Ludwig, K.R. and Titterington, D.M., 1994. Calculation
 #'     of \eqn{^{230}}Th/U isochrons, ages, and errors. Geochimica et
 #'     Cosmochimica Acta, 58(22), pp.5031-5042.
@@ -43,35 +103,42 @@
 #' @export
 evolution <- function(x,xlim=NA,ylim=NA,alpha=0.05,transform=FALSE,
                       detrital=FALSE,show.numbers=FALSE,levels=NA,
-                      ellipse.col=c("#00FF0080","#FF000080"),
-                      line.col='darksalmon',isochron=FALSE,
+                      clabel="",ellipse.col=c("#00FF0080","#FF000080"),
+                      line.col='darksalmon',isochron=FALSE, model=1,
                       exterr=TRUE,sigdig=2,...){
     if (x$format %in% c(1,2)){
         if (transform){
             U4U8vst(x,detrital=detrital,xlim=xlim,ylim=ylim,
                     alpha=alpha,show.numbers=show.numbers,
-                    levels=levels,ellipse.col=ellipse.col,...)
+                    levels=levels,clabel=clabel,
+                    ellipse.col=ellipse.col,show.ellipses=(model!=2),
+                    ...)
         } else {
-            U4U8vsTh0U8(x,isochron=isochron,detrital=detrital,
-                        xlim=xlim,ylim=ylim,alpha=alpha,
-                        show.numbers=show.numbers,levels=levels,
-                        ellipse.col=ellipse.col,line.col=line.col,...)
+            U4U8vsTh0U8(x,isochron=isochron,model=model,
+                        detrital=detrital,xlim=xlim,ylim=ylim,
+                        alpha=alpha,show.numbers=show.numbers,
+                        levels=levels,clabel=clabel,
+                        ellipse.col=ellipse.col, line.col=line.col,
+                        show.ellipses=(model!=2), ...)
         }
         if (isochron){
-            fit <- isochron.ThU(x,type=3,plot=FALSE,exterr=exterr)
+            fit <- isochron.ThU(x,type=3,plot=FALSE,
+                                exterr=exterr,model=model)
             graphics::title(evolution.title(fit,sigdig=sigdig))
         }
     } else {
-        Th02vsTh0U8(x,isochron=isochron,xlim=xlim,ylim=ylim,
-                    alpha=alpha,show.numbers=show.numbers,
+        Th02vsTh0U8(x,isochron=isochron,model=model,xlim=xlim,
+                    ylim=ylim,alpha=alpha,show.numbers=show.numbers,
                     exterr=exterr,sigdig=sigdig,levels=levels,
-                    ellipse.col=ellipse.col,line.col=line.col,...)
+                    clabel=clabel, ellipse.col=ellipse.col,
+                    line.col=line.col,...)
     }
 }
 
-U4U8vst <- function(x,detrital=FALSE,xlim=NA,ylim=NA, alpha=0.05,
-                    show.numbers=FALSE,levels=NA,
-                    ellipse.col=c("#00FF0080","#FF000080"),...){
+U4U8vst <- function(x,detrital=FALSE,xlim=NA,ylim=NA,alpha=0.05,
+                    show.numbers=FALSE,levels=NA,clabel="",
+                    ellipse.col=c("#00FF0080","#FF000080"),
+                    show.ellipses=TRUE,...){
     ns <- length(x)
     ta0 <- ThU.age(x,exterr=FALSE,i2i=detrital,cor=FALSE)
     nsd <- 3
@@ -84,29 +151,34 @@ U4U8vst <- function(x,detrital=FALSE,xlim=NA,ylim=NA, alpha=0.05,
     graphics::plot(xlim,ylim,type='n',bty='n',xlab=x.lab,ylab=y.lab)
     covmat <- matrix(0,2,2)
     ellipse.cols <- set.ellipse.colours(ns=ns,levels=levels,col=ellipse.col)
-    for (i in 1:ns){
-        x0 <- ta0[i,'t']
-        y0 <- ta0[i,'48_0']
-        diag(covmat) <- ta0[i,c('s[t]','s[48_0]')]^2
-        covmat[1,2] <- ta0[i,'cov[t,48_0]']
-        covmat[2,1] <- covmat[1,2]
-        ell <- ellipse(x0,y0,covmat,alpha=alpha)
-        graphics::polygon(ell,col=ellipse.cols[i])
-        if (show.numbers) graphics::text(x0,y0,i)
-        else graphics::points(x0,y0,pch=19,cex=0.25)
+    x0 <- ta0[,'t']
+    y0 <- ta0[,'48_0']
+    if (show.ellipses){
+        for (i in 1:ns){
+            diag(covmat) <- ta0[i,c('s[t]','s[48_0]')]^2
+            covmat[1,2] <- ta0[i,'cov[t,48_0]']
+            covmat[2,1] <- covmat[1,2]
+            ell <- ellipse(x0[i],y0[i],covmat,alpha=alpha)
+            graphics::polygon(ell,col=ellipse.cols[i])
+            if (show.numbers) graphics::text(x0[i],y0[i],i)
+            else graphics::points(x0[i],y0[i],pch=19,cex=0.25)
+        }
+    } else {
+        plot_points(x0,y0,bg=ellipse.cols,show.numbers=show.numbers,...)
     }
-    colourbar(z=levels,col=ellipse.col)
+    colourbar(z=levels,col=ellipse.col,clabel=clabel)
 }
 
-U4U8vsTh0U8 <- function(x,isochron=FALSE,detrital=FALSE,xlim=NA,
-                        ylim=NA,alpha=0.05,show.numbers=FALSE,
-                        levels=NA,ellipse.col=c("#00FF0080","#FF000080"),
-                        line.col='darksalmon',...){
+U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detrital=FALSE,
+                        xlim=NA,ylim=NA,alpha=0.05,
+                        show.numbers=FALSE,levels=NA,clabel="",
+                        ellipse.col=c("#00FF0080","#FF000080"),
+                        line.col='darksalmon',show.ellipses=TRUE,...){
     ns <- length(x)
     d <- data2evolution(x,detrital=detrital)
     lim <- evolution.lines(d,xlim=xlim,ylim=ylim,...)
     if (isochron){
-        fit <- isochron(x,type=2,plot=FALSE)
+        fit <- isochron(x,type=2,plot=FALSE,model=model)
         b48 <- fit$par['a']
         b08 <- fit$par['A']
         e48 <- 1
@@ -115,16 +187,18 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,detrital=FALSE,xlim=NA,
     }
     ellipse.cols <- set.ellipse.colours(ns=ns,levels=levels,col=ellipse.col)
     covmat <- matrix(0,2,2)
-    for (i in 1:ns){
-        x0 <- d[i,'Th230U238']
-        y0 <- d[i,'U234U238']
-        diag(covmat) <- d[i,c('errTh230U238','errU234U238')]^2
-        covmat[1,2] <- d[i,'cov']
-        covmat[2,1] <- covmat[1,2]
-        ell <- ellipse(x0,y0,covmat,alpha=alpha)
-        graphics::polygon(ell,col=ellipse.cols[i])
-        if (show.numbers) graphics::text(x0,y0,i)
-        else graphics::points(x0,y0,pch=19,cex=0.25)
+    x0 <- d[,'Th230U238']
+    y0 <- d[,'U234U238']
+    if (show.ellipses){
+        for (i in 1:ns){
+            diag(covmat) <- d[i,c('errTh230U238','errU234U238')]^2
+            covmat[1,2] <- d[i,'cov']
+            covmat[2,1] <- covmat[1,2]
+            ell <- ellipse(x0[i],y0[i],covmat,alpha=alpha)
+            graphics::polygon(ell,col=ellipse.cols[i])
+            if (show.numbers) graphics::text(x0[i],y0[i],i)
+            else graphics::points(x0[i],y0[i],pch=19,cex=0.25)
+        }
     }
     if (isochron){
         sa <- sqrt(fit$cov['a','a'])
@@ -135,11 +209,13 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,detrital=FALSE,xlim=NA,
                     ellipse.col=grDevices::rgb(1,1,1,0.85),
                     line.col='black',new.plot=FALSE)
     }
-    colourbar(z=levels,col=ellipse.col)
+    if (!show.ellipses)
+        plot_points(x0,y0,bg=ellipse.cols,show.numbers=show.numbers,...)
+    colourbar(z=levels,col=ellipse.col,clabel=clabel)
 }
 
-Th02vsTh0U8 <- function(x,isochron=FALSE,xlim=NA,ylim=NA,alpha=0.05,
-                        show.numbers=FALSE,exterr=TRUE,
+Th02vsTh0U8 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
+                        alpha=0.05,show.numbers=FALSE,exterr=TRUE,
                         levels=NA,ellipse.col=c("#00FF0080","#FF000080"),
                         sigdig=2,line.col='darksalmon',...){
     d <- data2evolution(x,isochron=isochron)
@@ -172,8 +248,8 @@ Th02vsTh0U8 <- function(x,isochron=FALSE,xlim=NA,ylim=NA,alpha=0.05,
     if (isochron){ # plot the data and isochron line fit
         isochron.ThU(x,type=1,plot=TRUE,show.numbers=show.numbers,
                      levels=levels,ellipse.col=ellipse.col,
-                     line.col='black', exterr=exterr,sigdig=sigdig,
-                     new.plot=FALSE)
+                     line.col='black',exterr=exterr,sigdig=sigdig,
+                     new.plot=FALSE,model=model)
     } else { # plot just the data
         scatterplot(d$x,alpha=alpha,show.numbers=show.numbers,
                     levels=levels,ellipse.col=ellipse.col,
@@ -195,26 +271,39 @@ evolution.title <- function(fit,sigdig=2){
     list1 <- list(a=rounded.age[1],
                   b=rounded.age[2],
                   c=rounded.age[3])
-    expr2 <- quote('(234/238)'[o]*' =')
+    expr2 <- quote('('^234*'U/'^238*'U)'[o]*~'=')
     list2 <- list(a=rounded.a0[1],
                   b=rounded.a0[2],
                   c=rounded.a0[3])
-    args <- quote(~a%+-%b~'|'~c)    
-    if (fit$mswd>1){
-        args <- quote(~a%+-%b~'|'~c~'|'~d)
-        list1$d <- rounded.age[4]
-        list2$d <- rounded.a0[4]
-    }
+    args <- quote(~a%+-%b~'|'~c)
     call1 <- substitute(e~a,list(e=expr1,a=args))
     line1 <- do.call(substitute,list(eval(call1),list1))
     call2 <- substitute(e~a,list(e=expr2,a=args))
     line2 <- do.call(substitute,list(eval(call2),list2))
-    line3 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
-                        list(a=signif(fit$mswd,2),
-                             b=signif(fit$p.value,2)))
-    graphics::mtext(line1,line=2)
-    graphics::mtext(line2,line=1)
-    graphics::mtext(line3,line=0)
+    if (fit$model==1 && fit$mswd>1){
+        args <- quote(~a%+-%b~'|'~c~'|'~d)
+        list1$d <- rounded.age[4]
+        list2$d <- rounded.a0[4]
+        line3 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
+                            list(a=signif(fit$mswd,2),
+                                 b=signif(fit$p.value,2)))
+        graphics::mtext(line1,line=2)
+        graphics::mtext(line2,line=1)
+        graphics::mtext(line3,line=0)
+    } else if (fit$model==2) {
+        graphics::mtext(line1,line=1)
+        graphics::mtext(line2,line=0)
+    } else if (fit$model==3) {
+        rounded.disp <- signif(fit$w,sigdig)
+        list3 <- list(a=rounded.disp[1],b=rounded.disp[2])
+        expr3 <- quote('('^232*'Th/'^238*'U)'-dispersion~'=')
+        args3 <- quote(a~'|'~b)
+        call3 <- substitute(e~a,list(e=expr3,a=args3))
+        line3 <- do.call(substitute,list(eval(call3),list3))
+        graphics::mtext(line1,line=2)
+        graphics::mtext(line2,line=1)
+        graphics::mtext(line3,line=0)
+    }
 }
 
 evolution.lines <- function(d,xlim=NA,ylim=NA,bty='n',
@@ -223,14 +312,15 @@ evolution.lines <- function(d,xlim=NA,ylim=NA,bty='n',
     maxt <- 400
     tt <- seq(from=0,to=maxt,by=50)
     nsd <- 3
-    if (any(is.na(xlim))) max.dx <- max(d[,'Th230U238']+nsd*d[,'errTh230U238'])
+    if (any(is.na(xlim)))
+        max.dx <- max(d[,'Th230U238']+nsd*d[,'errTh230U238'])
     else max.dx <- xlim[2] # only used if ylim == NA
     if (any(is.na(ylim))){
         max.dy <- max(d[,'U234U238']+nsd*d[,'errU234U238'])
         a0max <- get.ThU.age(max.dx,0,max.dy,0,0,exterr=FALSE)['48_0']
     } else {
         a0max <- ylim[2]
-    }    
+    }
     if (any(is.na(xlim)))
         xlim <- range(pretty(c(0,max(get.Th230U238(tt,a0max)))))
     a0 <- pretty(c(1,a0max))
@@ -288,8 +378,8 @@ data2evolution <- function(x,detrital=FALSE,isochron=FALSE){
             out[i,'cov'] <- covmat[1,2]
         }
     } else if (x$format == 2){
-        xy <- x$x[,c('Th230U238','errTh230U238',
-                      'U234U238','errU234U238')]
+        xy <- subset(x$x,select=c('Th230U238','errTh230U238',
+                                  'U234U238','errU234U238'))
         covariance <- x$x[,'errTh230U238']*
             x$x[,'errU234U238']*x$x[,'rhoYZ']
         out <- cbind(xy,covariance)

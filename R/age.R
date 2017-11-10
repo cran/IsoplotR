@@ -1,7 +1,9 @@
 #' Calculate isotopic ages
 #'
-#' Calculates  ages and propagates their analytical
-#' uncertainties.
+#' Calculates U-Pb, Pb-Pb, Ar-Ar, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf, U-Th-He,
+#' Th-U and fission track ages and propagates their analytical
+#' uncertainties. Includes options for single grain, isochron and
+#' concordia ages.
 #'
 #' @param x can be:
 #' \itemize{
@@ -50,14 +52,11 @@
 #'     \code{'Pb207-Pb206'}, \code{'Ar-Ar'}, \code{'Th-U'}, \code{'Re-Os'},
 #'     \code{'Sm-Nd'}, \code{'Rb-Sr'}, \code{'Lu-Hf'}, \code{'U-Th-He'} or
 #'     \code{'fissiontracks'}
-#' 
 #' @param exterr propagate the external (decay constant and
 #'     calibration factor) uncertainties?
-#' 
 #' @param i (optional) index of a particular aliquot
-#' 
 #' @param ... additional arguments
-#' 
+#'
 #' @rdname age
 #' @export
 age <- function(x,...){ UseMethod("age",x) }
@@ -96,21 +95,32 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
     }
     out
 }
-#' @param type scalar flag indicating whether each U-Pb analysis
-#'     should be considered separately (\code{type=1}), a
-#'     concordia age should be calculated from all U-Pb analyses
-#'     together (\code{type=2}), or a discordia line should be
-#'     fit through all the U-Pb analyses (\code{type=3}).
-#' 
+#' @param type scalar flag indicating whether
+#'
+#' \code{1}: each U-Pb analysis should be considered separately,
+#'
+#' \code{2}: all the measurements should be combined to calculate a
+#' concordia age,
+#'
+#' \code{3}: a discordia line should be fitted through all the U-Pb
+#'     analyses using the maximum likelihood algorithm of Ludwig
+#'     (1998), which assumes that the scatter of the data is solely
+#'     due to the analytical uncertainties.
+#'
+#' \code{4}: a discordia line should be fitted ignoring the analytical
+#' uncertainties.
+#'
+#' \code{5}: a discordia line should be fitted using a modified
+#' maximum likelihood algorithm that accounts for overdispersion by
+#' adding a geological (co)variance term.
+#'
 #' @param wetherill logical flag to indicate whether the data should
 #'     be evaluated in Wetherill (\code{TRUE}) or Tera-Wasserburg
 #'     (\code{FALSE}) space.  This option is only used when
 #'     \code{type=2}
-#' 
 #' @param sigdig number of significant digits for the uncertainty
-#'     estimate (only used if \code{type=1}, \code{isochron=FALSE}
-#'     or \code{central=FALSE}).
-#'
+#'     estimate (only used if \code{type=1}, \code{isochron=FALSE} and
+#'     \code{central=FALSE}).
 #' @param common.Pb apply a common lead correction using one of three
 #'     methods:
 #'
@@ -129,275 +139,55 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item if \code{x} is a scalar or a vector, returns the age using
 #' the geochronometer given by \code{method} and its standard error.
 #'
-#' \item if \code{x} has class \code{UPb} and \code{type=1},
-#' returns a table with the following columns: \code{t.75},
-#' \code{err[t.75]}, \code{t.68}, \code{err[t.68]}, \code{t.76},
-#' \code{err[t.76]}, \code{t.conc}, \code{err[t.conc]}, containing the
+#' \item if \code{x} has class \code{UPb} and \code{type=1}, returns a
+#' table with the following columns: \code{t.75}, \code{err[t.75]},
+#' \code{t.68}, \code{err[t.68]}, \code{t.76}, \code{err[t.76]},
+#' \code{t.conc}, \code{err[t.conc]}, containing the
 #' \eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
 #' \eqn{^{206}}Pb/\eqn{^{238}}U-age and standard error, the
 #' \eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, and the
-#' concordia age and standard error, respectively.
-#'  
-#' \item if \code{x} has class \code{UPb} and \code{type=2},
-#' returns a list with the following items:
+#' single grain concordia age and standard error, respectively.
 #'
-#' \describe{
-#'
-#' \item{x}{ a named vector with the (weighted mean) U-Pb composition }
-#' 
-#' \item{cov}{ the covariance matrix of the (mean) U-Pb composition }
-#' 
-#' \item{age}{a 4-element vector with:
-#'
-#' \code{t}: the concordia age (in Ma)
-#'
-#' \code{s[t]}: the estimated uncertainty of \code{t}
-#'
-#' \code{ci[t]}: the 95\% confidence interval of \code{t} for the
-#' appropriate degrees of freedom
-#'
-#' \code{disp[t]}: the 95\% confidence interval for \code{t} augmented
-#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.}
-#' 
-#' \item{mswd}{ a vector with three items (\code{equivalence},
-#' \code{concordance} and \code{combined}) containing the MSWD (Mean
-#' of the Squared Weighted Deviates, a.k.a the reduced Chi-squared
-#' statistic outside of geochronology) of isotopic equivalence, age
-#' concordance and combined goodness of fit, respectively. }
-#' 
-#' \item{p.value}{ a vector with three items (\code{equivalence},
-#' \code{concordance} and \code{combined}) containing the p-value of
-#' the Chi-square test for isotopic equivalence, age concordance and
-#' combined goodness of fit, respectively. }
-#' 
-#' \item{df}{ the number of degrees of freedom used for the
-#' \code{mswd} calculation.  These values are useful when expanding
-#' the analytical uncertainties when \code{mswd>1}.}
-#'
-#' }
-#' 
-#' \item if \code{x} has class \code{UPb} and \code{type=3},
-#' returns a list with the following items:
-#'
-#' \describe{
-#'
-#' \item{x}{ a two element vector with the upper and lower intercept
-#' ages (if \code{wetherill=TRUE}) or the lower intercept age and
-#' \eqn{^{207}}Pb/\eqn{^{206}}Pb intercept (for Tera-Wasserburg) }
-#' 
-#' \item{cov}{ the covariance matrix of the elements in \code{x} }
-#'
-#' \item{err}{ a \code{3 x 2} matrix with the following rows:
-#'
-#' \code{s}: the estimated standard deviation for \code{x}
-#' 
-#' \code{ci}: the 95\% confidence interval of \code{x} for the
-#' appropriate degrees of freedom
-#'
-#' \code{disp[t]}: the 95\% confidence interval for \code{x} augmented
-#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.}
-#'
-#' \item{df}{ the degrees of freedom of the concordia fit (concordance
-#' + equivalence)}
-#'
-#' \item{p.value}{ p-value of a Chi-square test for age homogeneity }
-#'
-#' \item{mswd}{ mean square of the weighted deviates -- a
-#' goodness-of-fit measure. \code{mswd > 1} indicates overdispersion
-#' w.r.t the analytical uncertainties.}
-#'
-#' }
+#' \item if \code{x} has class \code{UPb} and \code{type=2, 3, 4} or
+#' \code{5}, returns the output of the \code{\link{concordia}}
+#' function.
 #'
 #' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
-#' \code{SmNd}, \code{ReOs}, \code{LuHf} and \code{isochron=FALSE},
-#' returns a table of Pb-Pb, Ar-Ar, Rb-Sr, Sm-Nd, Re-Os or Lu-Hf and
-#' standard errors.
-#' 
-#' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
-#' \code{SmNd}, \code{ReOs} or \code{LuHf} and \code{isochron=TRUE},
-#' returns a list with the following items:
-#'
-#' \describe{
-#'
-#' \item{a}{the intercept of the straight line fit and its standard
-#' error.}
-#' 
-#' \item{b}{the slope of the fit and its standard error.}
-#'
-#' \item{cov.ab}{the covariance of the slope and intercept}
-#' 
-#' \item{mswd}{the mean square of the residuals (a.k.a
-#'     `reduced Chi-square') statistic}
-#'
-#' \item{p.value}{the p-value of a Chi-square test for linearity}
-#'
-#' \item{y0}{a 4-element vector containing:
-#'
-#' \code{t}: the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
-#' \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{187}}Os/\eqn{^{188}}Os,
-#' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio.
-#'
-#' \code{s[t]}: the estimated standard deviation of \code{t}
-#'
-#' \code{ci[t]}: the 95\% confidence interval of \code{t} for the
-#' appropriate degrees of freedom
-#'
-#' \code{disp[t]}: the 95\% confidence interval for \code{t} augmented
-#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.}
-#' 
-#' \item{age}{a 4-element vector containing:
-#'
-#' \code{y}: the \eqn{^{207}}Pb/\eqn{^{206}}Pb,
-#' \eqn{^{40}}Ar/\eqn{^{39}}Ar, \eqn{^{187}}Os/\eqn{^{187}}Re,
-#' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf age and its standard error.
-#'
-#' \code{s[y]}: the estimated standard deviation of \code{y}
-#'
-#' \code{ci[y]}: the 95\% confidence interval of \code{y} for the
-#' appropriate degrees of freedom
-#'
-#' \code{disp[y]}: the 95\% confidence interval for \code{y} augmented
-#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.}
-#'
-#' \item{tfact}{ the t-value for \code{df} degrees of freedom, which
-#' is used for the construction of \code{ci[t]} and \code{ci[y]} }
-#'
-#' \item{df}{ the degrees of freedom for the isochron fit}
-#'
-#' \item{model}{ copied from the input parameters }
-#'
-#' }
+#' \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{ThU} or \code{UThHe}
+#' and \code{isochron=FALSE}, returns a table of Pb-Pb, Ar-Ar, Rb-Sr,
+#' Sm-Nd, Re-Os, Lu-Hf, Th-U or U-Th-He ages and their standard
+#' errors.
 #'
 #' \item if \code{x} has class \code{ThU} and \code{isochron=FALSE},
 #' returns a 5-column table with the Th-U ages, their standard errors,
-#' the initial \eqn{^{234}U/^{238}U}-ratios, their standard errors,
+#' the initial \eqn{^{234}}U/\eqn{^{238}}U-ratios, their standard errors,
 #' and the correlation coefficient between the ages and the initial
 #' ratios.
 #'
-#' \item if \code{x} has class \code{ThU} and \code{isochron=TRUE},
-#' returns the output of an `Osmond Type-II' isochron, i.e.:
-#'
-#' \describe{
-#'
-#' \item{par}{the best fitting \eqn{^{234}U/^{238}U} intercept,
-#' \eqn{^{234}U/^{232}Th} slope, \eqn{^{230}Th/^{238}U} intercept and
-#' \eqn{^{230}Th/^{232}Th} slope.}
-#'
-#' \item{cov}{the covariance matrix of \code{par}.}
-#'
-#' \item{a}{the \eqn{^{234}U/^{238}U} intercept (i.e. the detrital
-#' Th-corrected value) and its standard error.}
-#' 
-#' \item{b}{the \eqn{^{234}U/^{232}Th} slope and its standard error.}
-#'
-#' \item{cov.ab}{the covariance of \code{a} and \code{b}.}
-#' 
-#' \item{mswd}{the mean square of the residuals (a.k.a
-#'     `reduced Chi-square') statistic.}
-#'
-#' \item{p.value}{the p-value of a Chi-square test for linearity.}
-#'
-#' \item{y0}{a 4-element vector containing:
-#'
-#' \code{y}: the initial \eqn{^{234}U/^{238}U}-ratio
-#'
-#' \code{s[y]}: the estimated standard deviation of \code{y}
-#'
-#' \code{ci[y]}: the 95\% confidence interval of \code{y} for the
-#' appropriate degrees of freedom
-#'
-#' \code{disp[y]}: the 95\% confidence interval for \code{y} augmented
-#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.  }
-#'
-#' \item{age}{a 4-element vector containing:
-#'
-#' \code{t}: the Th-U isochron age
-#'
-#' \code{s[t]}: the estimated standard deviation of \code{t}
-#'
-#' \code{ci[t]}: the 95\% confidence interval of \code{t} for the
-#' appropriate degrees of freedom
-#'
-#' \code{disp[t]}: the 95\% confidence interval for \code{t} augmented
-#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.  }
-#'
-#' \item{df}{the degrees of freedom for the isochron fit.}
-#'
-#' \item{tfact}{ the t-value for \code{df} degrees of freedom }
-#'
-#' }
-#'
-#' \item if \code{x} has class \code{UThHe} and \code{central=TRUE},
-#' returns a list with the following items:
-#'
-#' \describe{
-#'
-#' \item{uvw}{ a three-element list with the weighted mean log[U/He],
-#' log[Th/He] and log[Sm/He] compositions. }
-#'
-#' \item{covmat}{ a \code{3 x 3} covariance matrix for \code{uvw}}
-#'
-#' \item{mswd}{ the reduced Chi-square value for the
-#' log[U/He]-log[Th/He] compositions. }
-#'
-#' \item{p.value}{ the p-value of concordance between the
-#' log[U/He]-log[Th/He] compositions. }
-#'
-#' \item{age}{ a 4-element vector containing:
-#'
-#' \code{t}: the central age age, i.e. the U-Th-He age corresponding
-#' to the composition given by \code{uvw}
-#'
-#' \code{s[t]}: the estimated standard deviation of \code{t}
-#'
-#' \code{ci[t]}: the 95\% confidence interval of \code{t} for the
-#' appropriate degrees of freedom
-#'
-#' \code{disp[t]}: the 95\% confidence interval for \code{t} augmented
-#' by \eqn{\sqrt{MSWD}} to account for overdispersed datasets.  }
-#'
-#'
-#' \item{df}{the degrees of freedom for the data fit.}
-#'
-#' \item{tfact}{ the t-value for \code{df} degrees of freedom }
-#'
-#' }
+#' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
+#' \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{UThHe} or \code{ThU}
+#' and \code{isochron=TRUE}, returns the output of the
+#' \code{\link{isochron}} function.
 #'
 #' \item if \code{x} has class \code{fissiontracks} and
 #' \code{central=FALSE}, returns a table of fission track ages and
 #' standard errors.
-#' 
-#' \item if \code{x} has class \code{fissiontracks} and
-#' \code{central=TRUE}, returns a list with the following items:
 #'
-#' \describe{
-#'
-#' \item{mswd}{ the reduced Chi-square value for the fission track
-#' ages. }
-#'
-#' \item{p.value}{ the p-value of concordance between the fission
-#' track ages. }
-#'
-#' \item{age}{ a three-element vector with the central age, its
-#' standard error and a 95\% confidence interval for the appropriate
-#' degrees of freedom. }
-#'
-#' \item{disp}{ the (over)dispersion of the single grain ages beyond
-#' the formal analytical uncertainties. }
-#'
-#' \item{df}{ degrees of freedom for the Chi-square test}
+#' \item if \code{x} has class \code{fissiontracks} or \code{UThHe}
+#' and \code{central=TRUE}, returns the output of the
+#' \code{\link{central}} function.
 #'
 #' }
-#'
-#' }
-#' 
+#' @seealso \code{\link{concordia}}, \code{\link{isochron}},
+#'     \code{\link{central}}
 #' @examples
 #' data(examples)
-#' print(age(examples$UPb))
-#' print(age(examples$UPb,type=1))
-#' print(age(examples$UPb,type=2))
+#' tUPb <- age(examples$UPb,type=1)
+#' tconc <- age(examples$UPb,type=2)
+#' tdisc <- age(examples$UPb,type=3)
+#' tArAr <- age(examples$ArAr)
+#' tiso <- age(examples$ArAr,isochron=TRUE,i2i=TRUE)
+#' tcentral <- age(examples$FT1,central=TRUE)
 #' @rdname age
 #' @export
 age.UPb <- function(x,type=1,wetherill=TRUE,exterr=TRUE,i=NA,
@@ -408,17 +198,19 @@ age.UPb <- function(x,type=1,wetherill=TRUE,exterr=TRUE,i=NA,
         X <- x
     if (type==1)
         out <- UPb.age(X,exterr=exterr,i=i,sigdig=sigdig,...)
-    else if (type==2)
-        out <- concordia.age(X,wetherill=wetherill,exterr=exterr,...)
-    else if (type==3)
-        out <- concordia.intersection.ludwig(x,wetherill=wetherill,exterr=exterr)
+    else if (type %in% c(2,3,4))
+        out <- concordia(X,wetherill=wetherill,exterr=exterr,show.age=type-1)
     out
 }
 #' @rdname age
 #' @export
-age.PbPb <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
-    if (isochron) out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
-    else out <- PbPb.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
+age.PbPb <- function(x,isochron=TRUE,common.Pb=1,exterr=TRUE,i=NA,sigdig=NA,...){
+    if (common.Pb %in% c(1,2,3))
+        X <- common.Pb.correction(x,option=common.Pb)
+    else
+        X <- x
+    if (isochron) out <- isochron(X,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
+    else out <- PbPb.age(X,exterr=exterr,i=i,sigdig=sigdig,common.Pb=common.Pb,...)
     out
 }
 #' @param J two-element vector with the J-factor and its standard
@@ -427,16 +219,17 @@ age.PbPb <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
 #'     should be considered separately (\code{isochron=FALSE}) or an
 #'     isochron age should be calculated from all Ar-Ar analyses
 #'     together (\code{isochron=TRUE}).
-#' @param i2i
-#'     `isochron to intercept': calculates the initial (aka `inherited',
-#'     `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
-#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
-#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
-#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
-#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
-#'     stored in \code{settings('iratio',...)}  or zero (for the Pb-Pb
-#'     method). When applied to data of class \code{ThU}, setting
-#'     \code{i2i} to \code{TRUE} applies a detrital Th-correction.
+#' @param i2i `isochron to intercept': calculates the initial (aka
+#'     `inherited', `excess', or `common')
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
+#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
+#'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
+#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
+#'     uses the default values stored in
+#'     \code{settings('iratio',...)}. When applied to data of class
+#'     \code{ThU}, setting \code{i2i} to \code{TRUE} applies a
+#'     detrital Th-correction.
+#'
 #' @rdname age
 #' @export
 age.ArAr <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
@@ -444,14 +237,15 @@ age.ArAr <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
     else out <- ArAr.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
     out
 }
-#' @param central logical flag indicating whether each U-Th-He analysis
-#'     should be considered separately (\code{central=FALSE}) or a
-#'     central age should be calculated from all U-Th-He analyses
-#'     together (\code{central=TRUE}).
+#' @param central logical flag indicating whether each analysis should
+#'     be considered separately (\code{central=FALSE}) or a central
+#'     age should be calculated from all analyses together
+#'     (\code{central=TRUE}).
 #' @rdname age
 #' @export
-age.UThHe <- function(x,central=FALSE,i=NA,sigdig=NA,...){
-    if (central) out <- central(x)
+age.UThHe <- function(x,isochron=FALSE,central=FALSE,i=NA,sigdig=NA,...){
+    if (isochron) out <- isochron(x,plot=FALSE,sigdig=sigdig,...)
+    else if (central) out <- central(x)
     else out <- UThHe.age(x,i=i,sigdig=sigdig)
     out
 }

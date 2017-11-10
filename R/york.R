@@ -5,12 +5,27 @@
 #' consistent with maximum likelihood estimates of Titterington and
 #' Halliday (1979)
 #'
+#' @details
+#' Given n pairs of (approximately) collinear measurements \eqn{X_i}
+#' and \eqn{Y_i} (for \eqn{1 \leq i \leq n}), their uncertainties
+#' \eqn{s[X_i]} and \eqn{s[Y_i]}, and their covariances
+#' cov[\eqn{X_i,Y_i}], the \code{york} function finds the best fitting
+#' straight line using the least-squares algorithm of York et
+#' al. (2004). This algorithm is modified from an earlier method
+#' developed by York (1968) to be consistent with the maximum
+#' likelihood approach of Titterington and Halliday (1979). It
+#' computes the MSWD as a measure of under/overdispersion.
+#' Overdispersed datasets (MSWD>1) can be dealt with in the same three
+#' ways that are described in the documentation of the
+#' \code{\link{isochron}} function.
+#'
 #' @param x a 5-column matrix with the X-values, the analytical
 #'     uncertainties of the X-values, the Y-values, the analytical
 #'     uncertainties of the Y-values, and the correlation coefficients
 #'     of the X- and Y-values.
 #' @param alpha cutoff value for confidence intervals
-#' @return a four-element list of vectors containing:
+#' @return A four-element list of vectors containing:
+#'
 #'     \describe{
 #'
 #'     \item{a}{the intercept of the straight line fit and its
@@ -29,11 +44,12 @@
 #'     degrees of freedom}
 #'
 #'     }
+#' @seealso \code{\link{york}}, \code{\link{isochron}}, \code{\link{ludwig}}
 #' @references
 #' Titterington, D.M. and Halliday, A.N., 1979. On the fitting of
 #' parallel isochrons and the method of maximum likelihood. Chemical
 #' Geology, 26(3), pp.183-195.
-#' 
+#'
 #' York, Derek, et al. "Unified equations for the slope,
 #' intercept, and standard errors of the best straight line."
 #' American Journal of Physics 72.3 (2004): 367-375.
@@ -65,7 +81,8 @@ york <- function(x,alpha=0.05){
     ab <- stats::lm(x[,'Y'] ~ x[,'X'])$coefficients # initial guess
     a <- ab[1]
     b <- ab[2]
-    if (is.na(x) | is.na(b)) stop('Cannot fit a straight line through these data')
+    if (any(is.na(x)) | is.na(b))
+        stop('Cannot fit a straight line through these data')
     wX <- 1/x[,'sX']^2
     wY <- 1/x[,'sY']^2
     for (i in 1:50){ # 50 = maximum number of iterations
@@ -137,8 +154,8 @@ data2york.UPb <- function(x,wetherill=TRUE,...){
     colnames(out) <- c('X','sX','Y','sY','rXY')
     if (wetherill){
         if (x$format %in% c(1,3,4)){
-            out <- x$x[,c('Pb207U235','errPb207U235',
-                          'Pb206U238','errPb206U238','rhoXY')]
+            out <- subset(x$x,select=c('Pb207U235','errPb207U235',
+                                       'Pb206U238','errPb206U238','rhoXY'))
         } else if (x$format %in% c(2,5,6)){
             for (i in 1:ns){
                 samp <- wetherill(x,i=i,exterr=FALSE)
@@ -151,8 +168,8 @@ data2york.UPb <- function(x,wetherill=TRUE,...){
         }
     } else {
         if (x$format %in% c(2,5)){
-            out <- x$x[,c('U238Pb206','errU238Pb206',
-                          'Pb207Pb206','errPb207Pb206','rhoXY')]
+            out <- subset(x$x,select=c('U238Pb206','errU238Pb206',
+                                       'Pb207Pb206','errPb207Pb206','rhoXY'))
         } else if (x$format %in% c(1,3,4,6)){
             for (i in 1:ns){
                 samp <- tera.wasserburg(x,i=i,exterr=FALSE)
@@ -241,11 +258,11 @@ data2york.UThHe <- function(x,...){
 }
 data2york.ThU <- function(x,type=2,...){
     if (x$format %in% c(1,3) & type==1){
-        out <- x$x[,c('U238Th232','errU238Th232',
-                      'Th230Th232','errTh230Th232','rho')]
+        out <- subset(x$x,select=c('U238Th232','errU238Th232',
+                                   'Th230Th232','errTh230Th232','rho'))
     } else if (x$format %in% c(2,4) & type==2){
-        out <- x$x[,c('Th232U238','errTh232U238',
-                      'Th230U238','errTh230U238','rho')]
+        out <- subset(x$x,select=c('Th232U238','errTh232U238',
+                                   'Th230U238','errTh230U238','rho'))
     } else if (x$format %in% c(2,4) & type==1){
         out <- ThConversionHelper(x)
         colnames(out) <- c('U238Th232','errU238Th232',

@@ -3,6 +3,34 @@
 #' Cast a \code{.csv} file or a matrix into one of \code{IsoplotR}'s
 #' data classes
 #'
+#' @details IsoplotR provides the following example input files:
+#'
+#' \itemize{
+#' \item{U-Pb: \code{UPb1.csv}, \code{UPb2.csv}, \code{UPb3.csv},
+#' \code{UPb4.csv}, \code{UPb5.csv}, \code{UPb6.csv} }
+#' \item{Pb-Pb: \code{PbPb1.csv}, \code{PbPb2.csv}, \code{PbPb3.csv} }
+#' \item{Ar-Ar: \code{ArAr1.csv}, \code{ArAr2.csv}, \code{ArAr3.csv}}
+#' \item{Re-Os: \code{ReOs1.csv}, \code{ReOs2.csv}} \item{Sm-Nd:
+#' \code{SmNd1.csv}, \code{SmNd2.csv}} \item{Rb-Sr: \code{RbSr1.csv},
+#' \code{RbSr2.csv}} \item{Lu-Hf: \code{LuHf1.csv}, \code{LuHf2.csv}}
+#' \item{Th-U: \code{ThU1.csv}, \code{ThU2.csv}, \code{ThU3.csv},
+#' \code{ThU4.csv}}
+#' \item{fissiontracks: \code{FT1.csv}, \code{FT2.csv},
+#' \code{FT3.csv}}
+#' \item{U-Th-He: \code{UThHe.csv}, \code{UThSmHe.csv}}
+#' \item{detritals: \code{DZ.csv}}
+#' \item{other: \code{LudwigMixture.csv}, \code{LudwigMean.csv},
+#' \code{LudwigKDE.csv} \code{LudwigSpectrum.csv}}
+#' }
+#'
+#' The contents of these files can be viewed using the
+#' \code{system.file(...)} function. For example, to read the
+#' \code{ArAr1.csv} file:
+#'
+#' \code{fname <- system.file('ArAr1.csv',package='IsoplotR')}
+#'
+#' \code{ArAr <- read.data(fname,method='Ar-Ar',format=1)}
+#'
 #' @param x either a file name (\code{.csv} format) OR a matrix
 #' @param method one of \code{'U-Pb'}, \code{'Pb-Pb'}, \code{'Ar-Ar'},
 #'     \code{'detritals'}, \code{Rb-Sr}, \code{Sm-Nd}, \code{Re-Os},
@@ -10,7 +38,7 @@
 #'     \code{'other'}
 #' @param format formatting option, depends on the value of
 #'     \code{method}.
-#' 
+#'
 #' if \code{method='U-Pb'}, then \code{format} is one of either:
 #'
 #' \enumerate{
@@ -104,40 +132,19 @@
 #' \item{LA-ICP-MS-based fission track data using the 'absolute
 #' dating' method, which only requires a table with the the number of
 #' spontaneous tracks, the area over which these were counted and one
-#' or more U/Ca- or U-concentration measurements and their analytical
-#' uncertainties.}  }
-#'
-#' @details IsoplotR provides the following example input files:
-#'
-#' \itemize{
-#' \item{U-Pb: \code{UPb1.csv}, \code{UPb2.csv}, \code{UPb3.csv},
-#'             \code{UPb4.csv}, \code{UPb5.csv}, \code{UPb6.csv}}
-#' \item{Pb-Pb: \code{PbPb1.csv}, \code{PbPb2.csv}, \code{PbPb3.csv}}
-#' \item{Ar-Ar: \code{ArAr1.csv}, \code{ArAr2.csv}, \code{ArAr3.csv}}
-#' \item{Re-Os: \code{ReOs1.csv}, \code{ReOs2.csv}}
-#' \item{Sm-Nd: \code{SmNd1.csv}, \code{SmNd2.csv}}
-#' \item{Rb-Sr: \code{RbSr1.csv}, \code{RbSr2.csv}}
-#' \item{Lu-Hf: \code{LuHf1.csv}, \code{LuHf2.csv}}
-#' \item{Th-U: \code{ThU1.csv}, \code{ThU2.csv},
-#'             \code{ThU3.csv}, \code{ThU4.csv}}
-#' \item{fissiontracks: \code{FT1.csv}, \code{FT2.csv}, \code{FT3.csv}}
-#' \item{U-Th-He: \code{UThHe.csv}, \code{UThSmHe.csv}}
-#' \item{detritals: \code{Namib.csv}}
-#' \item{other: \code{MountTom.csv}, \code{average.csv}, \code{spectrum.csv}}
-#' }
-#' 
-#' The contents of these files can be viewed using the
-#' \code{system.file(...)} function.
+#' or more U/Ca-ratios or U-concentration measurements (in ppm) and
+#' their analytical uncertainties.}  }
 #'
 #' @param ... optional arguments to the \code{read.csv} function
+#' @seealso \code{\link{examples}}, \code{\link{settings}}
 #' @return an object of class \code{UPb}, \code{PbPb}, \code{ArAr},
 #'     \code{UThHe}, \code{ReOs}, \code{SmNd}, \code{RbSr},
 #'     \code{LuHf}, \code{detritals}, \code{fissiontracks}, \code{ThU}
 #'     or \code{other}
 #' @examples
-#' file.show(system.file("spectrum.csv",package="IsoplotR"))
 #'
 #' f1 <- system.file("UPb1.csv",package="IsoplotR")
+#' file.show(f1) # inspect the contents of 'UPb1.csv'
 #' d1 <- read.data(f1,method="U-Pb",format=1)
 #' concordia(d1)
 #'
@@ -162,12 +169,13 @@
 #' evolution(d6)
 #'
 #' #  one detrital zircon U-Pb file (detritals.csv)
-#' f7 <- system.file("Namib.csv",package="IsoplotR")
+#' f7 <- system.file("DZ.csv",package="IsoplotR")
 #' d7 <- read.data(f7,method="detritals")
 #' kde(d7)
 #'
-#' #  three 'other' files (MountTom.csv, spectrum.csv, average.csv)
-#' f8 <- system.file("MountTom.csv",package="IsoplotR")
+#' #  four 'other' files (LudwigMixture.csv, LudwigSpectrum.csv,
+#' #  LudwigMean.csv, LudwigKDE.csv)
+#' f8 <- system.file("LudwigMixture.csv",package="IsoplotR")
 #' d8 <- read.data(f8,method="other")
 #' radialplot(d8)
 #'
@@ -231,7 +239,7 @@ as.UPb <- function(x,format=3){
         } else {
             i <- which(is.na(X[,5]))
             X[i,5] <- 0
-            out$x <- X[,1:5]
+            out$x <- subset(X,select=1:5)
         }
     } else if (format==3 & nc>5){
         cnames <- c('Pb207U235','errPb207U235',
@@ -253,8 +261,8 @@ as.UPb <- function(x,format=3){
             j <- 1:(nr-1)
             X <- cbind(X,0,0)
         }
-        X[i,7] <- get.cor.75.68(X[i,1],X[i,2],X[i,3],X[i,4],X[,5],X[i,6])
-        X[j,8] <- get.cor.68.76(X[j,1],X[j,2],X[j,3],X[j,4],X[,5],X[j,6])
+        X[i,7] <- get.cor.75.68(X[i,1],X[i,2],X[i,3],X[i,4],X[i,5],X[i,6])
+        X[j,8] <- get.cor.68.76(X[j,1],X[j,2],X[j,3],X[j,4],X[j,5],X[j,6])
     } else if (format==4 & nc>8){
         cnames <- c('Pb207U235','errPb207U235',
                     'Pb206U238','errPb206U238',
@@ -273,7 +281,7 @@ as.UPb <- function(x,format=3){
                     'Pb204Pb207','errPb204Pb207',
                     'Pb204Pb206','errPb204Pb206')
     }
-    out$x <- X[,1:length(cnames)]
+    out$x <- subset(X,select=1:length(cnames))
     colnames(out$x) <- cnames
     out
 }
@@ -352,25 +360,8 @@ as.PbPb <- function(x,format=1){
         cnames <- c('Pb206Pb204','errPb206Pb204',
                     'Pb207Pb204','errPb207Pb204',
                     'Pb207Pb206','errPb207Pb206')
-    } else if (format==4 & nc>8){
-        cnames <- c('Pb207U235','errPb207U235',
-                    'Pb206U238','errPb206U238',
-                    'Pb204U238','errPb204U238',
-                    'rhoXY','rhoXZ','rhoYZ')        
-    } else if (format==5 & nc>8){
-        cnames <- c('U238Pb206','errU238Pb206',
-                    'Pb207Pb206','errPb207Pb206',
-                    'Pb204Pb206','errPb204Pb206',
-                    'rhoXY','rhoXZ','rhoYZ')
-    } else if (format==5 & nc>8){
-        cnames <- c('Pb207U235','errPb207U235',
-                    'Pb206U238','errPb206U238',
-                    'Pb204U238','errPb204U238',
-                    'Pb207Pb206','errPb207Pb206',
-                    'Pb204Pb207','errPb204Pb207',
-                    'Pb204Pb206','errPb204Pb206')
     }
-    out$x <- X[,1:length(cnames)]
+    out$x <- subset(X,select=1:length(cnames))
     colnames(out$x) <- cnames
     out
 }
@@ -385,24 +376,24 @@ as.ArAr <- function(x,format=3){
     X <- shiny2matrix(x,bi,nr,nc)
     if (format==3 & nc>5){
         if (nc==8){
-            out$x <- X[,1:7]
+            out$x <- subset(X,select=1:7)
         } else {
             ns <- nr-bi+1 # number of samples
-            out$x <- cbind(X[,1:6],1/ns)
+            out$x <- cbind(subset(X,select=1:6),1/ns)
         }
         colnames(out$x) <- c('Ar39Ar40','errAr39Ar40',
                              'Ar36Ar40','errAr36Ar40',
                              'Ar39Ar36','errAr39Ar36','Ar39')
     } else if (nc>3){
         if (nc>5){
-            out$x <- X[,1:6]
+            out$x <- subset(X,select=1:6)
         }
         if (nc==4) {
-            X <- cbind(X[,1:4],0)
+            X <- cbind(subset(X,select=1:4),0)
         }
         if (nc %in% c(4,5)){
             ns <- nr-bi+1 # number of samples
-            out$x <- cbind(X[,1:5],1/ns)
+            out$x <- cbind(subset(X,select=1:5),1/ns)
         }
         if (format==1) {
             colnames(out$x) <- c('Ar39Ar36','errAr39Ar36',
@@ -454,15 +445,15 @@ as.PD <- function(x,classname,colnames1,colnames2,format){
     X <- shiny2matrix(x,2,nr,nc)
     if (format==1 & nc>3){
         if (nc == 4){
-            out$x <- cbind(X[,1:4],0)
+            out$x <- cbind(subset(X,select=1:4),0)
         } else {
             i <- which(is.na(X[,5]))
             X[i,5] <- 0
-            out$x <- X[,1:5]
+            out$x <- subset(X,select=1:5)
         }
         colnames(out$x) <- colnames1
     } else if (format==2 & nc>5){
-        out$x <- X[,1:6]
+        out$x <- subset(X,select=1:6)
         colnames(out$x) <- colnames2
     }
     out
@@ -481,27 +472,27 @@ as.ThU <- function(x,format=1){
                     'U234Th232','errU234Th232',
                     'Th230Th232','errTh230Th232',
                     'rhoXY','rhoXZ','rhoYZ')
-        out$x <- X[,1:9]
+        out$x <- subset(X,select=1:9)
     } else if (format==2 & nc>8) {
         cnames <- c('Th232U238','errTh232U238',
                     'U234U238','errU234U238',
                     'Th230U238','errTh230U238',
                     'rhoXY','rhoXZ','rhoYZ')
-        out$x <- X[,1:9]
+        out$x <- subset(X,select=1:9)
     } else if (format==3 & nc>3) {
-        if (nc==4) X <- cbind(X[,1:4],0)
+        if (nc==4) X <- cbind(subset(X,select=1:4),0)
         cnames <- c('U238Th232','errU238Th232',
                     'Th230Th232','errTh230Th232',
                     'rho')
-        out$x <- X[,1:5]
+        out$x <- subset(X,select=1:5)
     } else if (format==4 & nc>3) {
-        if (nc==4) X <- cbind(X[,1:4],0)
+        if (nc==4) X <- cbind(subset(X,select=1:4),0)
         cnames <- c('Th232U238','errTh232U238',
                     'Th230U238','errTh230U238',
                     'rho')
-        out$x <- X[,1:5]
+        out$x <- subset(X,select=1:5)
     }
-    out$x <- X[,1:length(cnames)]
+    out$x <- subset(X,select=1:length(cnames))
     colnames(out$x) <- cnames
     out
 }
@@ -512,7 +503,7 @@ as.UThHe <- function(x){
     X[X<=0] <- NA
     if (nc>5) cnames <- c('He','errHe','U','errU','Th','errTh')
     if (nc>7) cnames <- c(cnames,'Sm','errSm')
-    out <- X[,1:length(cnames)]
+    out <- subset(X,select=1:length(cnames))
     colnames(out) <- cnames
     class(out) <- append(class(out),"UThHe")
     out
@@ -527,7 +518,7 @@ as.fissiontracks <- function(x,format=1){
         out$zeta <- as.numeric(x[2,1:2])
         out$rhoD <- as.numeric(x[4,1:2])
         X <- shiny2matrix(x,6,nr,nc)
-        out$x <- X[,1:2]
+        out$x <- subset(X,select=1:2)
         colnames(out$x) <- c('Ns','Ni')
     } else {
         if (format==2){

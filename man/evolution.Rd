@@ -5,9 +5,9 @@
 \title{Th-U evolution diagram}
 \usage{
 evolution(x, xlim = NA, ylim = NA, alpha = 0.05, transform = FALSE,
-  detrital = FALSE, show.numbers = FALSE, levels = NA,
+  detrital = FALSE, show.numbers = FALSE, levels = NA, clabel = "",
   ellipse.col = c("#00FF0080", "#FF000080"), line.col = "darksalmon",
-  isochron = FALSE, exterr = TRUE, sigdig = 2, ...)
+  isochron = FALSE, model = 1, exterr = TRUE, sigdig = 2, ...)
 }
 \arguments{
 \item{x}{an object of class \code{ThU}}
@@ -31,6 +31,8 @@ numbers?}
 \item{levels}{a vector with additional values to be displayed as
 different background colours within the error ellipses.}
 
+\item{clabel}{label of the colour legend.}
+
 \item{ellipse.col}{a vector of two background colours for the error
 ellipses. If \code{levels=NA}, then only the first colour will
 be used. If \code{levels} is a vector of numbers, then
@@ -39,6 +41,32 @@ be used. If \code{levels} is a vector of numbers, then
 \item{line.col}{colour of the age grid}
 
 \item{isochron}{fit a 3D isochron to the data?}
+
+\item{model}{if \code{isochron=TRUE}, choose one of three
+    regression models:
+
+\code{1}: maximum likelihood regression, using either the modified
+error weighted least squares algorithm of York et al. (2004) for
+2-dimensional data, or the Maximum Likelihood formulation of Ludwig
+and Titterington (1994) for 3-dimensional data. These algorithms
+take into account the analytical uncertainties and error
+correlations, under the assumption that the scatter between the
+data points is solely caused by the analytical uncertainty. If this
+assumption is correct, then the MSWD value should be approximately
+equal to one. There are three strategies to deal with the case
+where MSWD>1. The first of these is to assume that the analytical
+uncertainties have been underestimated by a factor
+\eqn{\sqrt{MSWD}}.
+
+\code{2}: ordinary least squares regression: a second way to deal
+with over- or underdispersed datasets is to simply ignore the
+analytical uncertainties.
+
+\code{3}: maximum likelihood regression with overdispersion:
+instead of attributing any overdispersion (MSWD > 1) to
+underestimated analytical uncertainties (model 1), one can also
+attribute it to the presence of geological uncertainty, which
+manifests itself as an added (co)variance term.}
 
 \item{exterr}{propagate the decay constant uncertainty in the
 isochron age?}
@@ -55,9 +83,39 @@ diagram, a \eqn{^{234}}U/\eqn{^{238}}U-age diagram, or
 a \eqn{^{230}}Th/\eqn{^{232}}Th-\eqn{^{238}}U/\eqn{^{232}}Th diagram,
 calculates isochron ages.
 }
+\details{
+Similar to the \code{\link{concordia}} diagram (for U-Pb data) and
+the \code{\link{helioplot}} diagram (for U-Th-He data), the
+evolution diagram simultaneously displays the isotopic composition
+and age of U-series data. For carbonate data (Th-U formats 1 and
+2), the Th-U evolution diagram consists of a scatter plot that sets
+out the \eqn{^{234}}U/\eqn{^{238}}U-activity ratios against the
+\eqn{^{230}}Th/\eqn{^{238}}U-activity ratios as error ellipses, and
+displays the initial \eqn{^{234}}U/\eqn{^{238}}U-activity ratios
+and ages as a set of intersecting lines.  Alternatively, the
+\eqn{^{234}}U/\eqn{^{238}}U-ratios can also be set out against the
+\eqn{^{230}}Th-\eqn{^{234}}U-\eqn{^{238}}U-ages.  In both types of
+evolution diagrams, \code{IsoplotR} provides the option to project
+the raw measurements along the best fitting isochron line and
+thereby remove the detrital \eqn{^{230}}Th-component. This
+procedure allows a visual assessment of the degree of homogeneity
+within a dataset, as is quantified by the MSWD.
+
+Neither the U-series evolution diagram, nor the
+\eqn{^{234}}U/\eqn{^{238}}U vs. age plot is applicable to igneous
+datasets (Th-U formats 3 and 4), in which \eqn{^{234}}U and
+\eqn{^{238}}U are in secular equilibrium.  For such datasets,
+\code{IsoplotR} produces an Osmond-style regression plot that is
+decorated with a fanning set of \code{\link{isochron}} lines.
+}
 \examples{
 data(examples)
 evolution(examples$ThU)
+
+dev.new()
+evolution(examples$ThU,transform=TRUE,
+          isochron=TRUE,model=1)
+
 }
 \references{
 Ludwig, K.R. and Titterington, D.M., 1994. Calculation
@@ -67,4 +125,7 @@ Ludwig, K.R. and Titterington, D.M., 1994. Calculation
 Ludwig, K.R., 2003. Mathematical-statistical treatment of data and
     errors for \eqn{^{230}}Th/U geochronology. Reviews in Mineralogy and
     Geochemistry, 52(1), pp.631-656.
+}
+\seealso{
+\code{\link{isochron}}
 }

@@ -11,7 +11,7 @@ central(x, ...)
 
 \method{central}{default}(x, alpha = 0.05, ...)
 
-\method{central}{UThHe}(x, alpha = 0.05, ...)
+\method{central}{UThHe}(x, alpha = 0.05, model = 1, ...)
 
 \method{central}{fissiontracks}(x, mineral = NA, alpha = 0.05, ...)
 }
@@ -24,48 +24,81 @@ uncertainties}
 
 \item{alpha}{cutoff value for confidence intervals}
 
+\item{model}{choose one of the following statistical models:
+
+\code{1}: weighted mean. This model assumes that the scatter
+between the data points is solely caused by the analytical
+uncertainty. If the assumption is correct, then the MSWD value
+should be approximately equal to one. There are three strategies to
+deal with the case where MSWD>1. The first of these is to assume
+that the analytical uncertainties have been underestimated by a
+factor \eqn{\sqrt{MSWD}}.
+
+\code{2}: unweighted mean. A second way to deal with over- or
+underdispersed datasets is to simply ignore the analytical
+uncertainties.
+
+\code{3}: weighted mean with overdispersion: instead of attributing
+any overdispersion (MSWD > 1) to underestimated analytical
+uncertainties (model 1), one could also attribute it to the
+presence of geological uncertainty, which manifests itself as an
+added (co)variance term.}
+
 \item{mineral}{setting this parameter to either \code{apatite} or
 \code{zircon} changes the default efficiency factor, initial
 fission track length and density to preset values (only affects
-results if \code{x$format=2}.)}
+results if \code{x$format=2})}
 }
 \value{
-if \code{x} has class \code{UThHe}, a list containing the
+If \code{x} has class \code{UThHe}, returns a list containing the
     following items:
 
 \describe{
-\item{age}{a four-element vector with:
-
-\code{t}: the central age
-
-\code{s[t]}: the standard error of \code{s[t]}
-
-\code{ci[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-\code{t} for the appropriate number of degrees of freedom
-
-\code{disp[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval
-enhanced by a factor of \eqn{\sqrt{MSWD}}.
-}
-
-\item{mswd}{the reduced Chi-square statistic of data concordance,
-i.e. \eqn{mswd=SS/df}, where \eqn{SS} is the sum of squares of
-the log[U/He]-log[Th/He] compositions}
-
-\item{df}{the degrees of freedom (\eqn{2n-2})}
-
-\item{p.value}{the p-value of a Chi-square test with \code{df}
-degrees of freedom}
 
 \item{uvw}{(if the input data table contains Sm) or \strong{uv} (if
-it doesn't): the geometric mean log[U/He], log[Th/He] (,
-log[Sm/He]) and log[Sm/He] composition}
+it does not): the mean log[U/He], log[Th/He] (, and log[Sm/He])
+composition.}
 
-\item{covmat}{the covariance matrix of \code{uvw} or \code{uv}}
+\item{covmat}{the covariance matrix of \code{uvw} or \code{uv}.}
 
-\item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of the t-
-distribution for \code{df} degrees of freedom}
+\item{mswd}{the reduced Chi-square statistic of data concordance,
+i.e. \eqn{mswd=SS/df}, where \eqn{SS} is the sum of squares of the
+log[U/He]-log[Th/He] compositions.}
+
+\item{model}{the fitting model.}
+
+\item{df}{the degrees of freedom (\eqn{2n-2}) of the fit (only
+reported if \code{model=1}).}
+
+\item{p.value}{the p-value of a Chi-square test with \code{df}
+degrees of freedom (only reported if \code{model=1}.)}
 
 }
+
+\item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of the t-
+distribution for \code{df} degrees of freedom (not reported if
+\code{model=2}).}
+
+\item{age}{a three- or four-element vector with:
+
+\code{t}: the central age.
+
+\code{s[t]}: the standard error of \code{t}.
+
+\code{ci[t]}: the \eqn{100(1-\alpha)\%} confidence interval for
+\code{t} for the appropriate number of degrees of freedom.
+
+\code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
+interval enhanced by a factor of \eqn{\sqrt{mswd}} (only reported
+if \code{model=1}).
+
+}
+
+\item{w}{the geological overdispersion term. If \code{model=3},
+this is a two-element vector with the standard deviation of the
+(assumedly) Normal dispersion and the corresponding
+\eqn{100(1-\alpha)\%} confidence interval. \code{w=0} if
+code{model<3}.}
 
 OR, otherwise:
 
@@ -73,16 +106,16 @@ OR, otherwise:
 
 \item{age}{a three-element vector with:
 
-\code{t}: the central age
+\code{t}: the central age.
 
-\code{s[t]}: the standard error of \code{s[t]}
+\code{s[t]}: the standard error of \code{t}.
 
-\code{ci[t]}: the \eqn{100(1-\alpha/2)\%} confidence interval for
-\code{t} for the appropriate number of degrees of freedom }
+\code{ci[t]}: the \eqn{100(1-\alpha)\%} confidence interval for
+\code{t} for the appropriate number of degrees of freedom.}
 
 \item{disp}{a two-element vector with the overdispersion (standard
 deviation) of the excess scatter, and the corresponding
-\eqn{100(1-\alpha/2)\%} confidence interval for the appropriate
+\eqn{100(1-\alpha)\%} confidence interval for the appropriate
 degrees of freedom.}
 
 \item{mswd}{the reduced Chi-square statistic of data concordance,
@@ -93,13 +126,29 @@ of the EDM data or ages}
 
 \item{p.value}{the p-value of a Chi-square test with \code{df}
 degrees of freedom}
-
 }
 }
 \description{
-Computes the geometric mean composition of a set of fission track
-or U-Th-He data and returns the corresponding age and fitting
-parameters.
+Computes the geometric mean composition of a continuous mixture of
+fission track or U-Th-He data and returns the corresponding age and
+fitting parameters.
+}
+\details{
+The central age assumes that the observed age distribution is the
+combination of two sources of scatter: analytical uncertainty and
+true geological dispersion.
+\enumerate{
+\item For fission track data, the analytical uncertainty is assumed
+to obey Poisson counting statistics and the geological dispersion
+is assumed to follow a lognormal distribution.
+\item For U-Th-He data, the U-Th-(Sm)-He compositions and
+uncertainties are assumed to follow a logistic normal distribution.
+\item For all other data types, both the analytical uncertainties
+and the true ages are assumed to follow lognormal distributions.
+}
+The difference between the central age and the weighted mean age is
+usually small unless the data are imprecise and/or strongly
+overdispersed.
 }
 \examples{
 data(examples)
@@ -108,9 +157,13 @@ print(central(examples$UThHe)$age)
 }
 \references{
 Galbraith, R.F. and Laslett, G.M., 1993. Statistical
-    models for mixed fission track ages. Nuclear tracks and
-    radiation measurements, 21(4), pp.459-470.
+    models for mixed fission track ages. Nuclear Tracks and
+    Radiation Measurements, 21(4), pp.459-470.
 
 Vermeesch, P., 2008. Three new ways to calculate average (U-Th)/He
     ages. Chemical Geology, 249(3), pp.339-347.
+}
+\seealso{
+\code{\link{weightedmean}}, \code{\link{radialplot}},
+    \code{\link{helioplot}}
 }
