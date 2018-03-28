@@ -1,10 +1,10 @@
 #' Plot a (40Ar/39Ar) release spectrum
 #'
 #' Produces a plot of boxes whose widths correspond to the cumulative
-#' amount of \eqn{^{39}}Ar (or any other volume proxy), and whose
+#' amount of \eqn{^{39}}Ar (or any other variable), and whose
 #' heights express the analytical uncertainties.  Only propagates the
 #' analytical uncertainty associated with decay constants and
-#' J-factors after computing the plateau composition.
+#' J-factors \emph{after} computing the plateau composition.
 #'
 #' @details
 #' \code{IsoplotR} defines the `plateau age' as the weighted mean age
@@ -44,6 +44,8 @@
 #' @param title add a title to the plot?
 #' @param xlab x-axis label
 #' @param ylab y-axis label
+#' @param show.ci show a 100(1-\eqn{\alpha})\% confidence interval for
+#'     the plateau age as a grey band
 #' @param ... optional parameters to the generic \code{plot} function
 #'
 #' @return If \code{plateau=TRUE}, returns a list with the following
@@ -56,17 +58,19 @@
 #'
 #' \code{s[x]}: the estimated standard deviation of \code{x}
 #'
-#' \code{ci[x]}: the 100(1-\eqn{\alpha})\% confidence interval of
-#' \code{t} for the appropriate degrees of freedom
-#' }
+#' \code{ci[x]}: the width of a 100(1-\eqn{\alpha})\% confidence interval of
+#' \code{t} }
 #'
-#' \item{disp}{a 2-element vector with:
+#' \item{disp}{a 3-element vector with:
 #'
-#' \code{s}: the standard deviation of the overdispersion
+#' \code{w}: the overdispersion, i.e. the standard deviation of the
+#' Normal distribution that is assumed to describe the true ages.
 #'
-#' \code{ci}: the 100(1-\eqn{\alpha})\% confidence interval of
-#' the overdispersion for the appropriate degrees of freedom
-#' }
+#' \code{ll}: the width of the lower half of a 100(1-\eqn{\alpha})\%
+#' confidence interval for the overdispersion
+#'
+#' \code{ul}: the width of the upper half of a 100(1-\eqn{\alpha})\%
+#' confidence interval for the overdispersion}
 #'
 #' \item{df}{the degrees of freedom for the weighted mean plateau fit}
 #'
@@ -80,9 +84,6 @@
 #' \item{fract}{the fraction of \eqn{^{39}}Ar contained in the
 #' plateau}
 #'
-#' \item{tfact}{the Student t-factor for \code{df} degrees of freedom
-#' evaluated at \eqn{100(1-\alpha/2)}\% confidence}
-#'
 #' \item{plotpar}{plot parameters for the weighted mean (see
 #' \code{\link{weightedmean}}), which are not used in the age
 #' spectrum}
@@ -93,9 +94,6 @@
 #' }
 #'
 #' @seealso \code{\link{weightedmean}}
-#' @references Ludwig, K. R. User's manual for Isoplot 3.00: a
-#'     geochronological toolkit for Microsoft Excel. Berkeley
-#'     Geochronology Center Special Publication, 2003.
 #' @rdname agespectrum
 #' @export
 agespectrum <- function(x,...){ UseMethod("agespectrum",x) }
@@ -105,8 +103,8 @@ agespectrum <- function(x,...){ UseMethod("agespectrum",x) }
 agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
                                 plateau.col=rgb(0,1,0,0.5),
                                 non.plateau.col=rgb(0,1,1,0.5),
-                                sigdig=2,line.col='red',
-                                lwd=2,title=TRUE,
+                                sigdig=2,line.col='red', lwd=2,
+                                title=TRUE,show.ci=TRUE,
                                 xlab='cumulative fraction',
                                 ylab='age [Ma]',...){
     ns <- nrow(x)
@@ -123,6 +121,11 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
     if (plateau) {
         colour <- rep(non.plateau.col,ns)
         colour[plat$i] <- plateau.col
+        if (show.ci){
+            ci <- plat$plotpar$rect
+            ci$x <- c(0,1,1,0)
+            graphics::polygon(ci,col='gray80',border=NA)
+        }
         graphics::lines(c(0,1),rep(plat$mean[1],2),col=line.col,lwd=lwd)
     } else {
         colour <- rep(plateau.col,ns)
@@ -135,6 +138,7 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
                                   c(Y[i]-fact*sY[i],Y[i+1]+fact*sY[i+1]))
     }
     if (plateau){
+        plat$n <- nrow(x)
         if (title) graphics::title(plateau.title(plat,sigdig=sigdig,Ar=FALSE))
         return(invisible(plat))
     }
@@ -170,8 +174,8 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
         # recalculate the weighted mean age, this time
         # taking into account decay and J uncertainties
         out$mean[1:2] <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=exterr)
-        out$mean[3] <- plat$tfact*out$mean[2]
-        graphics::title(plateau.title(out,sigdig=sigdig,Ar=TRUE))
+        out$mean[3] <- nfact(alpha)*out$mean[2]
+        graphics::title(plateau.title(out,sigdig=sigdig,Ar=TRUE,units='Ma'))
         return(invisible(out))
     }
 }
@@ -206,12 +210,15 @@ plateau <- function(x,alpha=0.05){
     out
 }
 
-plateau.title <- function(fit,sigdig=2,Ar=TRUE){
+plateau.title <- function(fit,sigdig=2,Ar=TRUE,units=''){
     rounded.mean <- roundit(fit$mean[1],fit$mean[2:3],sigdig=sigdig)
-    line1 <- substitute('mean ='~a%+-%b~'|'~c,
+    line1 <- substitute('mean ='~a%+-%b~'|'~c~u~'(n='~n/N~')',
                         list(a=rounded.mean[1],
                              b=rounded.mean[2],
-                             c=rounded.mean[3]))
+                             c=rounded.mean[3],
+                             u=units,
+                             n=length(fit$i),
+                             N=fit$n))
     a <- signif(100*fit$fract,sigdig)
     if (Ar)
         line2 <- bquote(paste("Includes ",.(a),"% of the ",""^"39","Ar"))

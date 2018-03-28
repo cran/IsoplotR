@@ -41,8 +41,9 @@
 #' @param from minimum age limit of the radial scale
 #' @param to maximum age limit of the radial scale
 #' @param t0 central value
-#' @param transformation one of either \code{log}, \code{linear} or
-#'     (if \code{x} has class \code{fissiontracks}), \code{arcsin}.
+#' @param transformation one of either \code{log}, \code{linear},
+#'     \code{sqrt} or (if \code{x} has class \code{fissiontracks} and
+#'     \code{fissiontracks$type} \eqn{\neq 1}) \code{arcsin}.
 #' @param sigdig the number of significant digits of the numerical
 #'     values reported in the title of the graphical output.
 #' @param show.numbers boolean flag (\code{TRUE} to show grain
@@ -66,12 +67,13 @@
 #' @param markers vector of ages of radial marker lines to add to the
 #'     plot.
 #' @param alpha cutoff value for confidence intervals
+#' @param units measurement units to be displayed in the legend.
 #' @param ... additional arguments to the generic \code{points}
 #'     function
 #' @seealso \code{\link{peakfit}}, \code{\link{central}}
-#' @references
-#' Galbraith, R.F., 1988. Graphical display of estimates having
-#' differing standard errors. Technometrics, 30(3), pp.271-281.
+#' @references Galbraith, R.F., 1988. Graphical display of estimates
+#'     having differing standard errors. Technometrics, 30(3),
+#'     pp.271-281.
 #'
 #' Galbraith, R.F., 1990. The radial plot: graphical assessment of
 #' spread in ages. International Journal of Radiation Applications and
@@ -98,13 +100,14 @@ radialplot.default <- function(x,from=NA,to=NA,t0=NA,
                                show.numbers=FALSE,pch=21,levels=NA,
                                clabel="",bg=c("white","red"),
                                title=TRUE,k=0,markers=NULL,
-                               alpha=0.05,...){
+                               alpha=0.05,units='',...){
     peaks <- peakfit(x,k=k,sigdig=sigdig)
     markers <- c(markers,peaks$peaks['t',])
     X <- x2zs(x,t0=t0,from=from,to=to,transformation=transformation)
     radial.plot(X,show.numbers=show.numbers,pch=pch,levels=levels,
                 clabel=clabel,bg=bg,markers=markers,...)
-    if (title) title(radial.title(central(x,alpha=alpha),sigdig=sigdig))
+    if (title)
+        title(radial.title(x,sigdig=sigdig,alpha=alpha,units=units))
     if (!is.null(peaks$legend))
         graphics::legend('bottomleft',legend=peaks$legend,bty='n')
 }
@@ -125,7 +128,8 @@ radialplot.fissiontracks <- function(x,from=NA,to=NA,t0=NA,
     radial.plot(X,zeta=x$zeta[1],rhoD=x$rhoD[1],
                 show.numbers=show.numbers,pch=pch,levels=levels,
                 clabel=clabel,bg=bg,markers=markers,...)
-    if (title) title(radial.title(central(x,alpha=alpha),sigdig=sigdig))
+    if (title)
+        title(radial.title(x,sigdig=sigdig,alpha=alpha,units='Ma'))
     if (!is.null(peaks$legend))
         graphics::legend('bottomleft',legend=peaks$legend,bty='n')
 }
@@ -296,7 +300,7 @@ radialplot.ThU <- function(x,from=NA,to=NA,t0=NA,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,levels=levels,
                       clabel=clabel,bg=bg,markers=markers,k=k,
-                      exterr=FALSE,i2i=i2i,alpha=alpha,...)
+                      exterr=FALSE,i2i=i2i,alpha=alpha,units='ka',...)
 }
 radialplot_helper <- function(x,from=NA,to=NA,t0=NA,
                               transformation='log',type=4,
@@ -304,7 +308,7 @@ radialplot_helper <- function(x,from=NA,to=NA,t0=NA,
                               show.numbers=FALSE,pch=21,levels=NA,
                               clabel="",bg=c("white","red"),
                               markers=NULL,k=0,exterr=TRUE,i2i=FALSE,
-                              alpha=0.05,...){
+                              alpha=0.05,units='Ma',...){
     peaks <- peakfit(x,k=k,exterr=exterr,i2i=i2i,type=type,
                      cutoff.76=cutoff.76,cutoff.disc=cutoff.disc)
     markers <- c(markers,peaks$peaks['t',])
@@ -312,7 +316,7 @@ radialplot_helper <- function(x,from=NA,to=NA,t0=NA,
                type=type,cutoff.76=cutoff.76,cutoff.disc=cutoff.disc,
                show.numbers=show.numbers,pch=pch,levels=levels,
                clabel=clabel,bg=bg,markers=markers,i2i=i2i,
-               alpha=alpha,...)
+               alpha=alpha,units=units,...)
     if (!is.null(peaks$legend))
         graphics::legend('bottomleft',legend=peaks$legend,bty='n')
 }
@@ -321,12 +325,12 @@ age2radial <- function(x,from=NA,to=NA,t0=NA,transformation='log',
                        type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
                        show.numbers=FALSE,pch=21,levels=NA,clabel="",
                        bg=c("white","red"),markers=NULL,k=0,
-                       i2i=FALSE,alpha=0.05,...){
+                       i2i=FALSE,alpha=0.05,units='MA',...){
     if (hasClass(x,'UPb')){
         tt <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
                               cutoff.disc=cutoff.disc,exterr=FALSE)
     } else if (hasClass(x,'PbPb')){
-        tt <- PbPb.age(x,exterr=FALSE,i2i=i2i)
+        tt <- PbPb.age(x,exterr=FALSE)
     } else if (hasClass(x,'ArAr')){
         tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'UThHe')){
@@ -346,7 +350,8 @@ age2radial <- function(x,from=NA,to=NA,t0=NA,transformation='log',
                        transformation=transformation,
                        show.numbers=show.numbers,pch=pch,
                        levels=levels,clabel=clabel,bg=bg,
-                       markers=markers,alpha=alpha,...)
+                       markers=markers,alpha=alpha,
+                       units=units,...)
 }
 
 radial.plot <- function(x,zeta=0,rhoD=0,asprat=3/4,
@@ -385,7 +390,7 @@ plot_radial_points <- function(x,show.numbers=FALSE,bg='white',...){
 plot_radial_axes <- function(x){
     xs <- stats::na.omit(x$s)
     graphics::Axis(side=2,at=c(-2,0,2),labels=c(-2,0,2))
-    if (identical(x$transformation,'arcsin')){
+    if (x$transformation %in% c('arctan','arcsin')){
         plabels <- pretty(c(0,range(1/(2*xs)^2 - 1/2)))
         pticks <- (2*sqrt(plabels+1/2))
     } else {
@@ -449,13 +454,17 @@ z2rxy <- function(Z,e,xM){
     cbind(rx,ry)
 }
 
-t2z <- function(tt,x,zeta,rhoD){
+t2z <- function(tt,x,zeta,rhoD,...){
     if (identical(x$transformation,'log')){
         out <- log(tt+x$offset)
     } else if (identical(x$transformation,'arcsin')){
         out <- att(tt,zeta,rhoD)
+    } else if (identical(x$transformation,'arctan')){
+        out <- atan(sqrt(tt))
     } else if (identical(x$transformation,'linear')){
         out <- tt
+    } else if (identical(x$transformation,'sqrt')){
+        out <- sqrt(tt)
     }
     out
 }
@@ -466,20 +475,29 @@ get.radial.tticks <- function(x){
     } else if (identical(x$transformation,'log')){
         logrange <- log10(c(x$from,x$to)+x$offset)
         out <- grDevices::axisTicks(usr=logrange,log=TRUE)-x$offset
-    } else {
+    } else if (x$transformation %in% c('arcsin','arctan')){
         logrange <- log10(c(x$from,x$to))
         out <- grDevices::axisTicks(usr=logrange,log=TRUE)
+    }  else if (identical(x$transformation,'sqrt')){
+        out <- pretty(sqrt(c(x$from,x$to)))^2
     }
     nt <- length(out)
-    reldiff <- (x$to-out[nt])/(out[nt]-out[nt-1])
-    if (reldiff > 0.25) {
-        sigdig <- ceiling(1-log10(1-out[nt]/x$to))
-        out <- c(out,signif(x$to,sigdig))
+    reldiff <- (out[1]-x$from)/(out[nt]-out[1])
+    sigdig <- ceiling(1-log10(abs(1-x$from/out[1])))
+    firsttick <- signif(x$from,sigdig)
+    if (out[1] < x$from) {
+        out[1] <- firsttick
+    } else if (reldiff > 0.2) {
+        out <- c(firsttick,out)
+        nt <- nt+1
     }
-    reldiff <- (out[1]-x$from)/(out[2]-out[1])
-    if (reldiff > 0.25) {
-        sigdig <- ceiling(1-log10(abs(1-x$from/out[1])))
-        out <- c(signif(x$from,sigdig),out)
+    reldiff <- (x$to-out[nt])/(out[nt]-out[1])
+    sigdig <- ceiling(1-log10(abs(1-out[nt]/x$to)))
+    lasttick <- signif(x$to,sigdig)
+    if (out[nt] > x$to) {
+        out[nt] <- lasttick
+    } else if (reldiff > 0.2) {
+        out <- c(out,lasttick)
     }
     out
 }
@@ -498,7 +516,11 @@ x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
         } else {
             out$xlab <- expression(t/sigma)
         }
-    } else {
+    } else if (identical(transformation,'sqrt')){
+        out$z <- sqrt(x[,1])
+        out$s <- 0.5*x[,2]/out$z
+        out$xlab <- 'precision'
+    } else  if (identical(transformation,'linear')){
         out$z <- x[,1]
         out$s <- x[,2]
         out$xlab <- expression(1/sigma)
@@ -507,11 +529,12 @@ x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
     # reset limits if necessary
     if (is.na(from)){
         min.z <- get.min.z(out)
-        if (identical(transformation,'log')){
+        if (identical(transformation,'log'))
             out$from <- exp(min.z)-out$offset
-        } else {
+        else if (identical(transformation,'sqrt'))
+            out$from <- min.z^2
+        else if (identical(transformation,'linear'))
             out$from <- min.z
-        }
     } else {
         out$from <- from
     }
@@ -521,6 +544,8 @@ x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
             out$to <- exp(max.z)-out$offset
         else if (identical(transformation,'linear'))
             out$to <- max.z
+        else if (identical(transformation,'sqrt'))
+            out$to <- max.z^2
     } else {
         out$to <- to
     }
@@ -528,11 +553,11 @@ x2zs.default <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
 }
 x2zs.fissiontracks <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
     out <- list()
-    if (is.na(transformation)){
+    if (transformation %in% c('linear','log','arcsin','sqrt')){
+        out$transformation <- transformation
+    } else {
         if (x$format==1) out$transformation <- 'arcsin'
         else out$transformation <- 'log'
-    } else {
-        out$transformation <- transformation
     }
     if (x$format==1){
         Ns <- x$x[,'Ns']
@@ -543,6 +568,13 @@ x2zs.fissiontracks <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
             out$s <- tt[,'s[t]']
             out$z0 <- get.z0(out,t0,from,to)
             out$xlab <- expression(1/sigma)
+        }
+        if (identical(transformation,'sqrt')){
+            tt <- fissiontrack.age(x,exterr=FALSE)
+            out$z <- sqrt(tt[,'t'])
+            out$s <- 0.5*tt[,'s[t]']/out$z
+            out$z0 <- get.z0(out,t0,from,to)
+            out$xlab <- 'precision'
         }
         if (identical(transformation,'log')){
             tt <- fissiontrack.age(x,exterr=FALSE)
@@ -582,6 +614,8 @@ x2zs.fissiontracks <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
                                  x$zeta[1],x$rhoD[1])
             else if (identical(transformation,'linear'))
                 out$from <- min(out$z,na.rm=TRUE)
+            else if (identical(transformation,'sqrt'))
+                out$from <- min(out$z,na.rm=TRUE)^2
         } else {
             out$from <- from
         }
@@ -593,6 +627,8 @@ x2zs.fissiontracks <- function(x,t0=NA,from=NA,to=NA,transformation=NA,...){
                                x$zeta[1],x$rhoD[1])
             else if (identical(transformation,'linear'))
                 out$to <- max(out$z,na.rm=TRUE)
+            else if (identical(transformation,'sqrt'))
+                out$to <- max(out$z,na.rm=TRUE)^2
         } else {
             out$to <- to
         }
@@ -616,6 +652,8 @@ get.z0 <- function(x,t0=NA,from=NA,to=NA){
             z0 <- mean(log(c(from,to)+x$offset),na.rm=TRUE)
         } else if (identical(x$transformation,'linear')) {
             z0 <- mean(c(from,to),na.rm=TRUE)
+        } else if (identical(x$transformation,'sqrt')) {
+            z0 <- mean(sqrt(c(from,to)),na.rm=TRUE)
         } else {
             stop('illegal input')
         }
@@ -623,6 +661,8 @@ get.z0 <- function(x,t0=NA,from=NA,to=NA){
         z0 <- log(t0+x$offset)
     } else if (identical(x$transformation,'linear')){
         z0 <- t0
+    } else if (identical(x$transformation,'sqrt')){
+        z0 <- sqrt(t0)
     } else {
         stop('illegal input')
     }
@@ -641,18 +681,23 @@ iatt <- function(z,zeta,rhoD){
 }
 
 # this would be much easier in unicode but that doesn't render in PDF:
-radial.title <- function(fit,sigdig=2){
+radial.title <- function(x,sigdig=2,alpha=0.05,units=''){
+    fit <- central(x,alpha=alpha)
     rounded.age <- roundit(fit$age[1],fit$age[2:3],sigdig=sigdig)
-    line1 <- substitute('central age ='~a%+-%b~'|'~c,
+    rounded.disp <- roundit(100*fit$disp[1],100*fit$disp[2:3],sigdig=sigdig)
+    line1 <- substitute('central age ='~a%+-%b~'|'~c~d~'(n='~n~')',
                         list(a=rounded.age[1],
                              b=rounded.age[2],
-                             c=rounded.age[3]))
+                             c=rounded.age[3],
+                             d=units,
+                             n=length(x)))
     line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
                         list(a=signif(fit$mswd,sigdig),
                              b=signif(fit$p.value,sigdig)))
-    line3 <- substitute('dispersion ='~a~'|'~b~'%',
-                        list(a=signif(100*fit$disp['s'],sigdig),
-                             b=signif(100*fit$disp['ci'],sigdig)))
+    line3 <- substitute('dispersion ='~a+b/-c~'%',
+                        list(a=rounded.disp[1],
+                             b=rounded.disp[3],
+                             c=rounded.disp[2]))
     graphics::mtext(line1,line=2)
     graphics::mtext(line2,line=1)
     graphics::mtext(line3,line=0)

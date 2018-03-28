@@ -19,12 +19,13 @@
 #' @param x an object of class \code{UPb}
 #' @param alpha cutoff value for confidence intervals
 #' @param ... optional arguments
-#'
+#
 # @param x a \eqn{3n}-element vector \eqn{[X Y Z]}, where \eqn{X},
 #     \eqn{Y} and \eqn{Z} are three \eqn{n}-element vectors of
 #     (isotopic ratio) values.
 # @param covmat a \eqn{[3n x 3n]}-element covariance matrix of
 #     \code{x}
+#
 #' @return
 #' \describe{
 #'
@@ -41,10 +42,11 @@
 #'
 #' \item{p.value}{p-value of a Chi-square test for the linear fit}
 #'
-#' \item{w}{the overdispersion, i.e., a two-element vector with the
+#' \item{w}{the overdispersion, i.e., a three-element vector with the
 #' estimated standard deviation of the (assumedly) Normal distribution
-#' that underlies the true isochron; and the \eqn{100(1-\alpha)\%}
-#' confidence interval (only relevant if \code{model = 3}).}
+#' that underlies the true isochron; and the lower and upper
+#' half-widths of its \eqn{100(1-\alpha)\%} confidence interval (only
+#' relevant if \code{model = 3}).}
 #'
 #' }
 #'
@@ -93,10 +95,7 @@ ludwig.default <- function(x,...){
 #' @rdname ludwig
 #' @export
 ludwig.UPb <- function(x,exterr=FALSE,alpha=0.05,model=1,...){
-    ta0 <- concordia.intersection.york(x,exterr=FALSE)$x
-    if (x$format<4) init <- ta0
-    else init <- c(ta0[1],10,10)
-    fit <- get.ta0b0(x,init=init,exterr=exterr,model=model)
+    fit <- get.ta0b0(x,exterr=exterr,model=model)
     out <- fit[c('par','w','model')]
     out$cov <- tryCatch({ # analytical
         fish <- fisher.lud(x,fit=fit)
@@ -108,14 +107,17 @@ ludwig.UPb <- function(x,exterr=FALSE,alpha=0.05,model=1,...){
         DD <- fish[(ns+1):(ns+3),(ns+1):(ns+3)]
         solve(DD - CC %*% solve(AA) %*% BB)
     }, error = function(e){ # numerical
-        fit <- stats::optim(init,fn=LL.lud.UPb,method="BFGS",
+        fit <- stats::optim(fit$par,fn=LL.lud.UPb,method="BFGS",
                             x=x,exterr=exterr,hessian=TRUE)
         solve(fit$hessian)
     })
     mswd <- mswd.lud(fit$par,x=x,model=fit$model,w=fit$w)
     out <- c(out,mswd)
-    out$w <- c(fit$w,fit$w*stats::qnorm(1-alpha/2))
-    names(out$w) <- c('s','ci')
+    if (model==3){
+        out$w <- c(fit$w,
+                   profile_LL_discordia_disp(fit,x=x,alpha=alpha))
+        names(out$w) <- c('s','ll','ul')
+    }
     if (x$format<4) parnames <- c('t[l]','76i')
     else parnames <- c('t','64i','74i')
     names(out$par) <- parnames
@@ -124,10 +126,10 @@ ludwig.UPb <- function(x,exterr=FALSE,alpha=0.05,model=1,...){
     out
 }
 
-mswd.lud <- function(pars,x,model=1,w=0){
+mswd.lud <- function(ta0b0,x,model=1,w=0){
     ns <- length(x)
     # Mistake in Ludwig (1998)? Multiply the following by 2?
-    SS <- LL.lud.UPb(pars,x=x,exterr=FALSE,model=model,w=w)
+    SS <- LL.lud.UPb(ta0b0,x=x,exterr=FALSE,model=model,w=w,LL=FALSE)
     out <- list()
     if (x$format<4) out$df <- ns-2
     else out$df <- 2*ns-2
@@ -136,11 +138,12 @@ mswd.lud <- function(pars,x,model=1,w=0){
     out
 }
 
-get.ta0b0 <- function(x,init,exterr=FALSE,model=1){
+get.ta0b0 <- function(x,exterr=FALSE,model=1){
+    init <- get.ta0b0.model2(x)
     if (model==1)
         out <- get.ta0b0.model1(x,init=init,exterr=exterr)
     else if (model==2)
-        out <- get.ta0b0.model2(x,init=init)
+        out <- list(par=init,w=0)
     else if (model==3)
         out <- get.ta0b0.model3(x,init=init,exterr=exterr)
     out$model <- model
@@ -148,45 +151,59 @@ get.ta0b0 <- function(x,init,exterr=FALSE,model=1){
     out
 }
 get.ta0b0.model1 <- function(x,init,exterr=FALSE){
-    out <- stats::optim(init,fn=LL.lud.UPb,method="BFGS",x=x,
-                        exterr=exterr,model=1,w=0)
+    out <- fit_ludwig_discordia(x,init=init,w=0,model=1,exterr=exterr)
     out$w <- 0
     out
 }
-get.ta0b0.model2 <- function(x,init){
-    fit <- stats::optim(init,fn=LL.lud.UPb,method="BFGS",x=x,
-                        exterr=FALSE,model=2,w=1)
-    mswd <- mswd.lud(fit$par,x=x,model=2,w=1)$mswd
-    w <- sqrt(mswd)
-    out <- stats::optim(init,fn=LL.lud.UPb,method="BFGS",
-                        x=x,model=2,w=w)
-    out$w <- w
-    out
+# tricks the weighted regression algorithm into doing ordinary least squares
+get.ta0b0.model2 <- function(x){
+    yfit <- york(data2york(x,wetherill=FALSE))
+    ta0b0 <-
+        concordia.intersection.ab(yfit$a[1],yfit$b[1],wetherill=FALSE)$x
+    if (x$format>3){
+        U238Pb206 <- subset(get.U238Pb206.ratios(x),select='U238Pb206')
+        Pb206U238 <- subset(get.Pb206U238.ratios(x),select='Pb206U238')
+        Pb204U238 <- subset(get.Pb204U238.ratios(x),select='Pb204U238')
+        Pb207Pb206 <- subset(get.Pb207Pb206.ratios(x),select='Pb207Pb206')
+        Pb204Pb206 <- Pb204U238/Pb206U238
+        lmfit <- stats::lm(Pb204Pb206 ~ U238Pb206)
+        ta0b0[3] <- ta0b0[2]/lmfit$coef[1] # 7/4
+        ta0b0[2] <- 1/lmfit$coef[1] # 6/4
+    }
+    ta0b0
 }
 get.ta0b0.model3 <- function(x,init,exterr=FALSE){
-    fit <- stats::optim(init,fn=LL.lud.UPb,method="BFGS",x=x,
-                        exterr=exterr,model=1,w=0)
-    mswd <- mswd.lud(fit$par,x=x,model=1,w=0)$mswd
-    wrange <- c(0,sqrt(mswd)*9,74) # 9.74 = current 204/238-ratio
-    w <- stats::optimize(model3.misfit,interval=wrange,
-                         ta0b0=fit$par,x=x)$minimum
-    out <- stats::optim(init,fn=LL.lud.UPb,method="BFGS",x=x,
-                        exterr=exterr,model=3,w=w)
+    fit <- fit_ludwig_discordia(x,init=init,w=0,model=1,exterr=exterr)
+    ta0b0 <- fit$par
+    w <- get_ludwig_disp(ta0b0,x,interval=get_lud_wrange(ta0b0,x))
+    out <- fit_ludwig_discordia(x,init=ta0b0,w=w,model=3,exterr=exterr)
     out$w <- w
     out
 }
-model3.misfit <- function(w,ta0b0,x){
-    abs(mswd.lud(ta0b0,x=x,model=3,w=w)$mswd-1)
+fit_ludwig_discordia <- function(x,init,w=0,model=1,exterr=FALSE){
+    stats::optim(init,fn=LL.lud.UPb,method="BFGS",x=x,
+                 model=model,w=w,exterr=exterr)
 }
+get_ludwig_disp <- function(ta0b0,x,interval){
+    stats::optimize(LL.lud.UPb.disp,interval=interval,
+                    x=x,ta0b0=ta0b0,maximum=TRUE)$maximum
+}
+get_lud_wrange <- function(ta0b0,x){
+    mswd <- mswd.lud(ta0b0,x=x,model=1,w=0)$mswd
+    c(0,sqrt(mswd)*9.74) # 9.74 = current 204/238-rati0
+}    
 
-LL.lud.UPb <- function(pars,x,exterr=FALSE,model=1,w=0){
+LL.lud.UPb.disp <- function(w,x,ta0b0){
+    LL.lud.UPb(ta0b0,x=x,exterr=FALSE,model=3,w=w,LL=TRUE)
+}
+LL.lud.UPb <- function(ta0b0,x,exterr=FALSE,model=1,w=0,LL=FALSE){
     if (x$format<4){
-        return(LL.lud.2D(pars,x=x,exterr=exterr,model=model,w=w))
+        return(LL.lud.2D(ta0b0,x=x,exterr=exterr,model=model,w=w,LL=LL))
     } else {
-        return(LL.lud.3D(pars,x=x,exterr=exterr,model=model,w=w))
+        return(LL.lud.3D(ta0b0,x=x,exterr=exterr,model=model,w=w,LL=LL))
     }
 }
-LL.lud.2D <- function(ta0,x,exterr=FALSE,model=1,w=0){
+LL.lud.2D <- function(ta0,x,exterr=FALSE,model=1,w=0,LL=FALSE){
     tt <- ta0[1]
     a0 <- ta0[2]
     l5 <- settings('lambda','U235')
@@ -199,34 +216,32 @@ LL.lud.2D <- function(ta0,x,exterr=FALSE,model=1,w=0){
     v <- matrix(0,1,2*ns)
     v[1:ns] <- XY[,'X']-xy[,1]
     v[(ns+1):(2*ns)] <- XY[,'Y']-xy[,2]
-    if (model==2){
-        E <- diag(2*ns)*w^2
+    if (exterr){
+        Ex <- matrix(0,2*ns+2,2*ns+2)
+        Jv <- diag(1,2*ns,2*ns+2)
     } else {
-        if (exterr){
-            Ex <- matrix(0,2*ns+2,2*ns+2)
-            Jv <- diag(1,2*ns,2*ns+2)
-        } else {
-            Ex <- matrix(0,2*ns,2*ns)
-            Jv <- diag(1,2*ns,2*ns)
-        }
-        Ex[1:ns,1:ns] <- diag(XY[,'sX'])^2
-        # overdispersion added to the Pb207/Pb206-ratio:
-        Ex[(ns+1):(2*ns),(ns+1):(2*ns)] <- diag(XY[,'sY']+w)^2
-        Ex[1:ns,(ns+1):(2*ns)] <-
-            diag(XY[,'rXY'])*diag(XY[,'sY'])*diag(XY[,'sY'])
-        Ex[(ns+1):(2*ns),1:ns] <- Ex[1:ns,(ns+1):(2*ns)]
-        if (exterr){
-            Ex[2*ns+1,2*ns+1] <- l5[2]^2
-            Ex[2*ns+2,2*ns+2] <- l8[2]^2
-            Jv[,2*ns+1] <- -tt*exp(l5[1]*tt)*XY[,'X']/U
-            Jv[,2*ns+2] <- a0*tt*exp(l8[1]*tt)*XY[,'X']
-        }
-        E <- Jv %*% Ex %*% t(Jv)
+        Ex <- matrix(0,2*ns,2*ns)
+        Jv <- diag(1,2*ns,2*ns)
     }
-    S <- v %*% solve(E) %*% t(v)
-    S/2
+    Ex[1:ns,1:ns] <- diag(XY[,'sX'])^2
+    # overdispersion added to the Pb207/Pb206-ratio:
+    Ex[(ns+1):(2*ns),(ns+1):(2*ns)] <- diag(XY[,'sY']+w)^2
+    Ex[1:ns,(ns+1):(2*ns)] <-
+        diag(XY[,'rXY'])*diag(XY[,'sY'])*diag(XY[,'sY'])
+    Ex[(ns+1):(2*ns),1:ns] <- Ex[1:ns,(ns+1):(2*ns)]
+    if (exterr){
+        Ex[2*ns+1,2*ns+1] <- l5[2]^2
+        Ex[2*ns+2,2*ns+2] <- l8[2]^2
+        Jv[,2*ns+1] <- -tt*exp(l5[1]*tt)*XY[,'X']/U
+        Jv[,2*ns+2] <- a0*tt*exp(l8[1]*tt)*XY[,'X']
+    }
+    E <- Jv %*% Ex %*% t(Jv)
+    SS <- v %*% solve(E) %*% t(v)
+    if (LL) out <- -(determinant(E,logarithm=TRUE)$modulus+SS)/2
+    else out <- SS
+    out
 }
-LL.lud.3D <- function(ta0b0,x,exterr=FALSE,model=1,w=0){
+LL.lud.3D <- function(ta0b0,x,exterr=FALSE,model=1,w=0,LL=FALSE){
     tt <- ta0b0[1]
     a0 <- ta0b0[2]
     b0 <- ta0b0[3]
@@ -235,7 +250,7 @@ LL.lud.3D <- function(ta0b0,x,exterr=FALSE,model=1,w=0){
     phi <- d$phi
     R <- d$R
     r <- d$r
-    SS <- 0
+    out <- 0
     ns <- length(d$R)
     if (exterr){
         omega <- d$omega
@@ -247,20 +262,26 @@ LL.lud.3D <- function(ta0b0,x,exterr=FALSE,model=1,w=0){
                 j1 <- j
                 j2 <- j + ns
                 j3 <- j + 2*ns
-                SS <- SS + R[i]*R[j]*omega[i1,j1] + r[i]*r[j]*omega[i2,j2] +
-                    phi[i]*phi[j]*omega[i3,j3] + 2*( R[i]*r[j]*omega[i1,j2] +
+                out <- out + R[i]*R[j]*omega[i1,j1] +
+                    r[i]*r[j]*omega[i2,j2] + phi[i]*phi[j]*omega[i3,j3] +
+                    2*( R[i]*r[j]*omega[i1,j2] +
                     R[i]*phi[j]*omega[i1,j3] + r[i]*phi[j]*omega[i2,j3] )
+                if (LL) out <- out +
+                    determinant(solve(omega),logarithm=TRUE)$modulus
             }
         }
     } else {
         for (i in 1:ns){
             omega <- d$omega[[i]]
-            SS <- SS + omega[1,1]*R[i]^2 + omega[2,2]*r[i]^2 +
-                       omega[3,3]*phi[i]^2 + 2*( R[i]*r[i]*omega[1,2] +
-                       R[i]*phi[i]*omega[1,3] + r[i]*phi[i]*omega[2,3] )
+            out <- out + omega[1,1]*R[i]^2 + omega[2,2]*r[i]^2 +
+                         omega[3,3]*phi[i]^2 + 2*( R[i]*r[i]*omega[1,2] +
+                         R[i]*phi[i]*omega[1,3] + r[i]*phi[i]*omega[2,3] )
+            if (LL) out <- out +
+                determinant(solve(omega),logarithm=TRUE)$modulus
         }
     }
-    SS/2
+    if (LL) out <- -out/2
+    out
 }
 
 fisher.lud <- function(x,...){ UseMethod("fisher.lud",x) }
@@ -444,20 +465,17 @@ data2ludwig_without_decay_err <- function(x,a0,b0,tt,model=1,w=0){
         Z[i] <- d$x['Pb204U238']
         R[i] <- d$x['Pb207U235'] - exp(l5[1]*tt) + 1 - U*b0*Z[i]
         r[i] <- d$x['Pb206U238'] - exp(l8[1]*tt) + 1 - a0*Z[i]
-        if (model==2){
-            O <- diag(2*ns)/w^2
-        } else { # overdispersion applied proportional to average composition
-            E[1,1] <- d$cov['Pb207U235','Pb207U235'] + (Xbar*w)^2
-            E[2,2] <- d$cov['Pb206U238','Pb206U238'] + (Ybar*w)^2
-            E[3,3] <- d$cov['Pb204U238','Pb204U238'] + (Zbar*w)^2
-            E[1,2] <- d$cov['Pb207U235','Pb206U238']
-            E[1,3] <- d$cov['Pb207U235','Pb204U238']
-            E[2,3] <- d$cov['Pb206U238','Pb204U238']
-            E[2,1] <- E[1,2]
-            E[3,1] <- E[1,3]
-            E[3,2] <- E[2,3]
-            O <- solve(E)
-        }
+        # overdispersion applied proportional to average composition
+        E[1,1] <- d$cov['Pb207U235','Pb207U235'] + (Xbar*w)^2
+        E[2,2] <- d$cov['Pb206U238','Pb206U238'] + (Ybar*w)^2
+        E[3,3] <- d$cov['Pb204U238','Pb204U238'] + (Zbar*w)^2
+        E[1,2] <- d$cov['Pb207U235','Pb206U238']
+        E[1,3] <- d$cov['Pb207U235','Pb204U238']
+        E[2,3] <- d$cov['Pb206U238','Pb204U238']
+        E[2,1] <- E[1,2]
+        E[3,1] <- E[1,3]
+        E[3,2] <- E[2,3]
+        O <- solve(E)
         omega[[i]] <- O
         # rearrange sum of squares:
         AA <- O[1,1]*(U*b0)^2 + O[2,2]*a0^2 + O[3,3] +

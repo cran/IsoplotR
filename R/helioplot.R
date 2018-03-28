@@ -124,34 +124,39 @@ helioplot <- function(x,logratio=TRUE,model=1,show.central.comp=TRUE,
                       clabel="",ellipse.col=c("#00FF0080","#0000FF80"),
                       sigdig=2,xlim=NA,ylim=NA,fact=NA,...){
     fit <- central.UThHe(x,alpha=alpha,model=model)
-    print(fit)
     ellipse.cols <- set.ellipse.colours(ns=length(x),levels=levels,
                                         col=ellipse.col)
     if (logratio) {
         plot_logratio_contours(x,contour.col=contour.col,
                                xlim=xlim,ylim=ylim,...)
-        if (model!=2) plot_logratio_ellipses(x,ellipse.cols=ellipse.cols,
-                                             alpha=alpha,
-                                             levels=levels,
-                                             show.numbers=show.numbers)
+        if (model==2){
+            u <- log(x[,'U']/x[,'He'])
+            v <- log(x[,'Th']/x[,'He'])
+            plot_points(u,v,bg=ellipse.cols,
+                        show.numbers=show.numbers,...)
+        } else {
+            plot_logratio_ellipses(x,ellipse.cols=ellipse.cols,
+                                   alpha=alpha,levels=levels,
+                                   show.numbers=show.numbers)
+        }
     } else {
         if (all(is.na(fact))) fact <- getfact(x,fit)
         plot_helioplot_contours(x,fact=fact,contour.col=contour.col,
                                 xlim=xlim,ylim=ylim)
-        if (model!=2) plot_helioplot_ellipses(x,ellipse.cols=ellipse.cols,
-                                              fact=fact, alpha=alpha,
-                                              levels=levels,
-                                              show.numbers=show.numbers)
+        if (model==2){
+            plot_helioplot_points(x,show.numbers=show.numbers,
+                                  alpha=alpha,fact=fact,bg=ellipse.cols)
+        } else {
+            plot_helioplot_ellipses(x,ellipse.cols=ellipse.cols,
+                                    fact=fact,alpha=alpha,levels=levels,
+                                    show.numbers=show.numbers)
+        }
     }
     if (show.central.comp){
         plot_central_ellipse(fit,fact=fact,logratio=logratio,
                              alpha=alpha,doSm=doSm(x))
+        fit$n <- length(x)
         graphics::title(helioplot_title(fit,sigdig=sigdig))
-    }
-    if (model==2){
-        u <- log(x[,'U']/x[,'He'])
-        v <- log(x[,'Th']/x[,'He'])
-        plot_points(u,v,bg=ellipse.cols,show.numbers=show.numbers,...)
     }
     invisible(colourbar(z=levels,col=ellipse.col,clabel=clabel))
 }
@@ -186,7 +191,7 @@ plot_logratio_ellipses <- function(x,ellipse.cols,alpha=0.05,
     }
 }
 plot_helioplot_ellipses <- function(x,ellipse.cols,fact=c(1,1,1),
-                                    alpha=0.05, show.numbers=FALSE,
+                                    alpha=0.05,show.numbers=FALSE,
                                     levels=NA){
     for (i in 1:nrow(x)){
         uvc <- UThHe2uv.covmat(x,i)
@@ -203,6 +208,14 @@ plot_helioplot_ellipses <- function(x,ellipse.cols,fact=c(1,1,1),
         if (show.numbers) graphics::text(x0y0[1],x0y0[2],i)
         else graphics::points(x0y0[1],x0y0[2],pch=19,cex=0.25)
     }
+}
+plot_helioplot_points <- function(x,fact=c(1,1,1),alpha=0.05,
+                                  show.numbers=FALSE,...){
+    xyz <- renormalise(x[,c('He','U','Th')],fact=fact)
+    xy <- xyz2xy(xyz)
+    if (show.numbers) graphics::text(xy[,1],xy[,2],1:nrow(xy),...)
+    else graphics::points(xy[,1],xy[,2],pch=21,...)
+
 }
 
 plot_central_ellipse <- function(fit,fact=c(1,1,1),logratio=TRUE,
@@ -264,12 +277,13 @@ plot_helioplot_contours <- function(x,fact=c(1,1,1),
 helioplot_title <- function(fit,sigdig=2){
     rounded.age <- roundit(fit$age[1],fit$age[2:4],sigdig=sigdig)
     expr <- quote('central age =')
-    args <- quote(~a%+-%b~'|'~c)
+    args1 <- quote(~a%+-%b~'|'~c~'Ma'~'(n='~n~')')
     list1 <- list(a=rounded.age[1],
                   b=rounded.age[2],
-                  c=rounded.age[3])
+                  c=rounded.age[3],
+                  n=fit$n)
     if (fit$model==1 && fit$mswd>1){
-        args <- quote(~a%+-%b~'|'~c~'|'~d)
+        args1 <- quote(~a%+-%b~'|'~c~'|'~d~'Ma'~'(n='~n~')')
         list1$d <- rounded.age[4]
         line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
                             list(a=signif(fit$mswd,2),
@@ -279,16 +293,16 @@ helioplot_title <- function(fit,sigdig=2){
     } else if (fit$model==2){
         line1line <- 0
     } else if (fit$model==3){
-        rounded.disp <- signif(100*fit$w,sigdig)
-        list2 <- list(a=rounded.disp[1],b=rounded.disp[2])
+        rounded.disp <- roundit(100*fit$w[1],100*fit$w[2:3],sigdig)
+        list2 <- list(a=rounded.disp[1],b=rounded.disp[2],c=rounded.disp[3])
         expr2 <- quote('dispersion =')
-        args2 <- quote(a~'|'~b~'%')
+        args2 <- quote(a+c-b~'%')
         call2 <- substitute(e~a,list(e=expr2,a=args2))
         line2 <- do.call(substitute,list(eval(call2),list2))
         line1line <- 1
         graphics::mtext(line2,line=0)
     }
-    call1 <- substitute(e~a,list(e=expr,a=args))
+    call1 <- substitute(e~a,list(e=expr,a=args1))
     line1 <- do.call(substitute,list(eval(call1),list1))
     graphics::mtext(line1,line=line1line)
 }
@@ -532,24 +546,6 @@ uv2HeUTh <- function(uv){
     cbind(He,U,Th)
 }
 
-# UVW = central composition
-SS.UThHe.uvw <- function(UVW,x,w=0){
-    doSm <- (length(UVW)>2)
-    SS <- 0
-    for (i in 1:length(x)){
-        if (doSm){
-            uvwc <- UThHe2uvw.covmat(x,i,w=w)
-            X <- UVW-uvwc$uvw
-        } else {
-            uvwc <- UThHe2uv.covmat(x,i,w=w)
-            X <- UVW-uvwc$uv
-        }
-        Ei <- solve(uvwc$covmat)
-        SSi <- X %*% Ei %*% t(X)
-        if (is.finite(SSi)) SS <- SS + SSi
-    }
-    as.numeric(SS)
-}
 UThHe2uvw.covmat <- function(x,i,w=0){
     U <- x[i,'U']
     sU <- x[i,'errU']

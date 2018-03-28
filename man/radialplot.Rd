@@ -20,7 +20,7 @@ radialplot(x, ...)
 \method{radialplot}{default}(x, from = NA, to = NA, t0 = NA,
   transformation = "log", sigdig = 2, show.numbers = FALSE, pch = 21,
   levels = NA, clabel = "", bg = c("white", "red"), title = TRUE,
-  k = 0, markers = NULL, alpha = 0.05, ...)
+  k = 0, markers = NULL, alpha = 0.05, units = "", ...)
 
 \method{radialplot}{fissiontracks}(x, from = NA, to = NA, t0 = NA,
   transformation = "arcsin", sigdig = 2, show.numbers = FALSE, pch = 21,
@@ -92,8 +92,9 @@ function}
 
 \item{t0}{central value}
 
-\item{transformation}{one of either \code{log}, \code{linear} or
-(if \code{x} has class \code{fissiontracks}), \code{arcsin}.}
+\item{transformation}{one of either \code{log}, \code{linear},
+\code{sqrt} or (if \code{x} has class \code{fissiontracks} and
+\code{fissiontracks$type} \eqn{\neq 1}) \code{arcsin}.}
 
 \item{sigdig}{the number of significant digits of the numerical
 values reported in the title of the graphical output.}
@@ -127,6 +128,8 @@ component.}
 plot.}
 
 \item{alpha}{cutoff value for confidence intervals}
+
+\item{units}{measurement units to be displayed in the legend.}
 
 \item{exterr}{propagate the external sources of uncertainty into
 the mixture model errors?}
@@ -215,8 +218,9 @@ radialplot(examples$LudwigMixture,k='min')
 
 }
 \references{
-Galbraith, R.F., 1988. Graphical display of estimates having
-differing standard errors. Technometrics, 30(3), pp.271-281.
+Galbraith, R.F., 1988. Graphical display of estimates
+    having differing standard errors. Technometrics, 30(3),
+    pp.271-281.
 
 Galbraith, R.F., 1990. The radial plot: graphical assessment of
 spread in ages. International Journal of Radiation Applications and

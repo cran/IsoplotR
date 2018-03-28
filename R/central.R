@@ -52,18 +52,14 @@
 #'
 #' }
 #'
-#' \item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of the t-
-#' distribution for \code{df} degrees of freedom (not reported if
-#' \code{model=2}).}
-#'
 #' \item{age}{a three- or four-element vector with:
 #'
 #' \code{t}: the central age.
 #'
 #' \code{s[t]}: the standard error of \code{t}.
 #'
-#' \code{ci[t]}: the \eqn{100(1-\alpha)\%} confidence interval for
-#' \code{t} for the appropriate number of degrees of freedom.
+#' \code{ci[t]}: the width of a \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{t}.
 #'
 #' \code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
 #' interval enhanced by a factor of \eqn{\sqrt{mswd}} (only reported
@@ -72,9 +68,9 @@
 #' }
 #'
 #' \item{w}{the geological overdispersion term. If \code{model=3},
-#' this is a two-element vector with the standard deviation of the
-#' (assumedly) Normal dispersion and the corresponding
-#' \eqn{100(1-\alpha)\%} confidence interval. \code{w=0} if
+#' this is a three-element vector with the standard deviation of the
+#' (assumedly) Normal dispersion and the lower and upper half-widths
+#' of its \eqn{100(1-\alpha)\%} confidence interval. \code{w=0} if
 #' code{model<3}.}
 #'
 #' OR, otherwise:
@@ -87,13 +83,12 @@
 #'
 #' \code{s[t]}: the standard error of \code{t}.
 #'
-#' \code{ci[t]}: the \eqn{100(1-\alpha)\%} confidence interval for
-#' \code{t} for the appropriate number of degrees of freedom.}
+#' \code{ci[t]}: the width of a \eqn{100(1-\alpha)\%} confidence
+#' interval for \code{t}.}
 #'
-#' \item{disp}{a two-element vector with the overdispersion (standard
-#' deviation) of the excess scatter, and the corresponding
-#' \eqn{100(1-\alpha)\%} confidence interval for the appropriate
-#' degrees of freedom.}
+#' \item{disp}{a three-element vector with the overdispersion
+#' (standard deviation) of the excess scatter, and the upper and lower
+#' half-widths of its \eqn{100(1-\alpha)\%} confidence interval.}
 #'
 #' \item{mswd}{the reduced Chi-square statistic of data concordance,
 #' i.e. \eqn{mswd=X^2/df}, where \eqn{X^2} is a Chi-square statistic
@@ -124,17 +119,11 @@ central <- function(x,...){ UseMethod("central",x) }
 #' @rdname central
 #' @export
 central.default <- function(x,alpha=0.05,...){
-    sigma <- 0.15 # convenient starting value
     zu <- log(x[,1])
     su <- x[,2]/x[,1]
-    for (i in 1:30){ # page 100 of Galbraith (2005)
-        wu <- 1/(sigma^2+su^2)
-        mu <- sum(wu*zu,na.rm=TRUE)/sum(wu,na.rm=TRUE)
-        fit <- stats::optimize(eq.6.9,c(0,10),mu=mu,zu=zu,su=su)
-        sigma <- fit$minimum
-    }
-    tt <- exp(mu)
-    st <- tt/sqrt(sum(wu,na.rm=TRUE))
+    fit <- continuous_mixture(zu,su)
+    tt <- exp(fit$mu[1])
+    st <- tt*fit$mu[2]
     Chi2 <- sum((zu/su)^2,na.rm=TRUE)-(sum(zu/su^2,na.rm=TRUE)^2)/
         sum(1/su^2,na.rm=TRUE)
     out <- list()
@@ -143,10 +132,11 @@ central.default <- function(x,alpha=0.05,...){
     # add back one d.o.f. for the homogeneity test
     out$mswd <- Chi2/(out$df+1)
     out$p.value <- 1-stats::pchisq(Chi2,out$df+1)
-    out$age <- c(tt,st,stats::qt(1-alpha/2,out$df)*st)
-    out$disp <- c(sigma,stats::qnorm(1-alpha/2)*sigma)
+    out$age <- c(tt,st,nfact(alpha)*st)
+    out$disp <- c(fit$sigma,
+                  profile_LL_weightedmean_disp(fit,zu,su,alpha))
     names(out$age) <- c('t','s[t]','ci[t]')
-    names(out$disp) <- c('s','ci')
+    names(out$disp) <- c('s','ll','ul')
     out
 }
 #' @param model choose one of the following statistical models:
@@ -177,20 +167,21 @@ central.UThHe <- function(x,alpha=0.05,model=1,...){
     doSm <- doSm(x)
     fit <- UThHe_logratio_mean(x,model=model,w=0)
     mswd <- mswd_UThHe(x,fit,doSm=doSm)
-    fit$tfact <- stats::qt(1-alpha/2,mswd$df)
+    f <- tfact(alpha,mswd$df)
     if (model==1){
         out <- c(fit,mswd)
-        out$age['disp[t]'] <- augment_UThHe_err(out,doSm)
+        out$age['disp[t]'] <-
+            uvw2age(out,doSm=doSm(x),fact=f*sqrt(mswd$mswd))[2]
     } else if (model==2){
         out <- fit
     } else {
+        f <- nfact(alpha)
         w <- get.UThHe.w(x,fit)
         out <- UThHe_logratio_mean(x,model=model,w=w)
-        out$w <- c(w,w*stats::qnorm(1-alpha/2))
-        names(out$w) <- c('s','ci')
-        out$tfact <- fit$tfact
+        out$w <- c(w,profile_LL_central_disp_UThHe(fit=out,x=x,alpha=alpha))
+        names(out$w) <- c('s','ll','ul')
     }
-    out$age['ci[t]'] <- out$tfact*out$age['s[t]']
+    out$age['ci[t]'] <- f*out$age['s[t]']
     out
 }
 #' @param mineral setting this parameter to either \code{apatite} or
@@ -223,15 +214,17 @@ central.fissiontracks <- function(x,mineral=NA,alpha=0.05,...){
         st <- tt * sqrt( 1/(sum(wj)*(theta*(1-theta))^2) +
                          (x$rhoD[2]/x$rhoD[1])^2 +
                          (x$zeta[2]/x$zeta[1])^2 )
+        mu <- log(theta/(1-theta))
         # remove two d.o.f. for mu and sigma
         out$df <- length(Nsj)-2
         # add back one d.o.f. for homogeneity test
         out$mswd <- Chi2/(out$df+1)
         out$p.value <- 1-stats::pchisq(Chi2,out$df+1)
         out$age <- c(tt,st,stats::qt(1-alpha/2,out$df)*st)
-        out$disp <- c(sigma,stats::qnorm(1-alpha/2)*sigma)
+        out$disp <- c(sigma,profile_LL_central_disp_FT(
+                                mu=mu,sigma=sigma,y=Nsj,m=mj,alpha=alpha))
         names(out$age) <- c('t','s[t]','ci[t]')
-        names(out$disp) <- c('s','ci')
+        names(out$disp) <- c('s','ll','ul')
     } else if (x$format>1){
         tst <- age(x,exterr=FALSE,mineral=mineral)
         out <- central.default(tst,alpha=alpha)
@@ -239,30 +232,28 @@ central.fissiontracks <- function(x,mineral=NA,alpha=0.05,...){
     out
 }
 
-get.UThHe.w <- function(x,fit){
-    mswd <- mswd_UThHe(x,fit,doSm=doSm(x))$mswd
-    wrange <- c(0,sqrt(mswd))
-    stats::optimize(UThHe_misfit,interval=wrange,x=x,model=3)$minimum
-}
-
-UThHe_logratio_mean <- function(x,model=1,w=0){
+UThHe_logratio_mean <- function(x,model=1,w=0,fact=1){
     out <- average_uvw(x,model=model,w=w)
     out$model <- model
     out$w <- w
     out$age <- rep(NA,3)
     names(out$age) <- c('t','s[t]','ci[t]')
-    if (doSm(x)){
-        cc <- uvw2UThHe(out$uvw,out$covmat)
-        out$age[c('t','s[t]')] <- get.UThHe.age(cc['U'],cc['sU'],
-                                                cc['Th'],cc['sTh'],
-                                                cc['He'],cc['sHe'],
-                                                cc['Sm'],cc['sSm'])
+    out$age[c('t','s[t]')] <- uvw2age(out,doSm(x))
+    out
+}
+
+uvw2age <- function(fit,doSm,fact=1){
+    if (doSm){
+        cc <- uvw2UThHe(fit$uvw,fact*fit$covmat)
+        out <- get.UThHe.age(cc['U'],cc['sU'],
+                             cc['Th'],cc['sTh'],
+                             cc['He'],cc['sHe'],
+                             cc['Sm'],cc['sSm'])
     } else {
-        cc <- uv2UThHe(out$uvw,out$covmat)
-        out$age[c('t','s[t]')] <-
-            get.UThHe.age(cc['U'],cc['sU'],
-                          cc['Th'],cc['sTh'],
-                          cc['He'],cc['sHe'])
+        cc <- uv2UThHe(fit$uvw,fact*fit$covmat)
+        out <- get.UThHe.age(cc['U'],cc['sU'],
+                             cc['Th'],cc['sTh'],
+                             cc['He'],cc['sHe'])
     }
     out
 }
@@ -272,21 +263,21 @@ average_uvw <- function(x,model=1,w=0){
     doSm <- doSm(x)
     if (doSm(x)){
         nms <- c('u','v','w')
-        uvw <- UThHe2uvw(x)
-        init <- rep(0,3)
+        logratios <- flat.uvw.table(x,w=w)
+        fit <- wtdmean3D(logratios)
+        uvw <- logratios[,c(1,3,5)]
     } else {
         nms <- c('u','v')
-        uvw <- UThHe2uv(x)
-        init <- rep(0,2)
+        logratios <- flat.uv.table(x,w=w)
+        fit <- wtdmean2D(logratios)
+        uvw <- logratios[,c(1,3)]
     }
     if (model==2){
         out$uvw <- apply(uvw,2,mean)
         out$covmat <- stats::cov(uvw)/(nrow(uvw)-1)
     } else {
-        fit <- stats::optim(init,SS.UThHe.uvw,method='BFGS',
-                            hessian=TRUE,x=x,w=w)
-        out$uvw <- fit$par
-        out$covmat <- solve(fit$hessian)
+        out$uvw <- fit$x
+        out$covmat <- fit$cov
     }
     names(out$uvw) <- nms
     colnames(out$covmat) <- nms
@@ -294,35 +285,55 @@ average_uvw <- function(x,model=1,w=0){
     out
 }
 
-# the MSWD calculation does not use Sm
+get.UThHe.w <- function(x,fit){
+    stats::optimize(LL.uvw,interval=c(0,100),
+                    UVW=fit$uvw,x=x,doSm=doSm(x),
+                    maximum=TRUE)$maximum
+}
+
+LL.uvw <- function(w,UVW,x,doSm=TRUE,LL=TRUE){
+    out <- 0
+    for (i in 1:length(x)){
+        if (doSm){
+            uvwc <- UThHe2uvw.covmat(x,i,w=w)
+            X <- UVW-uvwc$uvw
+        } else {
+            uvwc <- UThHe2uv.covmat(x,i,w=w)
+            X <- UVW-uvwc$uv
+        }
+        E <- uvwc$covmat
+        SS <- X %*% solve(E) %*% t(X)
+        if (LL) {
+            out <- out - ( determinant(E,logarithm=TRUE)$modulus + SS )/2
+        } else {
+            out <- out + SS
+        }
+    }
+    out
+}
 mswd_UThHe <- function(x,fit,doSm=FALSE){
     out <- list()
     if (doSm) nd <- 3
     else nd <- 2
-    SS <- SS.UThHe.uvw(fit$uvw[1:nd],x,w=fit$w)
+    SS <- LL.uvw(w=fit$w,fit$uvw[1:nd],x,doSm=doSm,LL=FALSE)
     out$df <- nd*(length(x)-1)
-    out$mswd <- SS/out$df
+    out$mswd <- as.numeric(SS/out$df)
     out$p.value <- 1-stats::pchisq(SS,out$df)
     out
 }
-UThHe_misfit <- function(w,x,model=1){
-    fit <- UThHe_logratio_mean(x,model=model,w=w)
-    abs(mswd_UThHe(x,fit,doSm=doSm(x))$mswd-1)
-}
 
-augment_UThHe_err <- function(fit,doSm){
-    if (doSm){
-        cco <- uvw2UThHe(fit$uvw,fit$mswd*fit$covmat)
-        out <- fit$tfact*get.UThHe.age(cco['U'],cco['sU'],
-                                       cco['Th'],cco['sTh'],
-                                       cco['He'],cco['sHe'],
-                                       cco['Sm'],cco['sSm'])[2]
-    } else {
-        cco <- uv2UThHe(fit$uvw,fit$mswd*fit$covmat)
-        out <- fit$tfact*get.UThHe.age(cco['U'],cco['sU'],
-                                       cco['Th'],cco['sTh'],
-                                       cco['He'],cco['sHe'])[2]
+continuous_mixture <- function(zu,su){
+    sigma <- stats::sd(zu)
+    for (i in 1:30){ # page 100 of Galbraith (2005)
+        wu <- 1/(sigma^2+su^2)
+        mu <- sum(wu*zu,na.rm=TRUE)/sum(wu,na.rm=TRUE)
+        fit <- stats::optimize(eq.6.9,c(0,10*stats::sd(zu)),mu=mu,zu=zu,su=su)
+        sigma <- fit$minimum
     }
+    smu <- 1/sqrt(sum(wu,na.rm=TRUE))
+    out <- list()
+    out$mu <- c(mu,smu)
+    out$sigma <- sigma
     out
 }
 

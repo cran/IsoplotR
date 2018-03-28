@@ -58,19 +58,17 @@
 #'
 #' \code{s[t]}: the estimated uncertainties of \code{t}
 #'
-#' \code{ci[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
-#' interval for \code{t}}
+#' \code{ci[t]}: the widths of approximate \eqn{100(1-\alpha)\%}
+#' confidence intervals for \code{t}}
 #'
 #' \item{props}{a \code{2 x k} matrix with the following rows:
 #'
 #' \code{p}: the proportions of the \code{k} peaks
 #'
-#' \code{s[p]}: the estimated uncertainties of \code{p}}
+#' \code{s[p]}: the estimated uncertainties (standard errors) of
+#' \code{p}}
 #'
 #' \item{L}{the log-likelihood of the fit}
-#'
-#' \item{tfact}{the \eqn{100(1-\alpha/2)\%} percentile of the
-#' t-distribution with \eqn{(n-2k+1)} degrees of freedom}
 #'
 #' \item{legend}{a vector of text expressions to be used in a figure
 #'     legend}
@@ -242,7 +240,7 @@ peakfit_helper <- function(x,k=1,type=4,cutoff.76=1100,
         for (i in 1:numpeaks){
             age.with.exterr <- add.exterr(x,fit$peaks['t',i],fit$peaks['s[t]',i])
             fit$peaks['s[t]',i] <- age.with.exterr[2]
-            fit$peaks['ci[t]',i] <- fit$tfact*fit$peaks['s[t]',i]
+            fit$peaks['ci[t]',i] <- nfact(alpha)*fit$peaks['s[t]',i]
         }
     }
     fit$legend <- peaks2legend(fit,sigdig=sigdig,k=k)
@@ -256,7 +254,7 @@ ages2peaks <- function(x,k=1,type=4,cutoff.76=1100,
         tt <- filter.UPb.ages(x,type,cutoff.76,
                               cutoff.disc,exterr=FALSE)
     } else if (hasClass(x,'PbPb')){
-        tt <- PbPb.age(x,exterr=FALSE,i2i=i2i)
+        tt <- PbPb.age(x,exterr=FALSE)
     } else if (hasClass(x,'ArAr')){
         tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'UThHe')){
@@ -332,8 +330,8 @@ peaks2legend <- function(fit,sigdig=2,k=NULL){
         line <- paste0('Peak ',i,': ',rounded.age[1],' \u00B1 ',
                        rounded.age[2],' | ',rounded.age[3])
         if (k>1){
-            rounded.prop <- roundit(fit$props[1,i],fit$props[2,i],sigdig=sigdig)
-            line <- paste0(line,' (',100*rounded.prop[1],'%)')
+            rounded.prop <- roundit(100*fit$props[1,i],100*fit$props[2,i],sigdig=sigdig)
+            line <- paste0(line,' (',rounded.prop[1],'%)')
         }
         out <- c(out,line)
     }
@@ -445,13 +443,12 @@ binomial.mixtures <- function(x,k,exterr=TRUE,alpha=0.05,...){
 format.peaks <- function(peaks,peaks.err,props,props.err,df,alpha=0.05){
     out <- list()
     k <- length(peaks)
-    out$tfact <- stats::qt(1-alpha/2,df)
     out$peaks <- matrix(0,3,k)
     colnames(out$peaks) <- 1:k
     rownames(out$peaks) <- c('t','s[t]','ci[t]')
     out$peaks['t',] <- peaks
     out$peaks['s[t]',] <- peaks.err
-    out$peaks['ci[t]',] <- out$tfact*out$peaks['s[t]',]
+    out$peaks['ci[t]',] <- nfact(alpha)*out$peaks['s[t]',]
     out$props <- matrix(0,2,k)
     colnames(out$props) <- 1:k
     rownames(out$props) <- c('p','s[p]')
@@ -529,10 +526,9 @@ min_age_model <- function(zs,sigdig=2,alpha=0.05){
     out$peaks <- matrix(0,3,1)
     rownames(out$peaks) <- c('t','s[t]','ci[t]')
     df <- length(z)-3
-    out$tfact <- stats::qt(1-alpha/2,df)
     out$peaks['t',] <- fit[1]
     out$peaks['s[t]',] <- sqrt(E[1,1])
-    out$peaks['ci[t]',] <- out$tfact*sqrt(E[1,1])
+    out$peaks['ci[t]',] <- nfact(alpha)*sqrt(E[1,1])
     out
 }
 
