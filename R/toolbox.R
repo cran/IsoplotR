@@ -6,8 +6,11 @@ length.SmNd <- function(x){ nrow(x$x) }
 length.ReOs <- function(x){ nrow(x$x) }
 length.LuHf <- function(x){ nrow(x$x) }
 length.ThU <- function(x){ nrow(x$x) }
-length.fissiontracks <- function(x){ length(x$Ns) }
 length.UThHe <- function(x){ nrow(x) }
+length.fissiontracks <- function(x){
+    if (x$format==1) return(nrow(x$x))
+    else return(length(x$Ns))
+}
 
 roundit <- function(age,err,sigdig=2){
     if (length(age)==1) dat <- c(age,err)
@@ -15,13 +18,15 @@ roundit <- function(age,err,sigdig=2){
     min.err <- min(abs(dat),na.rm=TRUE)
     if (is.na(sigdig)) {
         out <- dat
+    } else if (any(dat<=0, na.rm=TRUE)){
+        out <- signif(dat,sigdig)
     } else {
         nd <- ceiling(log10(abs(dat)))-ceiling(log10(min.err))+sigdig
         rounded <- signif(dat,nd)
-        decimals <- trunc(log10(min.err))+1-sigdig
-        if (decimals<0) nsmall <- abs(decimals)
+        decimals <- trunc(log10(min.err))-sigdig
+        if (decimals<1) nsmall <- abs(decimals)
         else nsmall <- 0
-        out <- format(rounded,nsmall=nsmall,trim=TRUE)
+        out <- format(rounded,digits=max(0,nsmall-1),nsmall=nsmall,trim=TRUE)
     }
     out
 }
