@@ -40,8 +40,28 @@
 #'     confidence intervals
 #' @param transform if \code{TRUE}, plots \eqn{^{234}}U/\eqn{^{238}}U
 #'     vs. Th-U age.
-#' @param detrital apply a detrital Th correction by projecting the
-#'     compositions along an isochron?
+#' @param detritus detrital \eqn{^{230}}Th correction (only applicable
+#'     when \code{x$format} is \code{2} or \code{3}.
+#'
+#' \code{0}: no correction
+#'
+#' \code{1}: project the data along an isochron fit
+#'
+#' \code{2}: correct the data using an assumed initial
+#' \eqn{^{230}}Th/\eqn{^{232}}Th-ratio for the detritus.
+#'
+#' \code{3}: correct the data using the measured present day
+#' \eqn{^{230}}Th/\eqn{^{238}}U, \eqn{^{232}}Th/\eqn{^{238}}U and
+#' \eqn{^{234}}U/\eqn{^{238}}U-ratios in the detritus.
+#' 
+#' @param Th02 2-element vector with the assumed initial
+#'     \eqn{^{230}}Th/\eqn{^{232}}Th-ratio of the detritus and its
+#'     standard error. Only used if \code{detritus==2}
+#' @param Th02U48 9-element vector with the measured composition of
+#'     the detritus, containing \code{X=0/8}, \code{sX}, \code{Y=2/8},
+#'     \code{sY}, \code{Z=4/8}, \code{sZ}, \code{rXY}, \code{rXZ},
+#'     \code{rYZ}. Only used if \code{isochron==FALSE} and
+#'     \code{detritus==3}
 #' @param show.numbers label the error ellipses with the grain
 #'     numbers?
 #' @param levels a vector with additional values to be displayed as
@@ -69,7 +89,7 @@
 #' assumption is correct, then the MSWD value should be approximately
 #' equal to one. There are three strategies to deal with the case
 #' where MSWD>1. The first of these is to assume that the analytical
-#' uncertainties have been underestimated by a factor
+#' uncertainties have been underestipmated by a factor
 #' \eqn{\sqrt{MSWD}}.
 #'
 #' \code{2}: ordinary least squares regression: a second way to deal
@@ -102,24 +122,26 @@
 #'     Geochemistry, 52(1), pp.631-656.
 #' @export
 evolution <- function(x,xlim=NA,ylim=NA,alpha=0.05,transform=FALSE,
-                      detrital=FALSE,show.numbers=FALSE,levels=NA,
+                      detritus=0,Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),
+                      show.numbers=FALSE,levels=NA,
                       clabel="",ellipse.col=c("#00FF0080","#FF000080"),
                       line.col='darksalmon',isochron=FALSE, model=1,
                       exterr=TRUE,sigdig=2,...){
     if (x$format %in% c(1,2)){
         if (transform){
-            U4U8vst(x,detrital=detrital,xlim=xlim,ylim=ylim,
-                    alpha=alpha,show.numbers=show.numbers,
-                    levels=levels,clabel=clabel,
-                    ellipse.col=ellipse.col,show.ellipses=(model!=2),
-                    ...)
+            U4U8vst(x,detritus=detritus,Th02=Th02,Th02U48=Th02U48,
+                    xlim=xlim,ylim=ylim,alpha=alpha,
+                    show.numbers=show.numbers,levels=levels,
+                    clabel=clabel, ellipse.col=ellipse.col,
+                    show.ellipses=(model!=2), ...)
         } else {
-            U4U8vsTh0U8(x,isochron=isochron,model=model,
-                        detrital=detrital,xlim=xlim,ylim=ylim,
-                        alpha=alpha,show.numbers=show.numbers,
-                        levels=levels,clabel=clabel,
-                        ellipse.col=ellipse.col, line.col=line.col,
-                        show.ellipses=(model!=2), ...)
+            U4U8vsTh0U8(x,isochron=isochron,model=model,xlim=xlim,
+                        ylim=ylim,alpha=alpha,
+                        detritus=detritus,Th02=Th02,Th02U48=Th02U48,
+                        show.numbers=show.numbers,levels=levels,
+                        clabel=clabel, ellipse.col=ellipse.col,
+                        line.col=line.col, show.ellipses=(model!=2),
+                        ...)
         }
         if (isochron){
             fit <- isochron.ThU(x,type=3,plot=FALSE,
@@ -128,20 +150,24 @@ evolution <- function(x,xlim=NA,ylim=NA,alpha=0.05,transform=FALSE,
             graphics::title(evolution.title(fit,sigdig=sigdig))
         }
     } else {
-        Th02vsTh0U8(x,isochron=isochron,model=model,xlim=xlim,
+        Th02vsU8Th2(x,isochron=isochron,model=model,xlim=xlim,
                     ylim=ylim,alpha=alpha,show.numbers=show.numbers,
                     exterr=exterr,sigdig=sigdig,levels=levels,
-                    clabel=clabel, ellipse.col=ellipse.col,
+                    clabel=clabel,ellipse.col=ellipse.col,
                     line.col=line.col,...)
     }
 }
 
-U4U8vst <- function(x,detrital=FALSE,xlim=NA,ylim=NA,alpha=0.05,
+U4U8vst <- function(x,detritus=0,Th02=c(0,0),
+                    Th02U48=c(0,0,1e6,0,0,0,0,0,0),
+                    xlim=NA,ylim=NA,alpha=0.05,
                     show.numbers=FALSE,levels=NA,clabel="",
                     ellipse.col=c("#00FF0080","#FF000080"),
                     show.ellipses=TRUE,...){
     ns <- length(x)
-    ta0 <- ThU.age(x,exterr=FALSE,i2i=detrital,cor=FALSE)
+    ta0 <- get.ThU.age.corals(x,exterr=FALSE,cor=FALSE,
+                              detritus=detritus,Th02=Th02,
+                              Th02U48=Th02U48)
     nsd <- 3
     if (any(is.na(xlim))) xlim <- range(c(ta0[,'t']-nsd*ta0[,'s[t]'],
                                           ta0[,'t']+nsd*ta0[,'s[t]']))
@@ -170,13 +196,14 @@ U4U8vst <- function(x,detrital=FALSE,xlim=NA,ylim=NA,alpha=0.05,
     colourbar(z=levels,col=ellipse.col,clabel=clabel)
 }
 
-U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detrital=FALSE,
+U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detritus=0,
+                        Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),
                         xlim=NA,ylim=NA,alpha=0.05,
                         show.numbers=FALSE,levels=NA,clabel="",
                         ellipse.col=c("#00FF0080","#FF000080"),
                         line.col='darksalmon',show.ellipses=TRUE,...){
     ns <- length(x)
-    d <- data2evolution(x,detrital=detrital)
+    d <- data2evolution(x,detritus=detritus,Th02=Th02,Th02U48=Th02U48)
     lim <- evolution.lines(d,xlim=xlim,ylim=ylim,...)
     if (isochron){
         fit <- isochron(x,type=2,plot=FALSE,model=model)
@@ -192,9 +219,9 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detrital=FALSE,
     y0 <- d[,'U234U238']
     if (show.ellipses){
         for (i in 1:ns){
-            diag(covmat) <- d[i,c('errTh230U238','errU234U238')]^2
-            covmat[1,2] <- d[i,'cov']
-            covmat[2,1] <- covmat[1,2]
+            covmat <- cor2cov2(sX=d[i,'sTh230U238'],
+                               sY=d[i,'sU234U238'],
+                               rXY=d[i,'rYZ'])
             ell <- ellipse(x0[i],y0[i],covmat,alpha=alpha)
             graphics::polygon(ell,col=ellipse.cols[i])
             if (show.numbers) graphics::text(x0[i],y0[i],i)
@@ -215,29 +242,36 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detrital=FALSE,
     colourbar(z=levels,col=ellipse.col,clabel=clabel)
 }
 
-Th02vsTh0U8 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
+Th02vsU8Th2 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
                         alpha=0.05,show.numbers=FALSE,exterr=TRUE,
-                        levels=NA,ellipse.col=c("#00FF0080","#FF000080"),
+                        clabel="",levels=NA,
+                        ellipse.col=c("#00FF0080","#FF000080"),
                         sigdig=2,line.col='darksalmon',...){
-    d <- data2evolution(x,isochron=isochron)
-    scatterplot(d$x,xlim=xlim,ylim=ylim,empty=TRUE)
+    d <- data2evolution(x)
+    scatterplot(d,xlim=xlim,ylim=ylim,empty=TRUE)
     ticks <- c(0,1,10,20,50,100,200,300)
     X <- graphics::par('usr')[1:2]
     Y <- X
     graphics::lines(X,Y,col=line.col,...) # equilibrium line
     minY <- graphics::par('usr')[3]
     maxY <- graphics::par('usr')[4]
+    if (isochron){
+        fit <- isochron.ThU(x,type=1,plot=FALSE,exterr=FALSE)
+        Th230Th232_0x <- fit$y0[1]
+    } else {
+        Th230Th232_0x <- 0
+    }
     if (maxY<X[2]) # add infinity symbol for equilibrium line
         graphics::text(maxY,maxY,'\U221E',pos=1,col=line.col)
     else
         graphics::text(X[2],X[2],'\U221E',pos=2,col=line.col)
     for (tick in ticks){ # plot isolines
-        Y <- get.Th230Th232(tick,d$Th230Th232_0x,X)
+        Y <- get.Th230Th232(tick,Th230Th232_0x,X)
         graphics::lines(X,Y,col=line.col,...)
         if (Y[2]<minY){
             # do nothing
         } else if (Y[2]>maxY){ # label below upper margin
-            xtext <- get.U238Th232(tick,d$Th230Th232_0x,maxY)
+            xtext <- get.U238Th232(tick,Th230Th232_0x,maxY)
             ytext <- maxY
             graphics::text(xtext,ytext,tick,pos=1,col=line.col)
         } else { # label to the left of the right margin
@@ -252,7 +286,7 @@ Th02vsTh0U8 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
                      line.col='black',exterr=exterr,sigdig=sigdig,
                      new.plot=FALSE,model=model)
     } else { # plot just the data
-        scatterplot(d$x,alpha=alpha,show.numbers=show.numbers,
+        scatterplot(d,alpha=alpha,show.numbers=show.numbers,
                     levels=levels,ellipse.col=ellipse.col,
                     new.plot=FALSE)
         xlab <- expression(paste(""^"238","U/"^"232","Th"))
@@ -262,6 +296,7 @@ Th02vsTh0U8 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
                                 "232","Th)"[o]^x*" = 0]"))
         graphics::mtext(tit,line=0)
     }
+    colourbar(z=levels,col=ellipse.col,clabel=clabel)
 }
 
 
@@ -319,24 +354,40 @@ evolution.lines <- function(d,xlim=NA,ylim=NA,bty='n',
     maxt <- 400
     tt <- seq(from=0,to=maxt,by=50)
     nsd <- 3
-    if (any(is.na(xlim)))
-        max.dx <- max(d[,'Th230U238']+nsd*d[,'errTh230U238'])
-    else max.dx <- xlim[2] # only used if ylim == NA
-    if (any(is.na(ylim))){
-        max.dy <- max(d[,'U234U238']+nsd*d[,'errU234U238'])
-        a0max <- get.ThU.age(max.dx,0,max.dy,0,0,exterr=FALSE)['48_0']
+    if (any(is.na(xlim))){
+        min.dx <- 0
+        max.dx <- max(d[,'Th230U238']+nsd*d[,'sTh230U238'])
     } else {
+        min.dx <- xlim[1]
+        max.dx <- xlim[2]
+    }
+    if (any(is.na(ylim))){
+        min.dy <- min(d[,'U234U238']-nsd*d[,'sU234U238'])
+        max.dy <- max(d[,'U234U238']+nsd*d[,'sU234U238'])
+        a01 <- get.ThU.age(min.dx,0,min.dy,0,0,exterr=FALSE)['48_0']
+        a02 <- get.ThU.age(min.dx,0,max.dy,0,0,exterr=FALSE)['48_0']
+        a03 <- get.ThU.age(max.dx,0,min.dy,0,0,exterr=FALSE)['48_0']
+        a04 <- get.ThU.age(max.dx,0,max.dy,0,0,exterr=FALSE)['48_0']
+        a0min <- min(a01,a02,a03,a04)
+        a0max <- max(a01,a02,a03,a04)
+    } else {
+        a0min <- ylim[1]
         a0max <- ylim[2]
     }
-    if (any(is.na(xlim)))
-        xlim <- range(pretty(c(0,max(get.Th230U238(tt,a0max)))))
-    a0 <- pretty(c(1,a0max))
+    if ((a0max-a0min)<0.01){
+        a0min <- 0
+        a0max <- 1.5
+    }
+    if (any(is.na(xlim))){
+        xlim <- range(pretty(c(min(get.Th230U238(tt,a0min)),
+                               max(get.Th230U238(tt,a0max)))))
+    }
+    a0 <- pretty(c(a0min,a0max))
     if (any(is.na(ylim))){
         ylim <- range(a0)
-        a0 <- a0[a0>1]
-    }
-    else {
-        a0 <- c(a0[a0>1 & a0<ylim[2]],ylim[2])
+        a0 <- a0[a0>0]
+    } else {
+        a0 <- c(a0[a0>0 & a0<ylim[2]],ylim[2])
     }
     x.lab <- expression(paste(""^"230","Th/"^"238","U"))
     y.lab <- expression(paste(""^"234","U/"^"238","U"))
@@ -358,59 +409,105 @@ evolution.lines <- function(d,xlim=NA,ylim=NA,bty='n',
     rbind(xlim,ylim)
 }
 
-data2evolution <- function(x,detrital=FALSE,isochron=FALSE){
-    out <- list()
-    labels <- c('Th230U238','errTh230U238',
-                'U234U238','errU234U238','cov')
-    if (x$format == 1){
-        ns <- length(x)
-        out <- matrix(0,ns,5)
-        colnames(out) <- labels
-        out[,'Th230U238'] <- x$x[,'Th230Th232']/x$x[,'U238Th232']
-        out[,'U234U238'] <- x$x[,'U234Th232']/x$x[,'U238Th232']
-        J <- matrix(0,2,3)
-        for (i in 1:ns){
-            J[1,1] <- -out[i,'Th230U238']/x$x[i,'U238Th232'] # d/d82
-            J[1,2] <- 0                                      # d/d42
-            J[1,3] <- 1/x$x[i,'U238Th232']                   # d/d02
-            J[2,1] <- -out[i,'U234U238']/x$x[i,'U238Th232']
-            J[2,2] <- 1/x$x[i,'U238Th232']
-            J[2,3] <- 0
-            E <- cor2cov3(x$x[i,'errU238Th232'],x$x[i,'errU234Th232'],
-                          x$x[i,'errTh230Th232'],x$x[i,'rhoXY'],
-                          x$x[i,'rhoXZ'],x$x[i,'rhoYZ'])
-            covmat <- J %*% E %*% t(J)
-            out[i,'errTh230U238'] <- sqrt(covmat[1,1])
-            out[i,'errU234U238'] <- sqrt(covmat[2,2])
-            out[i,'cov'] <- covmat[1,2]
-        }
-    } else if (x$format == 2){
-        xy <- subset(x$x,select=c('Th230U238','errTh230U238',
-                                  'U234U238','errU234U238'))
-        covariance <- x$x[,'errTh230U238']*
-            x$x[,'errU234U238']*x$x[,'rhoYZ']
-        out <- cbind(xy,covariance)
-        colnames(out) <- labels
+data2evolution <- function(x,detritus=0,Th02=c(0,0),
+                           Th02U48=c(0,0,1e6,0,0,0,0,0,0)){
+    ns <- length(x)
+    out <- matrix(0,ns,5)
+    if (x$format %in% c(1,2)){
+        d <- data2tit(x,osmond=TRUE,generic=FALSE) # 2/8 - 4/8 - 0/8
+        out <- Th230correction(d,option=detritus,
+                               dat=x,Th02=Th02,Th02U48=Th02U48)
     } else if (x$format %in% c(3,4)){
-        if (isochron){ # calculate initio 230Th from isochron intercept
-            fit <- isochron.ThU(x,type=1,plot=FALSE,exterr=FALSE)
-            out$x <- fit$d
-            out$Th230Th232_0x <- fit$y0[1]
-            out$Th230Th232_0 <- fit$a[1]
-        } else { # assume no initial 230Th
-            out$x <- data2york(x,type=1)
-            out$Th230Th232_0x <- 0
-            out$Th230Th232_0 <- 0
-        }
-        colnames(out$x) <- c('U238Th232','errU238Th232',
-                             'Th230Th232','errTh230Th232',
-                             'rho')
-    }
-    if (detrital){
-        osmond <- data2tit.ThU(x,osmond=TRUE)
-        fit <- titterington(osmond)
-        out[,'U234U238'] <- out[,'U234U238'] - fit$par['b']*osmond[,'X']
-        out[,'Th230U238'] <- out[,'Th230U238'] - fit$par['B']*osmond[,'X']
+        out <- data2york(x,type=1) # 8/2 - 0/2
+        covariance <- out[,'sX']*out[,'sY']*out[,'rXY']
+        out[,5] <- covariance
+        colnames(out) <- c('U238Th232','errU238Th232',
+                           'Th230Th232','errTh230Th232',
+                           'cov')
     }
     out
+}
+
+# x = table with 'Th230U238','errTh230U238', 'U234U238','errU234U238'
+#                (and 'Th232U238','errTh232U238' if option==2)
+Th230correction <- function(x,option=0,dat=NA,Th02=c(0,0),
+                            Th02U48=c(0,0,1e6,0,0,0,0,0,0)){
+    out <- x
+    if (option==1){
+        out <- Th230correction.isochron(x,dat=dat)
+    } else if (option==2){
+        tt <- get.ThU.age.corals(dat,detritus=2,Th02=Th02)[,'t']
+        out <- Th230correction.assumed.detritus(x,age=tt,Th02=Th02)
+    } else if (option==3){
+        out <- Th230correction.measured.detritus(dat,Th02U48=Th02U48)
+    }
+    out
+}
+Th230correction.isochron <- function(x,dat){
+    osmond <- data2tit.ThU(dat,osmond=TRUE)
+    fit <- titterington(osmond)
+    out <- x
+    out[,'U234U238'] <- x[,'U234U238'] - fit$par['b']*osmond[,'X']
+    out[,'Th230U238'] <- x[,'Th230U238'] - fit$par['B']*osmond[,'X']
+    out
+}
+Th230correction.assumed.detritus <- function(x,age=Inf,Th02=c(0,0)){
+    out <- x
+    l0 <- lambda('Th230')[1]
+    A <- Th02[1]*exp(-l0*age)*x[,'Th232U238']
+    out[,'Th230U238'] <- x[,'Th230U238'] - A
+    dA.dTh02 <- -exp(-l0*age)*x[,'Th232U238']
+    dA.Th2U8 <- -Th02[1]*exp(-l0*age)
+    sA <- errorprop1x2(dA.dTh02,dA.Th2U8,
+                       Th02[2]^2,x[,'sTh232U238']^2,0)
+    out[,'sTh230U238'] <- sqrt(x[,'sTh230U238']^2 + sA^2)         
+    out
+}
+Th230correction.measured.detritus <- function(x,Th02U48=c(0,0,1e6,0,0,0,0,0,0)){
+    osmond <- data2tit.ThU(x,osmond=TRUE,generic=FALSE) # 2/8 - 4/8 - 0/8
+    X1 <- osmond[,'Th232U238']
+    sX1 <- osmond[,'sTh232U238']
+    Y1 <- osmond[,'U234U238']
+    sY1 <- osmond[,'sU234U238']
+    Z1 <- osmond[,'Th230U238']
+    sZ1 <- osmond[,'sTh230U238']
+    rX1Y1 <- osmond[,'rXY']
+    rX1Z1 <- osmond[,'rXZ']
+    rY1Z1 <- osmond[,'rYZ']
+    covX1Y1 <- rX1Y1*sX1*sY1
+    covX1Z1 <- rX1Z1*sX1*sZ1
+    covY1Z1 <- rY1Z1*sY1*sZ1
+    X2 <- Th02U48[3]
+    Y2 <- Th02U48[5]
+    Z2 <- Th02U48[1]
+    sX2 <- Th02U48[4]^2
+    sY2 <- Th02U48[6]^2
+    sZ2 <- Th02U48[2]^2
+    covX2Y2 <- Th02U48[9]*Th02U48[4]*Th02U48[6]
+    covX2Z2 <- Th02U48[7]*Th02U48[2]*Th02U48[4]
+    covY2Z2 <- Th02U48[8]*Th02U48[2]*Th02U48[6]
+    b <- (Y2-Y1)/(X2-X1)
+    B <- (Z2-Z1)/(X2-X1)
+    r1 <- X1/(X2-X1)
+    r2 <- X2/(X2-X1)
+    a <- Y1 - b * X1
+    A <- Z1 - B * X1
+    sa <- sqrt( (b^2)*((r2*sX1)^2+(r1*sX2)^2) +
+                (r2*sY1)^2 + (r1*sY2)^2 -
+                2*r2*b*covX1Y1 - 2*(r1^2)*covX2Y2
+               )
+    sA <- sqrt( (B^2)*((r2*sX1)^2+(r1*sX2)^2) +
+                (r2*sZ1)^2 + (r1*sZ2)^2 -
+                2*r2*B*covX1Z1 - 2*(r1^2)*covX2Z2
+               )
+    covaA <- b*B*((r2*sX1)^2+(r1*sX2)^2) +
+        (r2^2)*(covY1Z1-B*covX1Y1-b*covX1Z1) +
+        (r1^2)*(covY2Z2-B*covX2Y2-b*covX2Z2)
+    out <- osmond
+    out[,'Th230U238'] <- A
+    out[,'sTh230U238'] <- sA
+    out[,'U234U238'] <- a
+    out[,'sU234U238'] <- sa
+    out[,'rYZ'] <- covaA/(sA*sa)
+    out    
 }
