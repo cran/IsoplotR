@@ -36,14 +36,15 @@
 #' OR
 #'
 #' and object of class \code{fissiontracks}, \code{UThHe},
-#' \code{ArAr}, \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{LuHf},
-#' \code{ThU}, \code{PbPb} or \code{UPb}
+#' \code{ArAr}, \code{KCa}, \code{ReOs}, \code{SmNd}, \code{RbSr},
+#' \code{LuHf}, \code{ThU}, \code{PbPb} or \code{UPb}
 #' @param from minimum age limit of the radial scale
 #' @param to maximum age limit of the radial scale
 #' @param t0 central value
 #' @param transformation one of either \code{log}, \code{linear},
-#'     \code{sqrt} or (if \code{x} has class \code{fissiontracks} and
-#'     \code{fissiontracks$type} \eqn{\neq 1}) \code{arcsin}.
+#'     \code{sqrt} or \code{arcsin} (if \code{x} has class
+#'     \code{fissiontracks} and \code{fissiontracks$type} \eqn{\neq
+#'     1}).
 #' @param sigdig the number of significant digits of the numerical
 #'     values reported in the title of the graphical output.
 #' @param show.numbers boolean flag (\code{TRUE} to show grain
@@ -186,12 +187,13 @@ radialplot.UPb <- function(x,from=NA,to=NA,t0=NA,
 }
 #' @param i2i `isochron to intercept': calculates the initial (aka
 #'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-#'     \eqn{^{187}}Os/\eqn{^{188}}Os, \eqn{^{230}}Th/\eqn{^{232}}Th or
-#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
-#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
-#'     stored in \code{settings('iratio',...)}.
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
+#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os,
+#'     \eqn{^{230}}Th/\eqn{^{232}}Th or \eqn{^{176}}Hf/\eqn{^{177}}Hf
+#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
+#'     uses the default values stored in
+#'     \code{settings('iratio',...)}.
 #' @rdname radialplot
 #' @export
 radialplot.PbPb <- function(x,from=NA,to=NA,t0=NA,
@@ -216,6 +218,19 @@ radialplot.ArAr <- function(x,from=NA,to=NA,t0=NA,
                             pch=21,levels=NA,clabel="",
                             bg=c("white","red"),markers=NULL,k=0,
                             exterr=TRUE,i2i=FALSE,alpha=0.05,...){
+    radialplot_helper(x,from=from,to=to,t0=t0,
+                      transformation=transformation,
+                      show.numbers=show.numbers,pch=pch,levels=levels,
+                      clabel=clabel,bg=bg,markers=markers,k=k,
+                      exterr=exterr,i2i=i2i,alpha=alpha,...)
+}
+#' @rdname radialplot
+#' @export
+radialplot.KCa <- function(x,from=NA,to=NA,t0=NA,
+                           transformation='log',show.numbers=FALSE,
+                           pch=21,levels=NA,clabel="",
+                           bg=c("white","red"),markers=NULL,k=0,
+                           exterr=TRUE,i2i=FALSE,alpha=0.05,...){
     radialplot_helper(x,from=from,to=to,t0=t0,
                       transformation=transformation,
                       show.numbers=show.numbers,pch=pch,levels=levels,
@@ -352,27 +367,9 @@ age2radial <- function(x,from=NA,to=NA,t0=NA,transformation='log',
                        bg=c("white","red"),markers=NULL,k=0,
                        i2i=FALSE,alpha=0.05,units='MA',detritus=0,
                        Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
-    if (hasClass(x,'UPb')){
-        tt <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
-                              cutoff.disc=cutoff.disc,exterr=FALSE)
-    } else if (hasClass(x,'PbPb')){
-        tt <- PbPb.age(x,exterr=FALSE)
-    } else if (hasClass(x,'ArAr')){
-        tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'UThHe')){
-        tt <- UThHe.age(x)
-    } else if (hasClass(x,'ReOs')){
-        tt <- ReOs.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'SmNd')){
-        tt <- SmNd.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'RbSr')){
-        tt <- RbSr.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'LuHf')){
-        tt <- LuHf.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'ThU')){
-        tt <- ThU.age(x,exterr=FALSE,i2i=i2i,
-                      detritus=detritus,Th02=Th02,Th02U48=Th02U48)
-    }
+    tt <- get.ages(x,type=type,cutoff.76=cutoff.76,
+                   cutoff.disc=cutoff.disc,i2i=i2i,
+                   detritus=detritus,Th02=Th02,Th02U48=Th02U48)
     radialplot.default(tt,from=from,to=to,t0=t0,
                        transformation=transformation,
                        show.numbers=show.numbers,pch=pch,

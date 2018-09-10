@@ -1,9 +1,9 @@
 #' Calculate and plot isochrons
 #'
-#' Plots cogenetic Ar-Ar, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os, Lu-Hf, U-Th-He
-#' or Th-U data as X-Y scatterplots, fits an isochron curve through
-#' them using the \code{york} function, and computes the corresponding
-#' isochron age, including decay constant uncertainties.
+#' Plots cogenetic Ar-Ar, K-Ca, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os, Lu-Hf,
+#' U-Th-He or Th-U data as X-Y scatterplots, fits an isochron curve
+#' through them using the \code{york} function, and computes the
+#' corresponding isochron age, including decay constant uncertainties.
 #'
 #' @details
 #' Given several aliquots from a single sample, isochrons allow the
@@ -33,15 +33,14 @@
 #' (1979).
 #'
 #' \code{IsoplotR} uses the York et al. (2004) algorithm for its
-#' \eqn{^{40}}Ar/\eqn{^{39}}Ar, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os and Lu-Hf
-#' isochrons. The maximum likelihood algorithm of Titterington and
-#' Halliday (1979) was generalised from two to three dimensions by
-#' Ludwig and Titterington (1994) for U-series disequilibrium dating.
-#' Also this algorithm is implemented in \code{IsoplotR}.  The extent
-#' to which the observed scatter in the data can be explained by the
-#' analytical uncertainties can be assessed using the Mean Square of
-#' the Weighted Deviates (MSWD, McIntyre et al., 1966), which is
-#' defined as:
+#' Ar-Ar, K-Ca, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os and Lu-Hf isochrons. The
+#' maximum likelihood algorithm of Titterington and Halliday (1979)
+#' was generalised from two to three dimensions by Ludwig and
+#' Titterington (1994) for U-series disequilibrium dating.  Also this
+#' algorithm is implemented in \code{IsoplotR}.  The extent to which
+#' the observed scatter in the data can be explained by the analytical
+#' uncertainties can be assessed using the Mean Square of the Weighted
+#' Deviates (MSWD, McIntyre et al., 1966), which is defined as:
 #'
 #' \eqn{MSWD = ([X - \hat{X}] \Sigma_{X}^{-1} [X - \hat{X}]^T)/df}
 #'
@@ -88,8 +87,9 @@
 #'
 #' OR
 #'
-#' an object of class \code{ArAr}, \code{PbPb}, \code{ReOs},
-#' \code{RbSr}, \code{SmNd}, \code{LuHf}, \code{UThHe} or \code{ThU}.
+#' an object of class \code{ArAr}, \code{KCa}, \code{PbPb},
+#' \code{ReOs}, \code{RbSr}, \code{SmNd}, \code{LuHf}, \code{UThHe} or
+#' \code{ThU}.
 #'
 #' @param xlim 2-element vector with the x-axis limits
 #'
@@ -120,6 +120,8 @@
 #'
 #' @param lwd line width
 #'
+#' @param plot if \code{FALSE}, suppresses the graphical output
+#'
 #' @param title add a title to the plot?
 #'
 #' @param model construct the isochron using either:
@@ -133,6 +135,11 @@
 #' \item{Error-weighted least squares with overdispersion term}
 #'
 #' }
+#'
+#' @param xlab text label for the horizontal plot axis
+#' 
+#' @param ylab text label for the vertical plot axis
+#' 
 #' @seealso
 #' \code{\link{york}},
 #' \code{\link{titterington}},
@@ -173,21 +180,21 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                              show.numbers=FALSE,levels=NA,clabel="",
                              ellipse.col=c("#00FF0080","#FF000080"),
                              ci.col='gray80',line.col='black',lwd=1,
-                             title=TRUE,model=1,...){
-    X <- subset(x,select=1:5)
-    colnames(X) <- c('X','sX','Y','sY','rXY')
-    fit <- regression_init(X,model=model,alpha=alpha)
+                             plot=TRUE,title=TRUE,model=1,
+                             xlab='x',ylab='y',...){
+    fit <- regression_init(x,model=model,alpha=alpha)
     fit <- ci_isochron(fit,model=model,alpha=alpha)
-    scatterplot(X,xlim=xlim,ylim=ylim,alpha=alpha,
-                show.ellipses=1*(model!=2),show.numbers=show.numbers,
-                levels=levels,clabel=clabel,ellipse.col=ellipse.col,
-                fit=fit,ci.col=ci.col,line.col=line.col,lwd=lwd)
-    if (title)
-        graphics::title(isochrontitle(fit,sigdig=sigdig),
-                        xlab='X',ylab='Y')
+    if (plot){
+        scatterplot(fit$d,xlim=xlim,ylim=ylim,alpha=alpha,
+                    show.ellipses=1*(model!=2),
+                    show.numbers=show.numbers,levels=levels,
+                    clabel=clabel,ellipse.col=ellipse.col,fit=fit,
+                    ci.col=ci.col,line.col=line.col,lwd=lwd,...)
+        if (title) graphics::title(isochrontitle(fit,sigdig=sigdig),
+                                   xlab=xlab,ylab=ylab)
+    }
+    invisible(fit)
 }
-#' @param plot if \code{FALSE}, suppresses the graphical output
-#'
 #' @param inverse
 #' if \code{FALSE} and \code{x} has class \code{ArAr}, plots
 #'     \eqn{^{40}}Ar/\eqn{^{36}}Ar vs. \eqn{^{39}}Ar/\eqn{^{36}}Ar.
@@ -204,10 +211,9 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' @param exterr propagate external sources of uncertainty
 #' (J, decay constant)?
 #'
-#' @return
-#' If \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
-#' \code{SmNd}, \code{ReOs} or \code{LuHf}, or \code{UThHe}, returns a
-#' list with the following items:
+#' @return If \code{x} has class \code{PbPb}, \code{ArAr}, \code{KCa},
+#'     \code{RbSr}, \code{SmNd}, \code{ReOs} or \code{LuHf}, or
+#'     \code{UThHe}, returns a list with the following items:
 #'
 #' \describe{
 #'
@@ -223,9 +229,10 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' \item{y0}{a four-element list containing:
 #'
 #' \code{y}: the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
-#' \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{187}}Os/\eqn{^{188}}Os,
-#' \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio.
+#' \eqn{^{40}}Ca/\eqn{^{44}}Ca, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
+#' \eqn{^{187}}Os/\eqn{^{188}}Os, \eqn{^{87}}Sr/\eqn{^{87}}Rb,
+#' \eqn{^{143}}Nd/\eqn{^{144}}Nd or \eqn{^{176}}Hf/\eqn{^{177}}Hf
+#' ratio.
 #'
 #' \code{s[y]}: the propagated uncertainty of \code{y}
 #'
@@ -239,9 +246,9 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' \item{age}{a four-element list containing:
 #'
 #' \code{t}: the \eqn{^{207}}Pb/\eqn{^{206}}Pb,
-#' \eqn{^{40}}Ar/\eqn{^{39}}Ar, \eqn{^{187}}Os/\eqn{^{187}}Re,
-#' \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf age.
+#' \eqn{^{40}}Ar/\eqn{^{39}}Ar, \eqn{^{40}}K/\eqn{^{40}}Ca,
+#' \eqn{^{187}}Os/\eqn{^{187}}Re, \eqn{^{87}}Sr/\eqn{^{87}}Rb,
+#' \eqn{^{143}}Nd/\eqn{^{144}}Nd or \eqn{^{176}}Hf/\eqn{^{177}}Hf age.
 #'
 #' \code{s[t]}: the propagated uncertainty of \code{t}
 #'
@@ -406,6 +413,19 @@ isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     }
     invisible(out)
 }
+#' @rdname isochron
+#' @export
+isochron.KCa <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
+                         show.numbers=FALSE,levels=NA,clabel="",
+                         ellipse.col=c("#00FF0080","#FF000080"),
+                         ci.col='gray80',line.col='black',
+                         lwd=1,plot=TRUE,exterr=TRUE,model=1,...){
+    isochron_PD(x,'K40',xlim=xlim,ylim=ylim,alpha=alpha,
+                sigdig=sigdig,show.numbers=show.numbers,
+                levels=levels,clabel=clabel,ellipse.col=ellipse.col,
+                ci.col=ci.col,line.col=line.col,lwd=lwd,
+                plot=plot,exterr=exterr,model=model,bratio=0.895,...)
+}
 #' @param growth add Stacey-Kramers Pb-evolution curve to the plot?
 #' @rdname isochron
 #' @export
@@ -413,7 +433,7 @@ isochron.PbPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           show.numbers=FALSE,levels=NA,clabel="",
                           ellipse.col=c("#00FF0080","#FF000080"),
                           inverse=TRUE,ci.col='gray80',
-                          line.col='black', lwd=1,plot=TRUE,
+                          line.col='black',lwd=1,plot=TRUE,
                           exterr=TRUE,model=1,growth=FALSE,...){
     out <- isochron_init(x,model=model,inverse=inverse,alpha=alpha)
     if (inverse){
@@ -460,8 +480,8 @@ isochron.RbSr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     isochron_PD(x,'Rb87',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
                 levels=levels,clabel=clabel,ellipse.col=ellipse.col,
-                ci.col=ci.col,line.col=line.col,lwd=lwd,plot=plot,exterr=exterr,
-                model=model,...)
+                ci.col=ci.col,line.col=line.col,lwd=lwd,plot=plot,
+                exterr=exterr,model=model,...)
 }
 #' @rdname isochron
 #' @export
@@ -575,7 +595,7 @@ isochron.UThHe <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     }
     invisible(out)
 }
-
+    
 isochron_ThU_3D <- function(x,type=2,model=1,
                             exterr=TRUE,alpha=0.05){
     if (type == 1){
@@ -681,16 +701,17 @@ isochron_PD <- function(x,nuclide,xlim=NA,ylim=NA,alpha=0.05,
                         sigdig=2,show.numbers=FALSE,levels=NA,
                         clabel="",ellipse.col=c("#00FF0080","#FF000080"),
                         ci.col='gray80',line.col='black',lwd=1,
-                        plot=TRUE,exterr=TRUE,model=1,...){
+                        plot=TRUE,exterr=TRUE,model=1,bratio=1,...){
     out <- isochron_init(x,model=model,exterr=exterr,alpha=alpha)
     out$y0[c('y','s[y]')] <- out$a
     out$age[c('t','s[t]')] <- get.PD.age(out$b['b'],out$b['s[b]'],
-                                         nuclide,exterr=exterr)
+                                         nuclide,exterr=exterr,
+                                         bratio=bratio)
     out <- ci_isochron(out,model=model,alpha=alpha)
     if (model==1){
         out$age['disp[t]'] <- out$fact*get.PD.age(out$b['b'],
                               sqrt(out$mswd)*out$b['s[b]'],
-                              nuclide,exterr=exterr)[2]        
+                              nuclide,exterr=exterr,bratio=bratio)[2]
     }
     if (identical(nuclide,'Sm147')){
         x.lab <- quote(''^147*'Sm/'^144*'Nd')
@@ -704,6 +725,9 @@ isochron_PD <- function(x,nuclide,xlim=NA,ylim=NA,alpha=0.05,
     } else if (identical(nuclide,'Lu176')){
         x.lab <- quote(''^176*'Lu/'^177*'Hf')
         y.lab <- quote(''^176*'Lu/'^177*'Hf')
+    } else if (identical(nuclide,'K40')){
+        x.lab <- quote(''^40*'K/'^44*'Ca')
+        y.lab <- quote(''^40*'Ca/'^44*'Ca')
     }
     out$displabel <-
         substitute(a*b*c,list(a='(',b=y.lab,c=')-dispersion = '))
@@ -722,21 +746,26 @@ isochron_PD <- function(x,nuclide,xlim=NA,ylim=NA,alpha=0.05,
 }
 
 isochron_init <- function(x,model=1,inverse=FALSE,alpha=0.05,
-                          osmond=NA,type=2,exterr=TRUE){
-    if (hasClass(x,'ThU') & !is.na(osmond)){ # 3D regression 
+                          osmond=TRUE,type=2,exterr=TRUE,format=1){
+    if (hasClass(x,'ThU') && x$format<3){ # 3D regression 
         d <- data2tit(x,osmond=osmond)
         out <- regression(d,model=model,type="titterington")
-    } else if (hasClass(x,'ThU') & is.na(osmond)){ # 2D regression
+    } else if (hasClass(x,'ThU') && x$format>2){ # 2D regression
         d <- data2york(x,type=type)
         out <- regression(d,model=model,type="york")
     } else if (hasClass(x,'PD')){
-        d <- data2york(x,exterr=exterr,common=FALSE)
+        d <- data2york(x,exterr=exterr)
+        out <- regression(d,model=model)
+    } else if (hasClass(x,'KCa')){
+        d <- data2york(x)
         out <- regression(d,model=model)
     } else {
         d <- data2york(x,inverse=inverse)
         out <- regression(d,model=model)
     }
-    if (model==1){
+    if (hasClass(x,'linear')){
+        # do nothing
+    } else if (model==1){
         out$age <- rep(NA,4)
         out$y0 <- rep(NA,4)
         names(out$age) <- c('t','s[t]','ci[t]','disp[t]')
@@ -760,7 +789,7 @@ isochron_init <- function(x,model=1,inverse=FALSE,alpha=0.05,
 regression_init <- function(X,model=model,alpha=0.05){
     fit <- regression(X,model=model)
     out <- fit
-    out$n <- length(X)
+    out$n <- nrow(X)
     out$displabel <- quote('y-dispersion = ')
     out$y0label <- quote('y-intercept = ')
     if (model==1){

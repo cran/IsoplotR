@@ -6,6 +6,7 @@
 \alias{age.UPb}
 \alias{age.PbPb}
 \alias{age.ArAr}
+\alias{age.KCa}
 \alias{age.UThHe}
 \alias{age.fissiontracks}
 \alias{age.ThU}
@@ -27,6 +28,9 @@ age(x, ...)
   i = NA, sigdig = NA, ...)
 
 \method{age}{ArAr}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE,
+  i = NA, sigdig = NA, ...)
+
+\method{age}{KCa}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE,
   i = NA, sigdig = NA, ...)
 
 \method{age}{UThHe}(x, isochron = FALSE, central = FALSE, i = NA,
@@ -63,6 +67,9 @@ error, or the spontaneous and induced track densities \code{Ns} and
 \item a four element vector containing \code{Ar40Ar39},
 \code{s[Ar40Ar39]}, \code{J}, \code{s[J]},
 
+\item a two element vector containing \code{K40Ca40} and
+\code{s[K40Ca40]},
+
 \item a six element vector containing \code{U}, \code{s[U]}, \code{Th},
 \code{s[Th]}, \code{He} and \code{s[He]},
 
@@ -89,17 +96,16 @@ error, or the spontaneous and induced track densities \code{Ns} and
 
 OR
 
-\itemize{
-\item an object of class \code{UPb}, \code{PbPb}, \code{ArAr}, \code{ThU},
-\code{RbSr}, \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{UThHe} or
-\code{fissiontracks}.
-}}
+\itemize{ \item an object of class \code{UPb}, \code{PbPb},
+\code{ArAr}, \code{KCa}, \code{ThU}, \code{RbSr}, \code{SmNd},
+\code{ReOs}, \code{LuHf}, \code{UThHe} or \code{fissiontracks}.  }}
 
 \item{...}{additional arguments}
 
-\item{method}{one of either \code{'U238-Pb206'}, \code{'U235-Pb207'},
-\code{'Pb207-Pb206'}, \code{'Ar-Ar'}, \code{'Th-U'}, \code{'Re-Os'},
-\code{'Sm-Nd'}, \code{'Rb-Sr'}, \code{'Lu-Hf'}, \code{'U-Th-He'} or
+\item{method}{one of either \code{'U238-Pb206'},
+\code{'U235-Pb207'}, \code{'Pb207-Pb206'}, \code{'Ar-Ar'},
+\code{'K-Ca'}, \code{'Th-U'}, \code{'Re-Os'}, \code{'Sm-Nd'},
+\code{'Rb-Sr'}, \code{'Lu-Hf'}, \code{'U-Th-He'} or
 \code{'fissiontracks'}}
 
 \item{exterr}{propagate the external (decay constant and
@@ -163,14 +169,14 @@ together (\code{isochron=TRUE}).}
 
 \item{i2i}{`isochron to intercept': calculates the initial (aka
 `inherited', `excess', or `common')
-\eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-\eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-uses the default values stored in
-\code{settings('iratio',...)}. When applied to data of class
-\code{ThU}, setting \code{i2i} to \code{TRUE} applies a
-detrital Th-correction.}
+\eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
+\eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+\eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
+\eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
+fit. Setting \code{i2i} to \code{FALSE} uses the default values
+stored in \code{settings('iratio',...)}. When applied to data
+of class \code{ThU}, setting \code{i2i} to \code{TRUE} applies
+a detrital Th-correction.}
 
 \item{central}{logical flag indicating whether each analysis should
 be considered separately (\code{central=FALSE}) or a central
@@ -178,7 +184,7 @@ age should be calculated from all analyses together
 (\code{central=TRUE}).}
 
 \item{detritus}{detrital \eqn{^{230}}Th correction (only applicable
-    when \code{x$format == 1} or \code{2}.
+    when \code{x$format = 1} or \code{2}).
 
 \code{0}: no correction
 
@@ -211,21 +217,22 @@ the geochronometer given by \code{method} and its standard error.
 \item if \code{x} has class \code{UPb} and \code{type=1}, returns a
 table with the following columns: \code{t.75}, \code{err[t.75]},
 \code{t.68}, \code{err[t.68]}, \code{t.76}, \code{err[t.76]},
-\code{t.conc}, \code{err[t.conc]}, containing the
-\eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
+\code{t.conc}, \code{err[t.conc]}, \code{err[p.conc]}, containing
+the \eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
 \eqn{^{206}}Pb/\eqn{^{238}}U-age and standard error, the
-\eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, and the
-single grain concordia age and standard error, respectively.
+\eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, the single
+grain concordia age and standard error, and the p-value for
+concordance, respectively.
 
 \item if \code{x} has class \code{UPb} and \code{type=2, 3, 4} or
 \code{5}, returns the output of the \code{\link{concordia}}
 function.
 
-\item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
-\code{SmNd}, \code{ReOs}, \code{LuHf}, \code{ThU} or \code{UThHe}
-and \code{isochron=FALSE}, returns a table of Pb-Pb, Ar-Ar, Rb-Sr,
-Sm-Nd, Re-Os, Lu-Hf, Th-U or U-Th-He ages and their standard
-errors.
+\item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{KCa},
+\code{RbSr}, \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{ThU} or
+\code{UThHe} and \code{isochron=FALSE}, returns a table of Pb-Pb,
+Ar-Ar, K-Ca, Rb-Sr, Sm-Nd, Re-Os, Lu-Hf, Th-U or U-Th-He ages and
+their standard errors.
 
 \item if \code{x} has class \code{ThU} and \code{isochron=FALSE},
 returns a 5-column table with the Th-U ages, their standard errors,
@@ -233,9 +240,9 @@ the initial \eqn{^{234}}U/\eqn{^{238}}U-ratios, their standard errors,
 and the correlation coefficient between the ages and the initial
 ratios.
 
-\item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
-\code{SmNd}, \code{ReOs}, \code{LuHf}, \code{UThHe} or \code{ThU}
-and \code{isochron=TRUE}, returns the output of the
+\item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{KCa},
+\code{RbSr}, \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{UThHe} or
+\code{ThU} and \code{isochron=TRUE}, returns the output of the
 \code{\link{isochron}} function.
 
 \item if \code{x} has class \code{fissiontracks} and
@@ -249,7 +256,7 @@ and \code{central=TRUE}, returns the output of the
 }
 }
 \description{
-Calculates U-Pb, Pb-Pb, Ar-Ar, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf, U-Th-He,
+Calculates U-Pb, Pb-Pb, Ar-Ar, K-Ca, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf, U-Th-He,
 Th-U and fission track ages and propagates their analytical
 uncertainties. Includes options for single grain, isochron and
 concordia ages.

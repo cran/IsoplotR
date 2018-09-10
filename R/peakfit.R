@@ -31,10 +31,11 @@
 #' age model), but truncated at this discrete value (Van der Touw et
 #' al., 1997).
 #'
-#' @param x either an \code{[n x 2]} matrix with measurements and their
-#'     standard errors, or an object of class \code{fissiontracks},
-#'     \code{UPb}, \code{PbPb}, \code{ArAr}, \code{ReOs}, \code{SmNd},
-#'     \code{RbSr}, \code{LuHf}, \code{ThU} or \code{UThHe}
+#' @param x either an \code{[n x 2]} matrix with measurements and
+#'     their standard errors, or an object of class
+#'     \code{fissiontracks}, \code{UPb}, \code{PbPb}, \code{ArAr},
+#'     \code{KCa}, \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{LuHf},
+#'     \code{ThU} or \code{UThHe}
 #' @param k the number of discrete age components to be
 #'     sought. Setting this parameter to \code{'auto'} automatically
 #'     selects the optimal number of components (up to a maximum of 5)
@@ -124,7 +125,8 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
     if (x$format == 1 & !identical(k,'min')){
         out <- binomial.mixtures(x,k,exterr=exterr,alpha=alpha,...)
     }  else if (x$format == 3){
-        out <- ages2peaks(x,k,log=log,alpha=alpha)
+        tt <- get.ages(x)
+        out <- peakfit.default(tt,k=k,log=log,alpha=alpha)
     } else {
         out <- peakfit_helper(x,k=k,sigdig=sigdig,log=log,
                               exterr=exterr,alpha=alpha,...)
@@ -162,14 +164,14 @@ peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,
 }
 #' @param i2i `isochron to intercept': calculates the initial (aka
 #'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-#'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-#'     uses the default values stored in
-#'     \code{settings('iratio',...)}. When applied to data of class
-#'     \code{ThU}, setting \code{i2i} to \code{TRUE} applies a
-#'     detrital Th-correction.
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
+#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
+#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}. When applied to data
+#'     of class \code{ThU}, setting \code{i2i} to \code{TRUE} applies
+#'     a detrital Th-correction.
 #' @rdname peakfit
 #' @export
 peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,
@@ -180,6 +182,13 @@ peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,
 #' @rdname peakfit
 #' @export
 peakfit.ArAr <- function(x,k=1,exterr=TRUE,sigdig=2,
+                         log=TRUE,i2i=FALSE,alpha=0.05,...){
+    peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
+                   log=log,i2i=i2i,alpha=alpha,...)
+}
+#' @rdname peakfit
+#' @export
+peakfit.KCa <- function(x,k=1,exterr=TRUE,sigdig=2,
                          log=TRUE,i2i=FALSE,alpha=0.05,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,i2i=i2i,alpha=alpha,...)
@@ -253,12 +262,13 @@ peakfit_helper <- function(x,k=1,type=4,cutoff.76=1100,
                            Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
     if (k<1) return(NULL)
     if (identical(k,'auto'))
-        k <- BIC_fit(x,5,log=log,type=type, cutoff.76=cutoff.76,
+        k <- BIC_fit(x,5,log=log,type=type,cutoff.76=cutoff.76,
                      cutoff.disc=cutoff.disc,detritus=detritus,
                      Th02=Th02,Th02U48=Th02U48)
-    fit <- ages2peaks(x,k=k,log=log,i2i=i2i,type=type,
-                      cutoff.76=cutoff.76,cutoff.disc=cutoff.disc,
-                      alpha=alpha,detritus=detritus,Th02=Th02,Th02U48=Th02U48)
+    tt <- get.ages(x,i2i=i2i,type=type,cutoff.76=cutoff.76,
+                   cutoff.disc=cutoff.disc,detritus=detritus,
+                   Th02=Th02,Th02U48=Th02U48)
+    fit <- peakfit.default(tt,k=k,sigdig=sigdig,log=log,alpha=alpha)
     if (exterr){
         if (identical(k,'min')) numpeaks <- 1
         else numpeaks <- k
@@ -270,36 +280,6 @@ peakfit_helper <- function(x,k=1,type=4,cutoff.76=1100,
     }
     fit$legend <- peaks2legend(fit,sigdig=sigdig,k=k)
     fit
-}
-
-ages2peaks <- function(x,k=1,type=4,cutoff.76=1100,
-                       cutoff.disc=c(-15,5),log=TRUE,i2i=FALSE,
-                       alpha=0.05,detritus=0,Th02=c(0,0),
-                       Th02U48=c(0,0,1e6,0,0,0,0,0,0)){
-    if (hasClass(x,'UPb')){
-        tt <- filter.UPb.ages(x,type,cutoff.76,
-                              cutoff.disc,exterr=FALSE)
-    } else if (hasClass(x,'PbPb')){
-        tt <- PbPb.age(x,exterr=FALSE)
-    } else if (hasClass(x,'ArAr')){
-        tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'UThHe')){
-        tt <- UThHe.age(x)
-    } else if (hasClass(x,'ReOs')){
-        tt <- ReOs.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'SmNd')){
-        tt <- SmNd.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'RbSr')){
-        tt <- RbSr.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'LuHf')){
-        tt <- LuHf.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'fissiontracks')){
-        tt <- fissiontrack.age(x,exterr=FALSE)
-    } else if (hasClass(x,'ThU')){
-        tt <- ThU.age(x,exterr=FALSE,i2i=i2i,detritus=detritus,
-                      Th02=Th02,Th02U48=Th02U48)
-    }
-    peakfit.default(tt,k=k,log=log,alpha=alpha)
 }
 
 get.peakfit.covmat <- function(k,pii,piu,aiu,biu){
@@ -506,10 +486,11 @@ theta2age <- function(x,theta,beta.var,exterr=TRUE){
 
 BIC_fit <- function(x,max.k,type=4,cutoff.76=1100,
                     cutoff.disc=c(-15,5),exterr=TRUE,
-                    detritus=0,Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
+                    detritus=0,Th02=c(0,0),
+                    Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
     n <- length(x)
     BIC <- Inf
-    out <- tryCatch({
+    tryCatch({
         for (k in 1:max.k){
             fit <- peakfit(x,k,type=type,cutoff.76=cutoff.76,
                            cutoff.disc=cutoff.disc,exterr=exterr,
@@ -522,10 +503,10 @@ BIC_fit <- function(x,max.k,type=4,cutoff.76=1100,
                 return(k-1)
             }
         }
+        return(k)
     },error = function(e){
         return(k-1)
-    })
-    out
+    }) 
 }
 
 # Simple 3-parameter Normal model (Section 6.11 of Galbraith, 2005)

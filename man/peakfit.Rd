@@ -7,6 +7,7 @@
 \alias{peakfit.UPb}
 \alias{peakfit.PbPb}
 \alias{peakfit.ArAr}
+\alias{peakfit.KCa}
 \alias{peakfit.ReOs}
 \alias{peakfit.SmNd}
 \alias{peakfit.RbSr}
@@ -33,6 +34,9 @@ peakfit(x, ...)
 \method{peakfit}{ArAr}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
   i2i = FALSE, alpha = 0.05, ...)
 
+\method{peakfit}{KCa}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
+  i2i = FALSE, alpha = 0.05, ...)
+
 \method{peakfit}{ReOs}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE,
   i2i = TRUE, alpha = 0.05, ...)
 
@@ -53,10 +57,11 @@ peakfit(x, ...)
   ...)
 }
 \arguments{
-\item{x}{either an \code{[n x 2]} matrix with measurements and their
-standard errors, or an object of class \code{fissiontracks},
-\code{UPb}, \code{PbPb}, \code{ArAr}, \code{ReOs}, \code{SmNd},
-\code{RbSr}, \code{LuHf}, \code{ThU} or \code{UThHe}}
+\item{x}{either an \code{[n x 2]} matrix with measurements and
+their standard errors, or an object of class
+\code{fissiontracks}, \code{UPb}, \code{PbPb}, \code{ArAr},
+\code{KCa}, \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{LuHf},
+\code{ThU} or \code{UThHe}}
 
 \item{...}{optional arguments (not used)}
 
@@ -100,14 +105,14 @@ between the \eqn{^{206}}Pb/\eqn{^{238}}U and
 
 \item{i2i}{`isochron to intercept': calculates the initial (aka
 `inherited', `excess', or `common')
-\eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-\eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-uses the default values stored in
-\code{settings('iratio',...)}. When applied to data of class
-\code{ThU}, setting \code{i2i} to \code{TRUE} applies a
-detrital Th-correction.}
+\eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
+\eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+\eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
+\eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
+fit. Setting \code{i2i} to \code{FALSE} uses the default values
+stored in \code{settings('iratio',...)}. When applied to data
+of class \code{ThU}, setting \code{i2i} to \code{TRUE} applies
+a detrital Th-correction.}
 
 \item{detritus}{detrital \eqn{^{230}}Th correction (only applicable
     when \code{x$format == 1} or \code{2}.

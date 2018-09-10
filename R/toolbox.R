@@ -21,12 +21,8 @@ roundit <- function(age,err,sigdig=2){
     } else if (any(dat<=0, na.rm=TRUE)){
         out <- signif(dat,sigdig)
     } else {
-        nd <- ceiling(log10(abs(dat)))-ceiling(log10(min.err))+sigdig
-        rounded <- signif(dat,nd)
-        decimals <- trunc(log10(min.err))-sigdig
-        if (decimals<1) nsmall <- abs(decimals)
-        else nsmall <- 0
-        out <- format(rounded,digits=max(0,nsmall-1),nsmall=nsmall,trim=TRUE)
+        nsmall <- max(0,-(trunc(log10(min.err))-sigdig))
+        out <- format(dat,digits=sigdig,nsmall=nsmall,trim=TRUE)
     }
     out
 }
@@ -186,6 +182,13 @@ errorprop1x2 <- function(J1,J2,E11,E22,E12){
     sqrt(E11*J1^2 + 2*E12*J1*J2 + E22*J2^2)
 }
 
+quotient <- function(X,sX,Y,sY,rXY){
+    YX <- Y/X
+    sYX <- errorprop1x2(J1=(-Y/X^2),J2=(1/X),
+                        E11=(sX^2),E22=(sY^2),E12=(rXY*sX*sY))
+    cbind(YX,sYX)
+}
+
 hasClass <- function(x,classname){
     classname %in% class(x)
 }
@@ -226,7 +229,7 @@ validLevels <- function(levels){
 }
 
 colourbar <- function(z=c(0,1),col=c("#00FF0080","#FF000080"),
-                      strip.width=0.02,clabel=""){
+                      strip.width=0.02,clabel="",cex=1){
     if (!validLevels(z)) return()
     ucoord <- graphics::par()$usr
     plotwidth <- (ucoord[2]-ucoord[1])
@@ -247,7 +250,7 @@ colourbar <- function(z=c(0,1),col=c("#00FF0080","#FF000080"),
     graphics::par(new=T)
     graphics::plot(rep(xe,length(z)),z,type='n',axes=F,xlab=NA,ylab=NA)
     graphics::axis(side=4)
-    graphics::mtext(text=clabel,side=3,adj=1)
+    graphics::mtext(text=clabel,side=3,adj=1,cex=cex)
 }
 
 plot_points <- function(x,y,bg='white',show.numbers=FALSE,...){

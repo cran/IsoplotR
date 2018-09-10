@@ -1,6 +1,6 @@
 #' Calculate isotopic ages
 #'
-#' Calculates U-Pb, Pb-Pb, Ar-Ar, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf, U-Th-He,
+#' Calculates U-Pb, Pb-Pb, Ar-Ar, K-Ca, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf, U-Th-He,
 #' Th-U and fission track ages and propagates their analytical
 #' uncertainties. Includes options for single grain, isochron and
 #' concordia ages.
@@ -15,6 +15,9 @@
 #'
 #' \item a four element vector containing \code{Ar40Ar39},
 #' \code{s[Ar40Ar39]}, \code{J}, \code{s[J]},
+#'
+#' \item a two element vector containing \code{K40Ca40} and
+#' \code{s[K40Ca40]},
 #'
 #' \item a six element vector containing \code{U}, \code{s[U]}, \code{Th},
 #' \code{s[Th]}, \code{He} and \code{s[He]},
@@ -42,15 +45,14 @@
 #'
 #' OR
 #'
-#' \itemize{
-#' \item an object of class \code{UPb}, \code{PbPb}, \code{ArAr}, \code{ThU},
-#' \code{RbSr}, \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{UThHe} or
-#' \code{fissiontracks}.
-#' }
+#' \itemize{ \item an object of class \code{UPb}, \code{PbPb},
+#' \code{ArAr}, \code{KCa}, \code{ThU}, \code{RbSr}, \code{SmNd},
+#' \code{ReOs}, \code{LuHf}, \code{UThHe} or \code{fissiontracks}.  }
 #'
-#' @param method one of either \code{'U238-Pb206'}, \code{'U235-Pb207'},
-#'     \code{'Pb207-Pb206'}, \code{'Ar-Ar'}, \code{'Th-U'}, \code{'Re-Os'},
-#'     \code{'Sm-Nd'}, \code{'Rb-Sr'}, \code{'Lu-Hf'}, \code{'U-Th-He'} or
+#' @param method one of either \code{'U238-Pb206'},
+#'     \code{'U235-Pb207'}, \code{'Pb207-Pb206'}, \code{'Ar-Ar'},
+#'     \code{'K-Ca'}, \code{'Th-U'}, \code{'Re-Os'}, \code{'Sm-Nd'},
+#'     \code{'Rb-Sr'}, \code{'Lu-Hf'}, \code{'U-Th-He'} or
 #'     \code{'fissiontracks'}
 #' @param exterr propagate the external (decay constant and
 #'     calibration factor) uncertainties?
@@ -73,6 +75,8 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
         out <- get.Pb207Pb206.age(x[1],x[2],exterr)
     } else if (identical(method,'Ar-Ar')){
         out <- get.ArAr.age(x[1],x[2],x[3],x[4],exterr)
+    } else if (identical(method,'K-Ca')){
+        out <- get.KCa.age(x[1],x[2],exterr)
     } else if (identical(method,'Re-Os')){
         out <- get.ReOs.age(x[1],x[2],exterr)
     } else if (identical(method,'Rb-Sr')){
@@ -142,21 +146,22 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item if \code{x} has class \code{UPb} and \code{type=1}, returns a
 #' table with the following columns: \code{t.75}, \code{err[t.75]},
 #' \code{t.68}, \code{err[t.68]}, \code{t.76}, \code{err[t.76]},
-#' \code{t.conc}, \code{err[t.conc]}, containing the
-#' \eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
+#' \code{t.conc}, \code{err[t.conc]}, \code{err[p.conc]}, containing
+#' the \eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
 #' \eqn{^{206}}Pb/\eqn{^{238}}U-age and standard error, the
-#' \eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, and the
-#' single grain concordia age and standard error, respectively.
+#' \eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, the single
+#' grain concordia age and standard error, and the p-value for
+#' concordance, respectively.
 #'
 #' \item if \code{x} has class \code{UPb} and \code{type=2, 3, 4} or
 #' \code{5}, returns the output of the \code{\link{concordia}}
 #' function.
 #'
-#' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
-#' \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{ThU} or \code{UThHe}
-#' and \code{isochron=FALSE}, returns a table of Pb-Pb, Ar-Ar, Rb-Sr,
-#' Sm-Nd, Re-Os, Lu-Hf, Th-U or U-Th-He ages and their standard
-#' errors.
+#' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{KCa},
+#' \code{RbSr}, \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{ThU} or
+#' \code{UThHe} and \code{isochron=FALSE}, returns a table of Pb-Pb,
+#' Ar-Ar, K-Ca, Rb-Sr, Sm-Nd, Re-Os, Lu-Hf, Th-U or U-Th-He ages and
+#' their standard errors.
 #'
 #' \item if \code{x} has class \code{ThU} and \code{isochron=FALSE},
 #' returns a 5-column table with the Th-U ages, their standard errors,
@@ -164,9 +169,9 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' and the correlation coefficient between the ages and the initial
 #' ratios.
 #'
-#' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{RbSr},
-#' \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{UThHe} or \code{ThU}
-#' and \code{isochron=TRUE}, returns the output of the
+#' \item if \code{x} has class \code{PbPb}, \code{ArAr}, \code{KCa},
+#' \code{RbSr}, \code{SmNd}, \code{ReOs}, \code{LuHf}, \code{UThHe} or
+#' \code{ThU} and \code{isochron=TRUE}, returns the output of the
 #' \code{\link{isochron}} function.
 #'
 #' \item if \code{x} has class \code{fissiontracks} and
@@ -196,10 +201,14 @@ age.UPb <- function(x,type=1,wetherill=TRUE,exterr=TRUE,i=NA,
         X <- common.Pb.correction(x,option=common.Pb)
     else
         X <- x
-    if (type==1)
+    if (type==1){
         out <- UPb.age(X,exterr=exterr,i=i,sigdig=sigdig,...)
-    else if (type %in% c(2,3,4))
-        out <- concordia(X,wetherill=wetherill,exterr=exterr,show.age=type-1)
+    } else if (type==2){
+        out <- concordia.age(X,wetherill=wetherill,exterr=exterr)
+    } else if (type %in% c(3,4,5)){
+        out <- concordia.intersection.ludwig(x,wetherill=wetherill,
+                                             exterr=exterr,model=type-2)
+    }
     out
 }
 #' @rdname age
@@ -217,26 +226,35 @@ age.PbPb <- function(x,isochron=TRUE,common.Pb=1,exterr=TRUE,i=NA,sigdig=NA,...)
 }
 #' @param J two-element vector with the J-factor and its standard
 #'     error.
+#' 
 #' @param isochron logical flag indicating whether each Ar-Ar analysis
 #'     should be considered separately (\code{isochron=FALSE}) or an
 #'     isochron age should be calculated from all Ar-Ar analyses
 #'     together (\code{isochron=TRUE}).
+#' 
 #' @param i2i `isochron to intercept': calculates the initial (aka
 #'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-#'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
-#'     uses the default values stored in
-#'     \code{settings('iratio',...)}. When applied to data of class
-#'     \code{ThU}, setting \code{i2i} to \code{TRUE} applies a
-#'     detrital Th-correction.
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
+#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
+#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
+#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
+#'     stored in \code{settings('iratio',...)}. When applied to data
+#'     of class \code{ThU}, setting \code{i2i} to \code{TRUE} applies
+#'     a detrital Th-correction.
 #'
 #' @rdname age
 #' @export
 age.ArAr <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
     if (isochron) out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
     else out <- ArAr.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
+    out
+}
+#' @rdname age
+#' @export
+age.KCa <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
+    if (isochron) out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
+    else out <- KCa.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
     out
 }
 #' @param central logical flag indicating whether each analysis should
@@ -263,7 +281,7 @@ age.fissiontracks <- function(x,central=FALSE,i=NA,sigdig=NA,exterr=TRUE,...){
     out
 }
 #' @param detritus detrital \eqn{^{230}}Th correction (only applicable
-#'     when \code{x$format == 1} or \code{2}.
+#'     when \code{x$format = 1} or \code{2}).
 #'
 #' \code{0}: no correction
 #'
@@ -343,6 +361,9 @@ add.exterr <- function(x,tt,st,cutoff.76=1100,type=4){
     } else if (hasClass(x,'ArAr')){
         R <- get.ArAr.ratio(tt,st,x$J[1],0,exterr=FALSE)
         out <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=TRUE)
+    } else if (hasClass(x,'KCa')){
+        R <- get.KCa.ratio(tt,st,exterr=FALSE)
+        out <- get.KCa.age(R[1],R[2],exterr=TRUE)
     } else if (hasClass(x,'ReOs')){
         R <- get.ReOs.ratio(tt,st,exterr=FALSE)
         out <- get.ReOs.age(R[1],R[2],exterr=TRUE)
@@ -357,6 +378,37 @@ add.exterr <- function(x,tt,st,cutoff.76=1100,type=4){
         out <- get.LuHf.age(R[1],R[2],exterr=TRUE)
     } else if (hasClass(x,'fissiontracks')){
         out[2] <- tt * sqrt( (x$zeta[2]/x$zeta[1])^2 + (st/tt)^2 )
+    }
+    out
+}
+
+get.ages <- function(x,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
+                     i2i=FALSE, detritus=0,Th02=c(0,0),
+                     Th02U48=c(0,0,1e6,0,0,0,0,0,0)){
+    if (hasClass(x,'UPb')){
+        out <- filter.UPb.ages(x,type,cutoff.76,
+                               cutoff.disc,exterr=FALSE)
+    } else if (hasClass(x,'PbPb')){
+        out <- PbPb.age(x,exterr=FALSE)
+    } else if (hasClass(x,'ArAr')){
+        out <- ArAr.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'KCa')){
+        out <- KCa.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'UThHe')){
+        out <- UThHe.age(x)
+    } else if (hasClass(x,'ReOs')){
+        out <- ReOs.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'SmNd')){
+        out <- SmNd.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'RbSr')){
+        out <- RbSr.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'LuHf')){
+        out <- LuHf.age(x,exterr=FALSE,i2i=i2i)
+    } else if (hasClass(x,'fissiontracks')){
+        out <- fissiontrack.age(x,exterr=FALSE)
+    } else if (hasClass(x,'ThU')){
+        out <- ThU.age(x,exterr=FALSE,i2i=i2i,detritus=detritus,
+                       Th02=Th02,Th02U48=Th02U48)
     }
     out
 }

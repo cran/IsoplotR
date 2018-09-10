@@ -49,12 +49,13 @@
 #'
 #' @param x a two column matrix of values (first column) and their
 #'     standard errors (second column) OR an object of class
-#'     \code{UPb}, \code{PbPb}, \code{ArAr}, \code{ReOs}, \code{SmNd},
-#'     \code{RbSr}, \code{LuHf}, \code{ThU}, \code{fissiontracks} or
-#'     \code{UThHe}
+#'     \code{UPb}, \code{PbPb}, \code{ArAr}, \code{KCa}, \code{ReOs},
+#'     \code{SmNd}, \code{RbSr}, \code{LuHf}, \code{ThU},
+#'     \code{fissiontracks} or \code{UThHe}
 #' @param random.effects if \code{TRUE}, computes the weighted mean
 #'     using a random effects model with two parameters: the mean and
-#'     the dispersion. This is akin to a `model-3' isochron regression.
+#'     the dispersion. This is akin to a `model-3' isochron
+#'     regression.
 #' 
 #'     if \code{FALSE}, attributes any excess dispersion to an
 #'     underestimation of the analytical uncertainties. This akin to a
@@ -228,12 +229,13 @@ weightedmean.PbPb <- function(x,random.effects=TRUE,
 }
 #' @param i2i `isochron to intercept': calculates the initial (aka
 #'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-#'     \eqn{^{187}}Os/\eqn{^{188}}Os, \eqn{^{230}}Th/\eqn{^{232}}Th or
-#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
-#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
-#'     stored in \code{settings('iratio',...)}.
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
+#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
+#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os,
+#'     \eqn{^{230}}Th/\eqn{^{232}}Th or \eqn{^{176}}Hf/\eqn{^{177}}Hf
+#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
+#'     uses the default values stored in
+#'     \code{settings('iratio',...)}.
 #' @param detritus detrital \eqn{^{230}}Th correction (only applicable
 #'     when \code{x$format == 1} or \code{2}.
 #'
@@ -280,6 +282,21 @@ weightedmean.ArAr <- function(x,random.effects=TRUE,
                               outlier.col=rgb(0,1,1,0.5),sigdig=2,
                               alpha=0.05,exterr=TRUE,ranked=FALSE,
                               i2i=FALSE,...){
+    weightedmean_helper(x,random.effects=random.effects,
+                        detect.outliers=detect.outliers,plot=plot,
+                        from=from,to=to,rect.col=rect.col,
+                        outlier.col=outlier.col,sigdig=sigdig,
+                        alpha=alpha,exterr=exterr,i2i=i2i,
+                        units='Ma',ranked=ranked,...)
+}
+#' @rdname weightedmean
+#' @export
+weightedmean.KCa <- function(x,random.effects=TRUE,
+                             detect.outliers=TRUE,plot=TRUE,
+                             from=NA,to=NA,rect.col=rgb(0,1,0,0.5),
+                             outlier.col=rgb(0,1,1,0.5),sigdig=2,
+                             alpha=0.05,exterr=TRUE,ranked=FALSE,
+                             i2i=FALSE,...){
     weightedmean_helper(x,random.effects=random.effects,
                         detect.outliers=detect.outliers,plot=plot,
                         from=from,to=to,rect.col=rect.col,
@@ -411,26 +428,9 @@ weightedmean_helper <- function(x,random.effects=TRUE,detect.outliers=TRUE,
                                 ranked=FALSE,i2i=FALSE,common.Pb=1,
                                 units='',detritus=0,Th02=c(0,0),
                                 Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
-    if (hasClass(x,'UPb')){
-        tt <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
-                              cutoff.disc=cutoff.disc,exterr=FALSE)
-    } else if (hasClass(x,'PbPb')){
-        tt <- PbPb.age(x,exterr=FALSE)
-    } else if (hasClass(x,'ThU')){
-        tt <- ThU.age(x,exterr=FALSE,i2i=i2i,detritus=detritus,
-                      Th02=Th02,Th02U48=Th02U48)
-        exterr <- FALSE
-    } else if (hasClass(x,'ArAr')){
-        tt <- ArAr.age(x,jcu=FALSE,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'ReOs')){
-        tt <- ReOs.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'SmNd')){
-        tt <- SmNd.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'RbSr')){
-        tt <- RbSr.age(x,exterr=FALSE,i2i=i2i)
-    } else if (hasClass(x,'LuHf')){
-        tt <- LuHf.age(x,exterr=FALSE,i2i=i2i)
-    }
+    tt <- get.ages(x,type=type,cutoff.76=cutoff.76,
+                   cutoff.disc=cutoff.disc,i2i=i2i,
+                   detritus=detritus,Th02=Th02,Th02U48=Th02U48)
     fit <- weightedmean.default(tt,random.effects=random.effects,
                                 detect.outliers=detect.outliers,
                                 alpha=alpha,plot=FALSE,...)
@@ -602,7 +602,7 @@ chauvenet <- function(X,sX,valid,random.effects=TRUE){
                             valid=valid)
     mu <- fit$mean[1]
     if (random.effects) sigma <- sqrt(fit$disp[1]^2+sX^2)
-    else sigma <- sqrt(fit$mswd*fit$mean[2]^2 + sX^2)
+    else sigma <- sqrt(fit$mean[2]^2 + fit$mswd*sX^2)
     prob <- 2*(1-stats::pnorm(abs(X-mu),sd=sigma))
     iprob <- order(prob)
     npruned <- length(which(!valid))

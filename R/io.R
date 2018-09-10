@@ -10,9 +10,11 @@
 #' \code{UPb4.csv}, \code{UPb5.csv}, \code{UPb6.csv} }
 #' \item{Pb-Pb: \code{PbPb1.csv}, \code{PbPb2.csv}, \code{PbPb3.csv} }
 #' \item{Ar-Ar: \code{ArAr1.csv}, \code{ArAr2.csv}, \code{ArAr3.csv}}
-#' \item{Re-Os: \code{ReOs1.csv}, \code{ReOs2.csv}} \item{Sm-Nd:
-#' \code{SmNd1.csv}, \code{SmNd2.csv}} \item{Rb-Sr: \code{RbSr1.csv},
-#' \code{RbSr2.csv}} \item{Lu-Hf: \code{LuHf1.csv}, \code{LuHf2.csv}}
+#' \item{K-Ca: \code{KCa1.csv}, \code{KCa2.csv}}, 
+#' \item{Re-Os: \code{ReOs1.csv}, \code{ReOs2.csv}}
+#' \item{Sm-Nd: \code{SmNd1.csv}, \code{SmNd2.csv}}
+#' \item{Rb-Sr: \code{RbSr1.csv}, \code{RbSr2.csv}}
+#' \item{Lu-Hf: \code{LuHf1.csv}, \code{LuHf2.csv}}
 #' \item{Th-U: \code{ThU1.csv}, \code{ThU2.csv}, \code{ThU3.csv},
 #' \code{ThU4.csv}}
 #' \item{fissiontracks: \code{FT1.csv}, \code{FT2.csv},
@@ -66,6 +68,14 @@
 #' \item{\code{9/6, s[9/6], 0/6, s[0/6], rho (, 39)}}
 #' \item{\code{6/0, s[6/0], 9/0, s[9/0] (, rho) (, 39)}}
 #' \item{\code{9/0, s[9/0], 6/0, s[6/0], 9/6, s[9/6] (, 39)}}
+#' }
+#'
+#' if \code{method='K-Ca'}, then \code{format} is one of either:
+#'
+#' \enumerate{
+#' \item{\code{K40/Ca44, s[K40/Ca44], Ca40/Ca44, s[Ca40/Ca44], rho}}
+#' \item{\code{K40/Ca44, s[K40/Ca44], Ca40/Ca44,
+#'             s[Ca40/Ca44], K40/Ca40, s[K40/Ca40]}}
 #' }
 #'
 #' if \code{method='Rb-Sr'}, then \code{format} is one of either:
@@ -138,9 +148,9 @@
 #' @param ... optional arguments to the \code{read.csv} function
 #' @seealso \code{\link{examples}}, \code{\link{settings}}
 #' @return an object of class \code{UPb}, \code{PbPb}, \code{ArAr},
-#'     \code{UThHe}, \code{ReOs}, \code{SmNd}, \code{RbSr},
-#'     \code{LuHf}, \code{detritals}, \code{fissiontracks}, \code{ThU}
-#'     or \code{other}
+#'     \code{KCa}, \code{UThHe}, \code{ReOs}, \code{SmNd},
+#'     \code{RbSr}, \code{LuHf}, \code{detritals},
+#'     \code{fissiontracks}, \code{ThU} or \code{other}
 #' @examples
 #'
 #' f1 <- system.file("UPb1.csv",package="IsoplotR")
@@ -202,6 +212,8 @@ read.data.matrix <- function(x,method='U-Pb',format=1,...){
         out <- as.PbPb(x,format)
     } else if (identical(method,'Ar-Ar')){
         out <- as.ArAr(x,format)
+    } else if (identical(method,'K-Ca')){
+        out <- as.KCa(x,format)
     } else if (identical(method,'Re-Os')){
         out <- as.ReOs(x,format)
     } else if (identical(method,'Rb-Sr')){
@@ -240,13 +252,7 @@ as.UPb <- function(x,format=3){
     } else if (format==2 & nc>3){
         cnames <- c('U238Pb206','errU238Pb206',
                     'Pb207Pb206','errPb207Pb206','rhoXY')
-        if (nc == 4){
-            X <- cbind(X,0)
-        } else {
-            i <- which(is.na(X[,5]))
-            X[i,5] <- 0
-            out$x <- subset(X,select=1:5)
-        }
+        X <- read.XsXYsYrXY(X)
     } else if (format==3 & nc>5){
         cnames <- c('Pb207U235','errPb207U235',
                     'Pb206U238','errPb206U238',
@@ -414,6 +420,28 @@ as.ArAr <- function(x,format=3){
     }
     out
 }
+as.KCa <- function(x,format=1){
+    out <- list()
+    class(out) <- "KCa"
+    out$format <- format
+    nc <- ncol(x)
+    nr <- nrow(x)
+    bi <- 2 # begin index
+    X <- shiny2matrix(x,bi,nr,nc)
+    cnames <- c('K40Ca44','errK40Ca44','Ca40Ca44','errCa40Ca44','rho')
+    if (format==1 & nc==4){
+        out$x <- cbind(X,0)
+    } else if (format==1 & nc>4){
+        out$x <- subset(X,select=1:5)
+    } else if (format==2 & nc>5){
+        out$x <- subset(X,select=1:6)
+        cnames <- c('K40Ca44','errK40Ca44',
+                    'Ca40Ca44','errCa40Ca44',
+                    'K40Ca40','errK40Ca40')
+    }
+    colnames(out$x) <- cnames
+    out
+}
 as.RbSr <- function(x,format=2){
     cnames1 <- c('Rb87Sr86','errRb87Sr86',
                  'Sr87Sr86','errSr87Sr86','rho')
@@ -452,13 +480,7 @@ as.PD <- function(x,classname,colnames1,colnames2,format){
     if (is.numeric(x)) X <- x
     else X <- shiny2matrix(x,2,nr,nc)
     if (format==1 & nc>3){
-        if (nc == 4){
-            out$x <- cbind(subset(X,select=1:4),0)
-        } else {
-            i <- which(is.na(X[,5]))
-            X[i,5] <- 0
-            out$x <- subset(X,select=1:5)
-        }
+        out$x <- read.XsXYsYrXY(X)
         colnames(out$x) <- colnames1
     } else if (format==2 & nc>5){
         out$x <- subset(X,select=1:6)
@@ -583,4 +605,17 @@ shiny2matrix <- function(x,br,nr,nc){
     suppressWarnings(
         return(matrix(as.numeric(x[(br:nr),]),nr-br+1,nc))
     )
+}
+
+# for data of class UPb, PbPb, PD (including LuHf, SmNd, RbSr, and ReOs) 
+read.XsXYsYrXY <- function(x){
+    nc <- ncol(x)
+    if (nc == 4){
+        out <- cbind(x,0)
+    } else {
+        i <- which(is.na(x[,5]))
+        x[i,5] <- 0
+        out <- subset(x,select=1:5)
+    }
+    out
 }
