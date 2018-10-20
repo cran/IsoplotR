@@ -2,8 +2,8 @@
 # or the lower intercept age and 207Pb/206Pb intercept (for Tera-Wasserburg)
 concordia.intersection.ludwig <- function(x,wetherill=TRUE,
                                           exterr=FALSE,alpha=0.05,
-                                          model=1){
-    fit <- ludwig(x,exterr=exterr,model=model)
+                                          model=1,anchor=list(FALSE,NA)){
+    fit <- ludwig(x,exterr=exterr,model=model,anchor=anchor)
     out <- list()
     out$model <- model
     out$mswd <- fit$mswd
@@ -249,17 +249,12 @@ discordia.line <- function(fit,wetherill){
         xl <- X[1]
         yl <- Y[1]
         y0 <- Y[2]
-        tl <- fit$x['t[l]']
+        tl <- check.zero.UPb(fit$x['t[l]'])
         U85 <- settings('iratio','U238U235')[1]
         x <- seq(from=max(.Machine$double.xmin,usr[1]),to=usr[2],length.out=100)
         y <- yl + (y0-yl)*(1-x/xl)
-        dyldtl <- (1/U85)*
-            (l5*exp(l5*tl)*(exp(l8*tl)-1)-
-             l8*exp(l8*tl)*(exp(l5*tl)-1))/
-            (exp(l8*tl)-1)^2
-        dxldtl <- -l8*exp(l8*tl)/(exp(l8*tl)-1)^2
-        J1 <- dyldtl - dyldtl*(1-x/xl) - (y0-yl)*dxldtl*x/xl^2
-        J2 <- 1-x/xl
+        J1 <- (1/U85)*l5*exp(l5*tl)*x - l8*exp(l8*tl)*x*y0 # dy/dtl
+        J2 <- 1 + x - exp(l8*tl)*x                         # dy/dy0
         sy <- errorprop1x2(J1,J2,fit$cov[1,1],fit$cov[2,2],fit$cov[1,2])
         ul <- y + fit$fact*sy
         ll <- y - fit$fact*sy
@@ -267,9 +262,9 @@ discordia.line <- function(fit,wetherill){
         yconc <- (1/U85)*(exp(l5*t68)-1)/(exp(l8*t68)-1)
         # correct overshot confidence intervals:
         if (y0>yl){ # negative slope
-            overshot <- (t68<fit$x['t[l]'] & ll<yconc)
+            overshot <- (ll<yconc & ll<y0/2)
             ll[overshot] <- yconc[overshot]
-            overshot <- (t68<fit$x['t[l]'] & ul<yconc)
+            overshot <- (ul<yconc & ul<y0/2)
             ul[overshot] <- yconc[overshot]
         } else {    # positive slope
             overshot <- ul>yconc
@@ -288,10 +283,10 @@ discordia.line <- function(fit,wetherill){
 discordia.title <- function(fit,wetherill,sigdig=2,...){
     lower.age <- roundit(fit$x[1],fit$err[,1],sigdig=sigdig)
     if (fit$model==1 && fit$mswd>1){
-        args1 <- quote(a%+-%b~'|'~c~'|'~d~u~'(n='~n~')')
+        args1 <- quote(a%+-%b~'|'~c~'|'~d~u~'(n='*n*')')
         args2 <- quote(a%+-%b~'|'~c~'|'~d~u)
     } else {
-        args1 <- quote(a%+-%b~'|'~c~u~'(n='~n~')')
+        args1 <- quote(a%+-%b~'|'~c~u~'(n='*n*')')
         args2 <- quote(a%+-%b~'|'~c~u)
     }
     list1 <- list(a=lower.age[1],b=lower.age[2],
@@ -323,12 +318,12 @@ discordia.title <- function(fit,wetherill,sigdig=2,...){
         line3 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
                             list(a=signif(fit$mswd,sigdig),
                                  b=signif(fit$p.value,sigdig)))
-        graphics::mtext(line1,line=2,...)
-        graphics::mtext(line2,line=1,...)
-        graphics::mtext(line3,line=0,...)
+        mymtext(line1,line=2,...)
+        mymtext(line2,line=1,...)
+        mymtext(line3,line=0,...)
     } else if (fit$model==2){
-        graphics::mtext(line1,line=1,...)
-        graphics::mtext(line2,line=0,...)
+        mymtext(line1,line=1,...)
+        mymtext(line2,line=0,...)
     } else {
         rounded.disp <- roundit(100*fit$w[1],100*fit$w[2:3],sigdig=sigdig)
         line3 <- substitute('overdispersion ='~a+b/-c~
@@ -336,8 +331,8 @@ discordia.title <- function(fit,wetherill,sigdig=2,...){
                             list(a=rounded.disp[1],
                                  b=rounded.disp[3],
                                  c=rounded.disp[2]))
-        graphics::mtext(line1,line=2,...)
-        graphics::mtext(line2,line=1,...)
-        graphics::mtext(line3,line=0,...)
+        mymtext(line1,line=2,...)
+        mymtext(line2,line=1,...)
+        mymtext(line3,line=0,...)
     }
 }

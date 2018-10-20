@@ -274,22 +274,22 @@ plot_helioplot_contours <- function(x,fact=c(1,1,1),
     }
 }
 
-helioplot_title <- function(fit,sigdig=2){
+helioplot_title <- function(fit,sigdig=2,...){
     rounded.age <- roundit(fit$age[1],fit$age[2:4],sigdig=sigdig)
     expr <- quote('central age =')
-    args1 <- quote(~a%+-%b~'|'~c~'Ma'~'(n='~n~')')
+    args1 <- quote(~a%+-%b~'|'~c~'Ma'~'(n='*n*')')
     list1 <- list(a=rounded.age[1],
                   b=rounded.age[2],
                   c=rounded.age[3],
                   n=fit$n)
     if (fit$model==1 && fit$mswd>1){
-        args1 <- quote(~a%+-%b~'|'~c~'|'~d~'Ma'~'(n='~n~')')
+        args1 <- quote(~a%+-%b~'|'~c~'|'~d~'Ma'~'(n='*n*')')
         list1$d <- rounded.age[4]
         line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
                             list(a=signif(fit$mswd,2),
                                  b=signif(fit$p.value,2)))
         line1line <- 1
-        graphics::mtext(line2,line=0)
+        mymtext(line2,line=0,...)
     } else if (fit$model==2){
         line1line <- 0
     } else if (fit$model==3){
@@ -300,11 +300,11 @@ helioplot_title <- function(fit,sigdig=2){
         call2 <- substitute(e~a,list(e=expr2,a=args2))
         line2 <- do.call(substitute,list(eval(call2),list2))
         line1line <- 1
-        graphics::mtext(line2,line=0)
+        mymtext(line2,line=0,...)
     }
     call1 <- substitute(e~a,list(e=expr,a=args1))
     line1 <- do.call(substitute,list(eval(call1),list1))
-    graphics::mtext(line1,line=line1line)
+    mymtext(line1,line=line1line,...)
 }
 
 get.logratio.contours <- function(x,xlim=NA,ylim=NA,res=50){

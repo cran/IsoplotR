@@ -72,6 +72,7 @@
 #'
 #' @param sigdig number of significant digits for the
 #'     concordia/discordia age
+#' 
 #' @param common.Pb apply a common lead correction using one of three
 #'     methods:
 #'
@@ -83,6 +84,25 @@
 #' \code{3}: use the Pb-composition stored in
 #' \code{settings('iratio','Pb206Pb204')} and
 #' \code{settings('iratio','Pb207Pb204')}
+#' @param anchor control parameters to fix the intercept age or common
+#'     Pb composition of the discordia fit. This is a two-element
+#'     list.
+#'
+#' \itemize{
+#'
+#' \item The first element is a boolean flag indicating whether the
+#' discordia line should be anchored. If this is \code{FALSE}, then
+#' the second item is ignored and both the common Pb composition and
+#' age are estimated.
+#'
+#' \item If the first element is \code{TRUE} and the second element is
+#' \code{NA}, then the common Pb composition is fixed at the values
+#' stored in \code{settings('iratio',...)}.
+#'
+#' item If the first element is \code{TRUE} and the second element is a
+#' number, then the discordia line is forced to intersect the
+#' concordia line at an age equal to that number.
+#' }
 #'
 #' @return
 #'
@@ -184,7 +204,10 @@
 #' dev.new()
 #' concordia(examples$UPb,wetherill=FALSE,
 #'           xlim=c(24.9,25.4),ylim=c(0.0508,0.0518),
-#'           ticks=249:254,exterr=TRUE)#' data(examples)
+#'           ticks=249:254,exterr=TRUE)
+#'
+#' dev.new()
+#' concordia(examples$UPb,wetherill=FALSE,show.age=2,anchor=list(TRUE,0))
 #'
 #' @references Ludwig, K.R., 1998. On the treatment of concordant
 #'     uranium-lead ages. Geochimica et Cosmochimica Acta, 62(4),
@@ -194,7 +217,8 @@ concordia <- function(x,tlim=NULL,alpha=0.05,wetherill=TRUE,
                       show.numbers=FALSE,levels=NA,clabel="",
                       ellipse.col=c("#00FF0080","#FF000080"),
                       concordia.col='darksalmon',exterr=FALSE,
-                      show.age=0,sigdig=2,common.Pb=0,ticks=NULL,...){
+                      show.age=0,sigdig=2,common.Pb=0,ticks=NULL,
+                      anchor=list(FALSE,NA),...){
     if (common.Pb>0) X <- common.Pb.correction(x,option=common.Pb)
     else X <- x
     lims <- prepare.concordia.line(X,tlim=tlim,wetherill=wetherill,...)
@@ -202,11 +226,10 @@ concordia <- function(x,tlim=NULL,alpha=0.05,wetherill=TRUE,
     if (show.age>1){
         fit <- concordia.intersection.ludwig(x,wetherill=wetherill,
                                              exterr=exterr,alpha=alpha,
-                                             model=(show.age-1))
+                                             model=(show.age-1),anchor=anchor)
         discordia.line(fit,wetherill=wetherill)
         fit$n <- length(x)
-        graphics::title(discordia.title(fit,wetherill=wetherill,
-                                        sigdig=sigdig))
+        graphics::title(discordia.title(fit,wetherill=wetherill,sigdig=sigdig))
     }
     plot.concordia.line(X,lims=lims,wetherill=wetherill,col=concordia.col,
                         alpha=alpha,exterr=exterr,ticks=ticks)
@@ -219,16 +242,16 @@ concordia <- function(x,tlim=NULL,alpha=0.05,wetherill=TRUE,
         y0 <- xyc$x[2]
         if (show.age==3){
             pch <- 21
-            cex <- 1
+            pcex <- 1
         } else {
             covmat <- xyc$cov
             ell <- ellipse(x0,y0,covmat,alpha=alpha)
             graphics::polygon(ell,col=ellipse.cols[i])
             pch <- 19
-            cex <- 0.25
+            pcex <- 0.25
         }
         if (show.numbers) graphics::text(x0,y0,i)
-        else graphics::points(x0,y0,pch=pch,cex=cex)
+        else graphics::points(x0,y0,pch=pch,cex=pcex*graphics::par('cex'))
     }
     if (show.age==1){
         fit <- concordia.age(X,wetherill=wetherill,
@@ -292,7 +315,7 @@ prepare.concordia.line <- function(x,tlim,wetherill=TRUE,...){
         x.lab <- expression(paste(""^"238","U/"^"206","Pb"))
         y.lab <- expression(paste(""^"207","Pb/"^"206","Pb"))
     }
-    graphics::plot(lims$x,lims$y,type='n',xlab=x.lab,ylab=y.lab,bty='n')
+    graphics::plot(lims$x,lims$y,type='n',xlab=x.lab,ylab=y.lab,bty='n',...)
     lims
 }
 prettier <- function(x,wetherill=TRUE,n=20){
@@ -395,12 +418,12 @@ get.concordia.limits <- function(x,tlim=NULL,wetherill=FALSE,...){
 }
 
 # this would be much easier in unicode but that doesn't render in PDF:
-concordia.title <- function(fit,sigdig=2,alpha=0.05){
+concordia.title <- function(fit,sigdig=2,alpha=0.05,...){
     rounded.age <- roundit(fit$age[1],fit$age[-1],sigdig=sigdig)
-    expr1 <- expression('concordia age ='~a%+-%b~'|'~c~'Ma (n='~n~')')
+    expr1 <- expression('concordia age ='~a%+-%b~'|'~c~'Ma (n='*n*')')
     list1 <- list(a=rounded.age[1],b=rounded.age[2],c=rounded.age[3],n=fit$n)
     if (fit$mswd['combined']>1){
-        expr1 <- expression('concordia age ='~a%+-%b~'|'~c~'|'~d~'Ma (n='~n~')')
+        expr1 <- expression('concordia age ='~a%+-%b~'|'~c~'|'~d~'Ma (n='*n*')')
         list1$d <- rounded.age[4]
     }
     line1 <- do.call('substitute',list(eval(expr1),list1))
@@ -412,8 +435,8 @@ concordia.title <- function(fit,sigdig=2,alpha=0.05){
                              d=signif(fit$p.value['concordance'],2),
                              e=signif(fit$p.value['equivalence'],2),
                              f=signif(fit$p.value['combined'],2)))
-    graphics::mtext(line1,line=1)
-    graphics::mtext(line2,line=0)
+    mymtext(line1,line=1,...)
+    mymtext(line2,line=0,...)
 }
 
 concordia.age <- function(x,...){ UseMethod("concordia.age",x) }

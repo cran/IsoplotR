@@ -7,6 +7,8 @@ length.ReOs <- function(x){ nrow(x$x) }
 length.LuHf <- function(x){ nrow(x$x) }
 length.ThU <- function(x){ nrow(x$x) }
 length.UThHe <- function(x){ nrow(x) }
+length.KDE <- function(x){ length(x$ages) }
+length.KDEs <- function(x){ length(x$kdes) }
 length.fissiontracks <- function(x){
     if (x$format==1) return(nrow(x$x))
     else return(length(x$Ns))
@@ -229,7 +231,7 @@ validLevels <- function(levels){
 }
 
 colourbar <- function(z=c(0,1),col=c("#00FF0080","#FF000080"),
-                      strip.width=0.02,clabel="",cex=1){
+                      strip.width=0.02,clabel="",...){
     if (!validLevels(z)) return()
     ucoord <- graphics::par()$usr
     plotwidth <- (ucoord[2]-ucoord[1])
@@ -248,9 +250,9 @@ colourbar <- function(z=c(0,1),col=c("#00FF0080","#FF000080"),
     }
     graphics::rect(xb,yb,xe,ye)
     graphics::par(new=T)
-    graphics::plot(rep(xe,length(z)),z,type='n',axes=F,xlab=NA,ylab=NA)
+    graphics::plot(rep(xe,length(z)),z,type='n',axes=F,xlab=NA,ylab=NA,...)
     graphics::axis(side=4)
-    graphics::mtext(text=clabel,side=3,adj=1,cex=cex)
+    mymtext(text=clabel,side=3,adj=1)
 }
 
 plot_points <- function(x,y,bg='white',show.numbers=FALSE,...){
@@ -267,4 +269,84 @@ nfact <- function(alpha){
 }
 tfact <- function(alpha,df){
     stats::qt(1-alpha/2,df=df)
+}
+
+mymtext <- function(text,line=0,...){
+    graphics::mtext(text,line=line,cex=graphics::par('cex'),...)
+}
+
+# if doall==FALSE, only returns the lower right submatrix
+blockinverse <- function(AA,BB,CC,DD,doall=FALSE){
+    out <- list()
+    invAA <- solve(AA)
+    invDCAB <- solve(DD-CC%*%invAA%*%BB)
+    if (doall){
+        invBB <- solve(BB)
+        invCC <- solve(CC)
+        invDD <- solve(DD)
+        ul <- invAA + invAA %*% BB %*% invDCAB %*% CC %*% invAA
+        ur <- - invAA %*% BB %*% invDCAB
+        ll <- - invDCAB %*% CC %*% invAA
+        lr <- invDCAB
+        toprow <- cbind(ul,ur)
+        botrow <- cbind(ll,lr)
+        out <- rbind(toprow,botrow)
+    } else {
+        out <- invDCAB
+    }
+    out
+}
+
+# Optimise with some fixed parameters 
+# Like optim, but with option to fix some parameters.
+# parms: Parameters to potentially optimize in fn
+# fixed: A vector of TRUE/FALSE values indicating which parameters in
+# parms to hold constant (not optimize). If TRUE, the corresponding
+# parameter in fn() is fixed. Otherwise it's variable and optimised over.
+# Originally written by Barry Rowlingson, modified by PV
+optifix <- function(parms, fixed, fn, gr = NULL, ...,
+                    method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN"), 
+                    lower = -Inf, upper = Inf, control = list(), hessian = FALSE){ 
+    force(fn)
+    force(fixed) 
+    .npar=length(parms) 
+    .fixValues = parms[fixed]
+    names(.fixValues)=names(parms)[fixed]
+    .parStart = parms[!fixed]
+    names(.parStart)=names(parms)[!fixed]
+  
+    .fn <- function(par,pnames=names(parms),...){
+        .par = rep(NA,sum(!fixed))
+        .par[!fixed] = par
+        .par[fixed] = .fixValues
+        names(.par)=pnames
+        fn(.par,...)
+    }
+
+    if(!is.null(gr)){
+        .gr <- function(par,pnames=names(parms),...){
+            .gpar = rep(NA,sum(!fixed))
+            .gpar[!fixed] = par
+            .gpar[fixed] = .fixValues
+            names(.par)=pnames
+            gr(.gpar,...)[!fixed]
+        }
+    } else {
+        .gr <- NULL
+    }
+
+    .opt = stats::optim(.parStart,.fn,.gr,...,method=method,
+                        lower=lower,upper=upper,control=control,hessian=hessian) 
+    
+    .opt$fullpars = rep(NA,sum(!fixed)) 
+    .opt$fullpars[fixed]=.fixValues 
+    .opt$fullpars[!fixed]=.opt$par 
+    names(.opt$fullpars)=names(parms)
+    .opt$fixed = fixed
+
+    # remove fullpars (PV)
+    .opt$par <- .opt$fullpars
+    .opt$fullpars <- NULL
+    
+    return(.opt)
 }

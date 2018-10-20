@@ -108,7 +108,7 @@ radialplot.default <- function(x,from=NA,to=NA,t0=NA,
     radial.plot(X,show.numbers=show.numbers,pch=pch,levels=levels,
                 clabel=clabel,bg=bg,markers=markers,...)
     if (title)
-        title(radial.title(x,sigdig=sigdig,alpha=alpha,units=units))
+        title(radial.title(x,sigdig=sigdig,alpha=alpha,units=units,n=nrow(x)))
     if (!is.null(peaks$legend))
         graphics::legend('bottomleft',legend=peaks$legend,bty='n')
 }
@@ -130,7 +130,7 @@ radialplot.fissiontracks <- function(x,from=NA,to=NA,t0=NA,
                 show.numbers=show.numbers,pch=pch,levels=levels,
                 clabel=clabel,bg=bg,markers=markers,...)
     if (title)
-        title(radial.title(x,sigdig=sigdig,alpha=alpha,units='Ma'))
+        title(radial.title(x,sigdig=sigdig,alpha=alpha,units='Ma',n=length(x)))
     if (!is.null(peaks$legend))
         graphics::legend('bottomleft',legend=peaks$legend,bty='n')
 }
@@ -411,9 +411,9 @@ plot_radial_points <- function(x,show.numbers=FALSE,bg='white',...){
     }
 }
 
-plot_radial_axes <- function(x){
+plot_radial_axes <- function(x,...){
     xs <- stats::na.omit(x$s)
-    graphics::Axis(side=2,at=c(-2,0,2),labels=c(-2,0,2))
+    graphics::Axis(side=2,at=c(-2,0,2),labels=c(-2,0,2),...)
     if (x$transformation %in% c('arctan','arcsin')){
         plabels <- pretty(c(0,range(1/(2*xs)^2 - 1/2)))
         pticks <- (2*sqrt(plabels+1/2))
@@ -421,7 +421,7 @@ plot_radial_axes <- function(x){
         plabels <- pretty(c(0,1/xs))
         pticks <- plabels
     }
-    graphics::Axis(side=1,at=pticks,labels=plabels)
+    graphics::Axis(side=1,at=pticks,labels=plabels,...)
 }
 
 data2rxry <- function(x){
@@ -430,7 +430,7 @@ data2rxry <- function(x){
     cbind(rx,ry)
 }
 
-radial.scale <- function(x,zeta=0,rhoD=0){
+radial.scale <- function(x,zeta=0,rhoD=0,...){
     zm <- t2z(x$from,x,zeta,rhoD)
     zM <- t2z(x$to,x,zeta,rhoD)
     padding <- 1.1
@@ -448,18 +448,18 @@ radial.scale <- function(x,zeta=0,rhoD=0){
     rxy <- z2rxy(Z,e,xM)
     graphics::plot(rxy[,1],rxy[,2],type='l',xlim=c(0,xM),
                    axes=FALSE,bty='n',xlab=x$xlab,
-                   ylab='standardised estimate')
+                   ylab='standardised estimate',...)
     c(e,xM)
 }
 
 plot_radial_lines <- function(tt,x,e,xM,zeta=0,rhoD=0,l=1,
-                              label=FALSE,pos=4){
+                              label=FALSE,pos=4,...){
     z <- t2z(tt,x,zeta,rhoD)
     rxyb <- z2rxy(z-x$z0,e,xM)
     rxye <- z2rxy(z-x$z0,e,(1-l)*xM)
     for (i in 1:length(tt)){
         graphics::lines(c(rxyb[i,1],rxye[i,1]),
-                        c(rxyb[i,2],rxye[i,2]))
+                        c(rxyb[i,2],rxye[i,2]),...)
         if (label) {
             if (pos==2)
                 graphics::text(rxye[i,1],rxye[i,2],
@@ -478,7 +478,7 @@ z2rxy <- function(Z,e,xM){
     cbind(rx,ry)
 }
 
-t2z <- function(tt,x,zeta,rhoD,...){
+t2z <- function(tt,x,zeta,rhoD){
     if (identical(x$transformation,'log')){
         out <- log(tt+x$offset)
     } else if (identical(x$transformation,'arcsin')){
@@ -705,16 +705,16 @@ iatt <- function(z,zeta,rhoD){
 }
 
 # this would be much easier in unicode but that doesn't render in PDF:
-radial.title <- function(x,sigdig=2,alpha=0.05,units=''){
+radial.title <- function(x,sigdig=2,alpha=0.05,units='',n=length(x),...){
     fit <- central(x,alpha=alpha)
     rounded.age <- roundit(fit$age[1],fit$age[2:3],sigdig=sigdig)
     rounded.disp <- roundit(100*fit$disp[1],100*fit$disp[2:3],sigdig=sigdig)
-    line1 <- substitute('central age ='~a%+-%b~'|'~c~d~'(n='~n~')',
+    line1 <- substitute('central age ='~a%+-%b~'|'~c~d~'(n='*n*')',
                         list(a=rounded.age[1],
                              b=rounded.age[2],
                              c=rounded.age[3],
                              d=units,
-                             n=length(x)))
+                             n=n))
     line2 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
                         list(a=signif(fit$mswd,sigdig),
                              b=signif(fit$p.value,sigdig)))
@@ -722,9 +722,9 @@ radial.title <- function(x,sigdig=2,alpha=0.05,units=''){
                         list(a=rounded.disp[1],
                              b=rounded.disp[3],
                              c=rounded.disp[2]))
-    graphics::mtext(line1,line=2)
-    graphics::mtext(line2,line=1)
-    graphics::mtext(line3,line=0)
+    mymtext(line1,line=2,...)
+    mymtext(line2,line=1,...)
+    mymtext(line3,line=0,...)
 }
 
 get.offset <- function(x,from=NA){
