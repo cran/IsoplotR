@@ -55,9 +55,7 @@ age are estimated.
 
 \item If the first element is \code{TRUE} and the second element is
 \code{NA}, then the common Pb composition is fixed at the values
-stored in \code{settings('iratio','Pb206Pb204')} (if
-\code{x$format<4}) or \code{settings('iratio','Pb206Pb204')} and
-\code{settings('iratio','Pb207Pb204')} (if \code{x$format>3}).
+stored in \code{settings('iratio',...)}.
 
 item If the first element is \code{TRUE} and the second element is a
 number, then the discordia line is forced to intersect the

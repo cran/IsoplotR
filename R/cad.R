@@ -42,6 +42,8 @@ cad <- function(x,...){ UseMethod("cad",x) }
 #'     \code{terrain.colors}, \code{topo.colors}, \code{cm.colors}),
 #'     which are to be used for plotting data of class
 #'     \code{detritals}.
+#' @param hide vector with indices of aliquots that should be removed
+#'     from the plot.
 #' @param ... optional arguments to the generic \code{plot} function
 #' @examples
 #' data(examples)
@@ -49,28 +51,32 @@ cad <- function(x,...){ UseMethod("cad",x) }
 #' @rdname cad
 #' @export
 cad.default <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
-                        colmap='heat.colors',col='black',...){
-    graphics::plot(range(x,na.rm=TRUE),c(0,1),type='n',
+                        colmap='heat.colors',col='black',
+                        hide=NULL,...){
+    calcit <- (1:length(x))%ni%hide
+    d <- x[calcit]
+    graphics::plot(range(d,na.rm=TRUE),c(0,1),type='n',
                    ylab='cumulative probability',xlab=xlab,...)
-    graphics::lines(stats::ecdf(x),pch=pch,verticals=verticals,col=col)
-    mymtext(paste0('n=',length(x)),line=0,adj=1)
+    graphics::lines(stats::ecdf(d),pch=pch,verticals=verticals,col=col)
+    mymtext(paste0('n=',length(d)),line=0,adj=1)
 }
 #' @param col colour to give to single sample datasets (not applicable
 #'     if \code{x} has class \code{detritals})
 #' @rdname cad
 #' @export
 cad.detritals <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
-                          colmap='heat.colors',...){
-    ns <- length(x)
-    snames <- names(x)
+                          colmap='heat.colors',hide=NULL,...){
+    if (is.character(hide)) hide <- which(names(x)%in%hide)
+    x2plot <- clear(x,hide)
+    ns <- length(x2plot)
     col <- do.call(colmap,list(ns))
-    graphics::plot(range(x,na.rm=TRUE),c(0,1),type='n',xlab=xlab,
+    graphics::plot(range(x2plot,na.rm=TRUE),c(0,1),type='n',xlab=xlab,
                    ylab='cumulative probability',...)
     for (i in 1:ns){
-        graphics::lines(stats::ecdf(x[[i]]),pch=pch,
+        graphics::lines(stats::ecdf(x2plot[[i]]),pch=pch,
                         verticals=verticals,col=col[i])
     }
-    graphics::legend("bottomright",legend=snames,lwd=1,col=col)
+    graphics::legend("bottomright",legend=names(x2plot),lwd=1,col=col)
 }
 #' @param type scalar indicating whether to plot the
 #'     \eqn{^{207}}Pb/\eqn{^{235}}U age (\code{type}=1), the
@@ -107,13 +113,15 @@ cad.detritals <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
 #' @export
 cad.UPb <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
                     col='black',type=4,cutoff.76=1100,
-                    cutoff.disc=c(-15,5),common.Pb=0,...){
+                    cutoff.disc=c(-15,5),common.Pb=0,
+                    hide=NULL,...){
     if (common.Pb %in% c(1,2,3))
         X <- common.Pb.correction(x,option=common.Pb)
     else
         X <- x
     tt <- filter.UPb.ages(X,type,cutoff.76,cutoff.disc)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @param i2i `isochron to intercept': calculates the initial (aka
 #'     `inherited', `excess', or `common')
@@ -134,27 +142,30 @@ cad.UPb <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
 #' @rdname cad
 #' @export
 cad.PbPb <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
-                     col='black',common.Pb=1,...){
+                     col='black',common.Pb=1,hide=NULL,...){
     if (common.Pb %in% c(1,2,3))
         X <- common.Pb.correction(x,option=common.Pb)
     else
         X <- x
     tt <- PbPb.age(X)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @rdname cad
 #' @export
-cad.ArAr <- function(x,pch=NA,verticals=TRUE,
-                     xlab='age [Ma]',col='black',i2i=FALSE,...){
+cad.ArAr <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                     col='black',i2i=FALSE,hide=NULL,...){
     tt <- ArAr.age(x,i2i=i2i)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @rdname cad
 #' @export
-cad.KCa <- function(x,pch=NA,verticals=TRUE,
-                    xlab='age [Ma]',col='black',i2i=FALSE,...){
+cad.KCa <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                    col='black',i2i=FALSE,hide=NULL,...){
     tt <- KCa.age(x,i2i=i2i)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @param detritus detrital \eqn{^{230}}Th correction (only applicable
 #'     when \code{x$format == 1} or \code{2}.
@@ -182,49 +193,57 @@ cad.KCa <- function(x,pch=NA,verticals=TRUE,
 #' @export
 cad.ThU <- function(x,pch=NA,verticals=TRUE, xlab='age [ka]',
                     col='black',i2i=FALSE,detritus=0,Th02=c(0,0),
-                    Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
-    tt <- ThU.age(x,i2i=i2i,detritus=detritus,Th02=Th02,Th02U48=Th02U48)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+                    Th02U48=c(0,0,1e6,0,0,0,0,0,0),hide=NULL,...){
+    tt <- ThU.age(x,i2i=i2i,detritus=detritus,
+                  Th02=Th02,Th02U48=Th02U48)[,1]
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @rdname cad
 #' @export
-cad.ReOs <- function(x,pch=NA,verticals=TRUE,
-                     xlab='age [Ma]',col='black',i2i=TRUE,...){
+cad.ReOs <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                     col='black',i2i=TRUE,hide=NULL,...){
     tt <- ReOs.age(x,i2i=i2i)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @rdname cad
 #' @export
-cad.SmNd <- function(x,pch=NA,verticals=TRUE,
-                     xlab='age [Ma]',col='black',i2i=TRUE,...){
+cad.SmNd <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                     col='black',i2i=TRUE,hide=NULL,...){
     tt <- SmNd.age(x,i2i=i2i)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @rdname cad
 #' @export
-cad.RbSr <- function(x,pch=NA,verticals=TRUE,
-                     xlab='age [Ma]',col='black',i2i=TRUE,...){
+cad.RbSr <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                     col='black',i2i=TRUE,hide=NULL,...){
     tt <- RbSr.age(x,i2i=i2i)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @rdname cad
 #' @export
-cad.LuHf <- function(x,pch=NA,verticals=TRUE,
-                     xlab='age [Ma]',col='black',i2i=TRUE,...){
+cad.LuHf <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                     col='black',i2i=TRUE,hide=NULL,...){
     tt <- LuHf.age(x,i2i=i2i)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @rdname cad
 #' @export
-cad.UThHe <- function(x,pch=NA,verticals=TRUE,
-                      xlab='age [Ma]',col='black',...){
+cad.UThHe <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                      col='black',hide=NULL,...){
     tt <- UThHe.age(x)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }
 #' @rdname cad
 #' @export
-cad.fissiontracks <- function(x,pch=NA,verticals=TRUE,
-                      xlab='age [Ma]',col='black',...){
+cad.fissiontracks <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',
+                              col='black',hide=NULL,...){
     tt <- fissiontrack.age(x)[,1]
-    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,col=col,...)
+    cad.default(tt,pch=pch,verticals=verticals,xlab=xlab,
+                col=col,hide=hide,...)
 }

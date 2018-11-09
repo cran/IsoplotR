@@ -62,6 +62,8 @@
 #' @param bg background colour (may be a vector)
 #' @param xlab a string with the label of the x axis
 #' @param ylab a string with the label of the y axis
+#' @param hide vector with indices of aliquots that should be removed
+#'     from the plot.
 #' @param ... optional arguments to the generic \code{plot} function
 #' @seealso \code{\link{cad}}, \code{\link{kde}}
 #' @return Returns an object of class \code{MDS}, i.e. a list
@@ -118,8 +120,10 @@ mds.default <- function(x,classical=FALSE,plot=TRUE,shepard=FALSE,
 #' @export
 mds.detritals <- function(x,classical=FALSE,plot=TRUE,shepard=FALSE,
                           nnlines=FALSE,pos=NULL,col='black',
-                          bg='white',xlab="",ylab="",...){
-    d <- diss(x)
+                          bg='white',xlab="",ylab="",hide=NULL,...){
+    if (is.character(hide)) hide <- which(names(x)%in%hide)
+    x2plot <- clear(x,hide)
+    d <- diss(x2plot)
     out <- mds.default(d,classical=classical,plot=plot,
                        shepard=shepard,nnlines=nnlines,pos=pos,
                        col=col,bg=bg,xlab=xlab,ylab=ylab,...)
@@ -146,7 +150,7 @@ KS.diss <- function(x,y) {
     xy = sort(y)
     cdftmp = stats::ecdf(xy)
     cdfEstim = cdftmp(xy)
-    cdfRef = stats::approx(xx, cdf1, xy, yleft = 0, yright = 1, ties = "mean")
+    cdfRef = stats::approx(xx,cdf1,xy,yleft=0,yright=1,ties="mean")
     dif = cdfRef$y - cdfEstim
     dif = abs(dif)
     out = max(dif)
@@ -177,7 +181,8 @@ plot.MDS <- function(x,nnlines=FALSE,pos=NULL,shepard=FALSE,
         do.call(graphics::plot,args)
         if (nnlines) plotlines(x$points,x$diss)
         if (is.na(pch)) {
-            args <- c(list(x=x$points,labels=labels(x$diss),col=col,bg=bg,pos=pos),
+            args <- c(list(x=x$points,labels=labels(x$diss),
+                           col=col,bg=bg,pos=pos),
                       ellipsis)
             graphics::points(x$points,pch=pch)
             do.call(graphics::text,args)

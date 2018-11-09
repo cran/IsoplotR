@@ -294,7 +294,15 @@ age_to_Pb207Pb206_ratio <- function(tt,st=0){
     out
 }
 check.zero.UPb <- function(tt){
-    max(tt,2*.Machine$double.neg.eps/lambda('U238')[1])
+    smallnum <- 2*.Machine$double.neg.eps/lambda('U238')[1]
+    if (length(tt)>1){
+        pos <- which(tt>0)
+        out <- tt
+        out[!pos] <- smallnum
+    } else {
+        out <- max(tt,smallnum)
+    }
+    out
 }
 
 get.Pb204U238.ratios <- function(x){
@@ -593,18 +601,20 @@ filter.UPb.ages <- function(x,type=4,cutoff.76=1100,
                         'Try adjusting the discordance limits OR ',
                         'apply a common-Pb correction.'))
     }
+    out <- matrix(NA,length(x),2)
     if (type==1){
-        out <- tt[is.concordant,c('t.75','s[t.75]')]
+        out[is.concordant,] <- tt[is.concordant,c('t.75','s[t.75]')]
     } else if (type==2){
-        out <- tt[is.concordant,c('t.68','s[t.68]')]
+        out[is.concordant,] <- tt[is.concordant,c('t.68','s[t.68]')]
     } else if (type==3){
-        out <- tt[is.concordant,c('t.76','s[t.76]')]
+        out[is.concordant,] <- tt[is.concordant,c('t.76','s[t.76]')]
     } else if (type==4){
         i.76 <- as.vector(which(do.76 & is.concordant))
         i.68 <- as.vector(which(!do.76 & is.concordant))
-        out <- rbind(tt[i.68,c('t.68','s[t.68]')],tt[i.76,c('t.76','s[t.76]')])
+        out[i.76,] <- tt[i.76,c('t.76','s[t.76]')]
+        out[i.68,] <- tt[i.68,c('t.68','s[t.68]')]
     } else if (type==5){
-        out <- tt[is.concordant,c('t.conc','s[t.conc]')]
+        outout[is.concordant,] <- tt[is.concordant,c('t.conc','s[t.conc]')]
     }
     colnames(out) <- c('t','s[t]')
     out

@@ -1,6 +1,7 @@
 length.UPb  <- function(x){ nrow(x$x) }
 length.PbPb <- function(x){ nrow(x$x) }
 length.ArAr <- function(x){ nrow(x$x) }
+length.KCa <- function(x){ nrow(x$x) }
 length.RbSr <- function(x){ nrow(x$x) }
 length.SmNd <- function(x){ nrow(x$x) }
 length.ReOs <- function(x){ nrow(x$x) }
@@ -12,6 +13,43 @@ length.KDEs <- function(x){ length(x$kdes) }
 length.fissiontracks <- function(x){
     if (x$format==1) return(nrow(x$x))
     else return(length(x$Ns))
+}
+
+subset.UPb  <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.PbPb <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.ArAr <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.KCa <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.RbSr <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.SmNd <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.ReOs <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.LuHf <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.ThU <- function(x,subset,...){ subset_helper(x,subset,...) }
+subset.detritals <- function(x,subset,...){
+    out <- x[subset]
+    class(out) <- class(x)
+    out
+}
+subset.UThHe <- function(x,subset,...){
+    out <- x[subset,]
+    class(out) <- class(x)
+    out
+}
+subset.fissiontracks <- function(x,subset,...){
+    if (x$format==1){
+        out <- subset_helper(x,subset,...)
+    } else {
+        out <- x
+        out$Ns <- x$Ns[subset]
+        out$A <- x$A[subset]
+        out$U <- x$U[subset]
+        out$sU <- x$sU[subset]
+    }
+    out
+}
+subset_helper <- function(x,subset){
+    out <- x
+    out$x <- subset(x$x,subset=subset)
+    out
 }
 
 roundit <- function(age,err,sigdig=2){
@@ -201,23 +239,33 @@ LL.norm <- function(x,covmat){
         get.concordia.SS(x,covmat)/2
 }
 
-set.ellipse.colours <- function(ns=1,levels=NA,col=c('yellow','red')){
-    if (any(!is.numeric(levels)) | any(is.na(levels))) levels <- NA
+set.ellipse.colours <- function(ns=1,levels=NA,col=c('yellow','red'),
+                                hide=NULL,omit=NULL,omit.col=NA){
     nl <- length(levels)
+    if (nl > 1){
+        levels[c(hide,omit)] <- NA
+        levels[!is.numeric(levels)] <- NA
+    }
     out <- NULL
-    if (all(is.na(levels)) | (max(levels)==min(levels))){
+    if (all(is.na(levels)) ||
+        (min(levels,na.rm=TRUE)==max(levels,na.rm=TRUE))){
         out <- rep(col[1],ns)
     } else if (nl<ns){
         out[1:nl] <- levels2colours(levels=levels,col=col)
     } else {
         out <- levels2colours(levels=levels,col=col)[1:ns]
     }
+    out[omit] <- omit.col
     out
 }
 
 levels2colours <- function(levels=c(0,1),col=c('yellow','red')){
+    m <- min(levels,na.rm=TRUE)
+    M <- max(levels,na.rm=TRUE)
     fn <- grDevices::colorRamp(colors=col,alpha=TRUE)
-    normalised.levels <- (levels-min(levels))/(max(levels)-min(levels))
+    normalised.levels <- (levels-m)/(M-m)
+    nan <- is.na(normalised.levels)
+    normalised.levels[nan] <- 0
     col.matrix <- fn(normalised.levels)/255
     red <- col.matrix[,1]
     green <- col.matrix[,2]
@@ -250,18 +298,80 @@ colourbar <- function(z=c(0,1),col=c("#00FF0080","#FF000080"),
     }
     graphics::rect(xb,yb,xe,ye)
     graphics::par(new=T)
-    graphics::plot(rep(xe,length(z)),z,type='n',axes=F,xlab=NA,ylab=NA,...)
+    graphics::plot(rep(xe,length(z)),z,type='n',
+                   axes=F,xlab=NA,ylab=NA,...)
     graphics::axis(side=4)
     mymtext(text=clabel,side=3,adj=1)
 }
 
-plot_points <- function(x,y,bg='white',show.numbers=FALSE,...){
-    if ('pch' %in% graphics::par(list(...))) pch <- graphics::par()$pch
-    else pch <- 21
-    if ('cex' %in% graphics::par(list(...))) pch <- graphics::par()$cex
-    else cex <- 1.5
-    if (show.numbers) graphics::text(x,y,1:length(x),cex=cex,...)
-    else graphics::points(x,y,bg=bg,pch=pch,cex=cex,...)
+# mybg, mypch etc are the default values that will be used if bg, pch are not in ...
+# this function can be used to override parameters that are in the ...
+plot_points <- function(x,y,mybg='yellow',mypch=21,mycol='black',mycex=1.5,mypos=1,
+                        show.numbers=FALSE,hide=NULL,omit=NULL,...){
+    ns <- length(x)
+    sn <- clear(1:ns,hide)
+    pargs <- get_points_pars(...,mybg=mybg,mypch=mypch,mycol=mycol,mycex=mycex)
+    targs <- get_text_pars(...,mycol=mycol,mycex=mycex,mypos=mypos)
+    pargs$x <- x[sn]
+    pargs$y <- y[sn]
+    targs$x <- x[sn]
+    targs$y <- y[sn]
+    hascol <- !all(is.na(mybg))
+    show.points <- (hascol | !show.numbers)
+    if (show.points){
+        do.call(graphics::points,pargs)
+    }
+    if (show.numbers & show.points){
+        targs$labels <- sn
+        do.call(graphics::text,targs)
+    } else if (show.numbers & !show.points){
+        tcol <- rep('black',ns)
+        tcol[omit] <- 'grey'
+        targs$col <- tcol[sn]
+        targs$labels <- sn
+        targs$pos <- NULL
+        do.call(graphics::text,targs)
+    }
+}
+get_points_pars <- function(...,mybg='yellow',mypch=21,mycol='black',mycex=1.5){
+    ellipsis <- list(...)
+    pars <- names(ellipsis)
+    out <- ellipsis
+    if ('pch' %in% pars)
+        out$pch <- ellipsis$pch
+    else
+        out$pch <- mypch
+    if ('col' %in% pars)
+        out$col <- ellipsis$col
+    else
+        out$col <- mycol
+    if ('bg' %in% pars)
+        out$bg <- ellipsis$bg
+    else
+        out$bg <- mybg
+    if ('cex' %in% pars)
+        out$cex <- ellipsis$cex
+    else
+        out$cex <- mycex
+    out
+}
+get_text_pars <- function(...,mycol='black',mycex=1.5,mypos=NULL){
+    ellipsis <- list(...)
+    pars <- names(ellipsis)
+    out <- ellipsis
+    if ('col' %in% pars)
+        out$col <- ellipsis$col
+    else
+        out$col <- mycol
+    if ('cex' %in% pars)
+        out$cex <- ellipsis$cex
+    else
+        out$cex <- mycex
+    if ('pos' %in% pars)
+        out$pos <- ellipsis$pos
+    else
+        out$pos <- mypos
+    out
 }
 
 nfact <- function(alpha){
@@ -336,7 +446,8 @@ optifix <- function(parms, fixed, fn, gr = NULL, ...,
     }
 
     .opt = stats::optim(.parStart,.fn,.gr,...,method=method,
-                        lower=lower,upper=upper,control=control,hessian=hessian) 
+                        lower=lower,upper=upper,
+                        control=control,hessian=hessian) 
     
     .opt$fullpars = rep(NA,sum(!fixed)) 
     .opt$fullpars[fixed]=.fixValues 
@@ -349,4 +460,15 @@ optifix <- function(parms, fixed, fn, gr = NULL, ...,
     .opt$fullpars <- NULL
     
     return(.opt)
+}
+
+'%ni%' <- function(x,y)!('%in%'(x,y))
+
+clear <- function(x,...){
+    i <- unlist(list(...))
+    if (hasClass(x,'matrix')) sn <- 1:nrow(x)
+    else sn <- 1:length(x)
+    if (is.numeric(i)) out <- subset(x,subset=sn%ni%i)
+    else out <- x
+    out
 }

@@ -20,45 +20,46 @@
 cad(x, ...)
 
 \method{cad}{default}(x, pch = NA, verticals = TRUE,
-  xlab = "age [Ma]", colmap = "heat.colors", col = "black", ...)
+  xlab = "age [Ma]", colmap = "heat.colors", col = "black",
+  hide = NULL, ...)
 
 \method{cad}{detritals}(x, pch = NA, verticals = TRUE,
-  xlab = "age [Ma]", colmap = "heat.colors", ...)
+  xlab = "age [Ma]", colmap = "heat.colors", hide = NULL, ...)
 
 \method{cad}{UPb}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
   col = "black", type = 4, cutoff.76 = 1100, cutoff.disc = c(-15,
-  5), common.Pb = 0, ...)
+  5), common.Pb = 0, hide = NULL, ...)
 
 \method{cad}{PbPb}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", common.Pb = 1, ...)
+  col = "black", common.Pb = 1, hide = NULL, ...)
 
 \method{cad}{ArAr}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", i2i = FALSE, ...)
+  col = "black", i2i = FALSE, hide = NULL, ...)
 
 \method{cad}{KCa}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", i2i = FALSE, ...)
+  col = "black", i2i = FALSE, hide = NULL, ...)
 
 \method{cad}{ThU}(x, pch = NA, verticals = TRUE, xlab = "age [ka]",
   col = "black", i2i = FALSE, detritus = 0, Th02 = c(0, 0),
-  Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0), ...)
+  Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0), hide = NULL, ...)
 
 \method{cad}{ReOs}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", i2i = TRUE, ...)
+  col = "black", i2i = TRUE, hide = NULL, ...)
 
 \method{cad}{SmNd}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", i2i = TRUE, ...)
+  col = "black", i2i = TRUE, hide = NULL, ...)
 
 \method{cad}{RbSr}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", i2i = TRUE, ...)
+  col = "black", i2i = TRUE, hide = NULL, ...)
 
 \method{cad}{LuHf}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", i2i = TRUE, ...)
+  col = "black", i2i = TRUE, hide = NULL, ...)
 
 \method{cad}{UThHe}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", ...)
+  col = "black", hide = NULL, ...)
 
 \method{cad}{fissiontracks}(x, pch = NA, verticals = TRUE,
-  xlab = "age [Ma]", col = "black", ...)
+  xlab = "age [Ma]", col = "black", hide = NULL, ...)
 }
 \arguments{
 \item{x}{a numerical vector OR an object of class \code{UPb},
@@ -83,6 +84,9 @@ which are to be used for plotting data of class
 
 \item{col}{colour to give to single sample datasets (not applicable
 if \code{x} has class \code{detritals})}
+
+\item{hide}{vector with indices of aliquots that should be removed
+from the plot.}
 
 \item{type}{scalar indicating whether to plot the
 \eqn{^{207}}Pb/\eqn{^{235}}U age (\code{type}=1), the

@@ -9,7 +9,7 @@ concordia(x, tlim = NULL, alpha = 0.05, wetherill = TRUE,
   ellipse.col = c("#00FF0080", "#FF000080"),
   concordia.col = "darksalmon", exterr = FALSE, show.age = 0,
   sigdig = 2, common.Pb = 0, ticks = NULL, anchor = list(FALSE,
-  NA), ...)
+  NA), hide = NULL, omit = NULL, omit.col = NA, ...)
 }
 \arguments{
 \item{x}{an object of class \code{UPb}}
@@ -93,14 +93,21 @@ age are estimated.
 
 \item If the first element is \code{TRUE} and the second element is
 \code{NA}, then the common Pb composition is fixed at the values
-stored in \code{settings('iratio','Pb206Pb204')} (if
-\code{x$format<4}) or \code{settings('iratio','Pb206Pb204')} and
-\code{settings('iratio','Pb207Pb204')} (if \code{x$format>3}).
+stored in \code{settings('iratio',...)}.
 
 item If the first element is \code{TRUE} and the second element is a
 number, then the discordia line is forced to intersect the
 concordia line at an age equal to that number.
 }}
+
+\item{hide}{vector with indices of aliquots that should be removed
+from the concordia diagram}
+
+\item{omit}{vector with indices of aliquots that should be plotted
+but omitted from concordia or discordia age calculation}
+
+\item{omit.col}{colour that should be used for the omitted
+aliquots.}
 
 \item{...}{optional arguments to the generic \code{plot} function}
 }

@@ -12,12 +12,12 @@ agespectrum(x, ...)
   random.effects = TRUE, plateau.col = rgb(0, 1, 0, 0.5),
   non.plateau.col = rgb(0, 1, 1, 0.5), sigdig = 2, line.col = "red",
   lwd = 2, title = TRUE, show.ci = TRUE,
-  xlab = "cumulative fraction", ylab = "age [Ma]", ...)
+  xlab = "cumulative fraction", ylab = "age [Ma]", hide = NULL, ...)
 
 \method{agespectrum}{ArAr}(x, alpha = 0.05, plateau = TRUE,
   random.effects = TRUE, plateau.col = rgb(0, 1, 0, 0.5),
   non.plateau.col = rgb(0, 1, 1, 0.5), sigdig = 2, exterr = TRUE,
-  line.col = "red", lwd = 2, i2i = FALSE, ...)
+  line.col = "red", lwd = 2, i2i = FALSE, hide = NULL, ...)
 }
 \arguments{
 \item{x}{a three-column matrix whose first column gives the amount
@@ -69,6 +69,9 @@ the plateau age as a grey band}
 \item{xlab}{x-axis label}
 
 \item{ylab}{y-axis label}
+
+\item{hide}{vector with indices of aliquots that should be removed
+from the plot.}
 
 \item{exterr}{propagate the external (decay constant and
 calibration factor) uncertainties?}

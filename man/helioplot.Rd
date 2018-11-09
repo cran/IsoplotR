@@ -7,7 +7,8 @@
 helioplot(x, logratio = TRUE, model = 1, show.central.comp = TRUE,
   show.numbers = FALSE, alpha = 0.05, contour.col = c("white",
   "red"), levels = NA, clabel = "", ellipse.col = c("#00FF0080",
-  "#0000FF80"), sigdig = 2, xlim = NA, ylim = NA, fact = NA, ...)
+  "#0000FF80"), sigdig = 2, xlim = NA, ylim = NA, fact = NA,
+  hide = NULL, omit = NULL, omit.col = NA, ...)
 }
 \arguments{
 \item{x}{an object of class \code{UThHe}}
@@ -71,6 +72,15 @@ determined automatically.}
 \item{fact}{three-element vector with scaling factors of the
 ternary diagram if \code{fact=NA}, these will be determined
 automatically}
+
+\item{hide}{vector with indices of aliquots that should be removed
+from the plot.}
+
+\item{omit}{vector with indices of aliquots that should be plotted
+but omitted from the central age calculation.}
+
+\item{omit.col}{colour that should be used for the omitted
+aliquots.}
 
 \item{...}{optional arguments to the generic \code{plot} function}
 }
