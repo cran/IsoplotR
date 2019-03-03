@@ -136,6 +136,7 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
     out$legend <- peaks2legend(out,sigdig=sigdig,k=k)
     out
 }
+#'
 #' @param type scalar valueindicating whether to plot the
 #'     \eqn{^{207}}Pb/\eqn{^{235}}U age (\code{type}=1), the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U age (\code{type}=2), the
@@ -143,10 +144,12 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U age
 #'     (\code{type}=4), or the (Wetherill) concordia age
 #'     (\code{type}=5)
+#' 
 #' @param cutoff.76 the age (in Ma) below which the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U and above which the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 #'     only used if \code{type=4}.
+#' 
 #' @param cutoff.disc two element vector with the maximum and minimum
 #'     percentage discordance allowed between the
 #'     \eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U
@@ -155,32 +158,46 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 #'     \code{cutoff.disc=NA} if you do not want to use this filter.
+#' 
+#' @param common.Pb apply a common lead correction using one of three
+#'     methods:
+#'
+#' \code{1}: use the Stacey-Kramers two-stage model to infer the initial
+#' Pb-composition
+#'
+#' \code{2}: use the isochron intercept as the initial Pb-composition
+#'
+#' \code{3}: use the Pb-composition stored in
+#' \code{settings('iratio','Pb207Pb206')} (if \code{x$format}<4) or
+#' \code{settings('iratio','Pb206Pb204')} and
+#' \code{settings('iratio','Pb207Pb204')} (if \code{x$format}>3)
+#' 
 #' @rdname peakfit
 #' @export
-peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,
-                        cutoff.disc=c(-15,5),exterr=TRUE,
-                        sigdig=2,log=TRUE,alpha=0.05,...){
-    peakfit_helper(x,k=k,type=type,cutoff.76=cutoff.76,
-                   cutoff.disc=cutoff.disc,exterr=exterr,
-                   sigdig=sigdig,log=log,alpha=alpha,...)
+peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
+                        common.Pb=0,exterr=TRUE,sigdig=2,log=TRUE,alpha=0.05,...){
+    peakfit_helper(x,k=k,type=type,cutoff.76=cutoff.76,cutoff.disc=cutoff.disc,
+                   exterr=exterr,sigdig=sigdig,log=log,alpha=alpha,common.Pb=common.Pb,...)
 }
-#' @param i2i `isochron to intercept': calculates the initial (aka
-#'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
-#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
-#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
-#'     \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
-#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
-#'     stored in \code{settings('iratio',...)}. When applied to data
-#'     of class \code{ThU}, setting \code{i2i} to \code{TRUE} applies
-#'     a detrital Th-correction.
 #' @rdname peakfit
 #' @export
 peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,
-                         log=TRUE,i2i=TRUE,alpha=0.05,...){
+                         log=TRUE,common.Pb=0,alpha=0.05,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
-                   log=log,i2i=i2i,alpha=alpha,...)
+                   log=log,common.Pb=common.Pb,alpha=alpha,...)
 }
+#'
+#' @param i2i `isochron to intercept': calculates the initial (aka
+#'     `inherited', `excess', or `common')
+#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
+#'     \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
+#'     \eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
+#'     ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
+#'     uses the default values stored in
+#'     \code{settings('iratio',...)}. When applied to data of class
+#'     \code{ThU}, setting \code{i2i} to \code{TRUE} applies a
+#'     detrital Th-correction.
+#' 
 #' @rdname peakfit
 #' @export
 peakfit.ArAr <- function(x,k=1,exterr=TRUE,sigdig=2,
@@ -237,45 +254,34 @@ peakfit.LuHf <- function(x,k=1,exterr=TRUE,sigdig=2,
 #' \eqn{^{230}}Th/\eqn{^{238}}U, \eqn{^{232}}Th/\eqn{^{238}}U and
 #' \eqn{^{234}}U/\eqn{^{238}}U-ratios in the detritus.
 #'
-#' @param Th02 2-element vector with the assumed initial
-#'     \eqn{^{230}}Th/\eqn{^{232}}Th-ratio of the detritus and its
-#'     standard error. Only used if \code{detritus==2}
-#' @param Th02U48 9-element vector with the measured composition of
-#'     the detritus, containing \code{X=0/8}, \code{sX}, \code{Y=2/8},
-#'     \code{sY}, \code{Z=4/8}, \code{sZ}, \code{rXY}, \code{rXZ},
-#'     \code{rYZ}. Only used if \code{isochron==FALSE} and
-#'     \code{detritus==3}
 #' @rdname peakfit
 #' @export
 peakfit.ThU <- function(x,k=1,exterr=FALSE,sigdig=2, log=TRUE,
-                        i2i=TRUE,alpha=0.05,detritus=0,Th02=c(0,0),
-                        Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
+                        i2i=TRUE,alpha=0.05,detritus=0,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,log=log,i2i=i2i,
-                   alpha=alpha,detritus=detritus,Th02=Th02,Th02U48=Th02U48,...)
+                   alpha=alpha,detritus=detritus,...)
 }
 #' @rdname peakfit
 #' @export
 peakfit.UThHe <- function(x,k=1,sigdig=2,log=TRUE,alpha=0.05,...){
     peakfit_helper(x,k=k,sigdig=sigdig,log=log,alpha=alpha,...)
 }
-peakfit_helper <- function(x,k=1,type=4,cutoff.76=1100,
-                           cutoff.disc=c(-15,5),exterr=TRUE,sigdig=2,
-                           log=TRUE,i2i=FALSE,alpha=0.05,detritus=0,
-                           Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
+peakfit_helper <- function(x,k=1,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
+                           exterr=TRUE,sigdig=2,log=TRUE,i2i=FALSE,
+                           common.Pb=0,alpha=0.05,detritus=0,...){
     if (k<1) return(NULL)
-    if (identical(k,'auto'))
+    if (identical(k,'auto')){
         k <- BIC_fit(x,5,log=log,type=type,cutoff.76=cutoff.76,
-                     cutoff.disc=cutoff.disc,detritus=detritus,
-                     Th02=Th02,Th02U48=Th02U48)
-    tt <- get.ages(x,i2i=i2i,type=type,cutoff.76=cutoff.76,
-                   cutoff.disc=cutoff.disc,detritus=detritus,
-                   Th02=Th02,Th02U48=Th02U48)
+                     cutoff.disc=cutoff.disc,detritus=detritus,commonPb=common.Pb)
+    }
+    tt <- get.ages(x,i2i=i2i,common.Pb=common.Pb,type=type,cutoff.76=cutoff.76,
+                   cutoff.disc=cutoff.disc,detritus=detritus)
     fit <- peakfit.default(tt,k=k,sigdig=sigdig,log=log,alpha=alpha)
     if (exterr){
         if (identical(k,'min')) numpeaks <- 1
         else numpeaks <- k
         for (i in 1:numpeaks){
-            age.with.exterr <- add.exterr(x,fit$peaks['t',i],fit$peaks['s[t]',i])
+            age.with.exterr <- add.exterr(x,fit$peaks['t',i],fit$peaks['s[t]',i],type=type)
             fit$peaks['s[t]',i] <- age.with.exterr[2]
             fit$peaks['ci[t]',i] <- nfact(alpha)*fit$peaks['s[t]',i]
         }
@@ -288,7 +294,6 @@ get.peakfit.covmat <- function(k,pii,piu,aiu,biu){
     Au <- matrix(0,k-1,k-1)
     Bu <- matrix(0,k-1,k)
     Cu <- matrix(0,k,k)
-    hess <- matrix(0,2*k-1,2*k-1)
     if (k>1){
         for (i in 1:(k-1)){
             for (j in 1:(k-1)){
@@ -296,7 +301,6 @@ get.peakfit.covmat <- function(k,pii,piu,aiu,biu){
                                (piu[,j]/pii[j]-piu[,k]/pii[k]))
             }
         }
-        hess[1:(k-1),1:(k-1)] <- Au
         for (i in 1:(k-1)){
             for (j in 1:k){
                 Bu[i,j] <- sum(piu[,j]*aiu[,j]*
@@ -305,8 +309,6 @@ get.peakfit.covmat <- function(k,pii,piu,aiu,biu){
                                )
             }
         }
-        hess[1:(k-1),k:(2*k-1)] <- Bu
-        hess[k:(2*k-1),1:(k-1)] <- t(Bu)
     }
     for (i in 1:k){
         for (j in 1:k){
@@ -314,8 +316,9 @@ get.peakfit.covmat <- function(k,pii,piu,aiu,biu){
                            (i==j)*biu[,i]*piu[,i])
         }
     }
-    hess[k:(2*k-1),k:(2*k-1)] <- Cu
-    solve(hess)
+    if (k>1) out <- blockinverse(Au,Bu,t(Bu),Cu,doall=TRUE)
+    else out <- solve(Cu)
+    out
 }
 
 get.props.err <- function(E){
@@ -365,24 +368,22 @@ normal.mixtures <- function(x,k,sigdig=2,alpha=0.05,...){
     pii <- rep(1,k)/k
     L <- -Inf
     for (j in 1:100){
-        fiu <- matrix(0,n,k)
-        for (i in 1:k){
-            fiu[,i] <- stats::dnorm(yu,betai[i]*xu,1)
+        lpfiu <- matrix(0,n,k) # log(pii x fiu) taking logs enhances stability 
+        for (i in 1:k){        # compared to Galbraiths orignal formulation
+            lpfiu[,i] <- log(pii[i]) + stats::dnorm(yu,betai[i]*xu,1,log=TRUE)
         }
         piu <- matrix(0,n,k)
-        for (u in 1:n){
-            den <- sum(pii*fiu[u,])
-            if (den>0) piu[u,] <- pii*fiu[u,]/den
+        for (i in 1:k){
+            lden <- apply(lpfiu,2,'-',lpfiu[,i])
+            piu[,i] <- 1/rowSums(exp(lden))
         }
-        fiu <- matrix(0,n,k)
-        fu <- rep(0,n)
         for (i in 1:k){
             pii[i] <- mean(piu[,i])
             betai[i] <- sum(piu[,i]*xu*yu)/sum(piu[,i]*xu^2)
-            fiu[,i] <- stats::dnorm(yu,betai[i]*xu,1)
-            fu <- fu + pii[i] * fiu[,i]
+            lpfiu[,i] <- log(pii[i]) +
+                stats::dnorm(yu,betai[i]*xu,1,log=TRUE)
         }
-        newL <- sum(log(fu[fu>0]))
+        newL <- get.L.normal.mixture(lpfiu)
         if (((newL-L)/newL)^2 < 1e-20) break;
         L <- newL
     }
@@ -401,6 +402,19 @@ normal.mixtures <- function(x,k,sigdig=2,alpha=0.05,...){
     out$L <- L
     out$legend <- peaks2legend(out,sigdig=sigdig,k=k)
     out
+}
+# uses sum-of-logs identity from Wikipedia
+get.L.normal.mixture <- function(lpfiu){
+    if (ncol(lpfiu)<2){
+        fu <- lpfiu
+    } else {
+        sorted.lpfiu <- t(apply(lpfiu,1,sort,decreasing=TRUE))
+        a0 <- subset(sorted.lpfiu,select=1)
+        ai <- subset(sorted.lpfiu,select=-1)
+        aia0 <- apply(ai,2,'-',a0)
+        fu <- a0 + log(1 + sum(exp(aia0)))
+    }
+    sum(fu)
 }
 
 binomial.mixtures <- function(x,k,exterr=TRUE,alpha=0.05,...){
@@ -487,17 +501,15 @@ theta2age <- function(x,theta,beta.var,exterr=TRUE){
     list(peaks=peaks,peaks.err=peaks.err)
 }
 
-BIC_fit <- function(x,max.k,type=4,cutoff.76=1100,
-                    cutoff.disc=c(-15,5),exterr=TRUE,
-                    detritus=0,Th02=c(0,0),
-                    Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
+BIC_fit <- function(x,max.k,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
+                    exterr=TRUE,detritus=0,common.Pb=0,...){
     n <- length(x)
     BIC <- Inf
     tryCatch({
         for (k in 1:max.k){
             fit <- peakfit(x,k,type=type,cutoff.76=cutoff.76,
                            cutoff.disc=cutoff.disc,exterr=exterr,
-                           detritus=detritus,Th02=Th02,Th02U48=Th02U48,...)
+                           detritus=detritus,common.Pb=common.Pb,...)
             p <- 2*k-1
             newBIC <- -2*fit$L+p*log(n)
             if (newBIC<BIC) {

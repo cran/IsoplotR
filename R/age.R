@@ -54,9 +54,25 @@
 #'     \code{'K-Ca'}, \code{'Th-U'}, \code{'Re-Os'}, \code{'Sm-Nd'},
 #'     \code{'Rb-Sr'}, \code{'Lu-Hf'}, \code{'U-Th-He'} or
 #'     \code{'fissiontracks'}
+#' 
 #' @param exterr propagate the external (decay constant and
 #'     calibration factor) uncertainties?
+#' 
 #' @param i (optional) index of a particular aliquot
+#' 
+#' @param U48 the initial \eqn{^{234}}U/\eqn{^{238}}U-activity ratio
+#'     (only used if \code{method='U238-Pb206'}, \code{'U238-Pb206'}
+#'     or \code{'Pb207-Pb206'}).
+#' @param Th0U8 the initial \eqn{^{230}}Th/\eqn{^{238}}U-activity
+#'     ratio (only used if \code{method='U238-Pb206'},
+#'     \code{'U238-Pb206'} or \code{'Pb207-Pb206'}).
+#' @param Ra6U8 the initial \eqn{^{226}}Ra/\eqn{^{238}}U-activity
+#'     ratio (only used if \code{method='U238-Pb206'},
+#'     \code{'U238-Pb206'} or \code{'Pb207-Pb206'}).
+#' @param Pa1U5 the initial \eqn{^{231}}Pa/\eqn{^{235}}U-activity
+#'     ratio (only used if \code{method='U238-Pb206'},
+#'     \code{'U238-Pb206'} or \code{'Pb207-Pb206'}).
+#'
 #' @param ... additional arguments
 #'
 #' @rdname age
@@ -65,35 +81,39 @@ age <- function(x,...){ UseMethod("age",x) }
 #' @rdname age
 #' @export
 age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
-                        zeta=c(NA,NA),rhoD=c(NA,NA),...){
+                        zeta=c(NA,NA),rhoD=c(NA,NA),U48=1,Th0U8=1,Ra6U8=1,Pa1U5=1,...){
+    d <- diseq(U48=U48,Th0U8=Th0U8,Ra6U8=Ra6U8,Pa1U5=Pa1U5)
     if (length(x)==1) x <- c(x,0)
     if (identical(method,'U235-Pb207')){
-        out <- get.Pb207U235.age(x[1],x[2],exterr)
+        out <- get.Pb207U235.age(x=x[1],sx=x[2],exterr=exterr,d=d)
     } else if (identical(method,'U238-Pb206')){
-        out <- get.Pb206U238.age(x[1],x[2],exterr)
-    } else if (identical(method,'Pb206-Pb207')){
-        out <- get.Pb207Pb206.age(x[1],x[2],exterr)
+        out <- get.Pb206U238.age(x=x[1],sx=x[2],exterr=exterr,d=d)
+    } else if (identical(method,'Pb207-Pb206')){
+        out <- get.Pb207Pb206.age(x=x[1],sx=x[2],exterr,d=d)
     } else if (identical(method,'Ar-Ar')){
-        out <- get.ArAr.age(x[1],x[2],x[3],x[4],exterr)
+        out <- get.ArAr.age(Ar40Ar39=x[1],sAr40Ar39=x[2],
+                            J=x[3],sJ=x[4],exterr=exterr)
     } else if (identical(method,'K-Ca')){
-        out <- get.KCa.age(x[1],x[2],exterr)
+        out <- get.KCa.age(K40Ca40=x[1],sK40Ca40=x[2],exterr=exterr)
     } else if (identical(method,'Re-Os')){
-        out <- get.ReOs.age(x[1],x[2],exterr)
+        out <- get.ReOs.age(Os187Re187=x[1],sOs187Re187=x[2],exterr=exterr)
     } else if (identical(method,'Rb-Sr')){
-        out <- get.RbSr.age(x[1],x[2],exterr)
+        out <- get.RbSr.age(Rb87Sr86=x[1],sRb87Sr86=x[2],exterr)
     } else if (identical(method,'Sm-Nd')){
-        out <- get.SmNd.age(x[1],x[2],exterr)
+        out <- get.SmNd.age(Nd143Sm147=x[1],sNd143Sm147=x[2],exterr)
     } else if (identical(method,'Lu-Hf')){
-        out <- get.LuHf.age(x[1],x[2],exterr)
+        out <- get.LuHf.age(Hf176Lu176=x[1],sHf176Lu176=x[2],exterr)
     } else if (identical(method,'Th-U')){
-        out <- get.ThU.age(x[1],x[2],x[3],x[4],x[5],exterr=exterr)
-    } else if (identical(method,'U-Th-He')){
-        if (length(x)==6)
-            out <- get.UThHe.age(x[1],x[2],x[3],x[4],x[5],x[6])
-        else if (length(x)==8)
-            out <- get.UThHe.age(x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8])
+        out <- get.ThU.age(Th230U238=x[1],sTh230U238=x[2],U234U238=x[3],
+                           sU234U238=x[4],cov4808=x[5],exterr=exterr)
+    } else if (identical(method,'U-Th-He') && length(x)==6){
+        out <- get.UThHe.age(U=x[1],sU=x[2],Th=x[3],
+                             sTh=x[4],He=x[5],sHe=x[6])
+    } else if (identical(method,'U-Th-He') && length(x)==8){
+        out <- get.UThHe.age(U=x[1],sU=x[2],Th=x[3],sTh=x[4],
+                             He=x[5],sHe=x[6],Sm=x[7],sSm=x[8])
     } else if (identical(method,'fissiontracks')){
-        out <- get.EDM.age(x[1],x[2],zeta,rhoD)
+        out <- get.EDM.age(Ns=x[1],Ni=x[2],zeta=zeta,rhoD=rhoD)
     } else {
         out <- NA
     }
@@ -222,14 +242,10 @@ age.UPb <- function(x,type=1,wetherill=TRUE,exterr=TRUE,i=NA,
 #' @export
 age.PbPb <- function(x,isochron=TRUE,common.Pb=1,
                      exterr=TRUE,i=NA,sigdig=NA,...){
-    if (common.Pb %in% c(1,2,3))
-        X <- common.Pb.correction(x,option=common.Pb)
-    else
-        X <- x
     if (isochron)
-        out <- isochron(X,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
+        out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
     else
-        out <- PbPb.age(X,exterr=exterr,i=i,sigdig=sigdig)
+        out <- PbPb.age(x,exterr=exterr,i=i,sigdig=sigdig,common.Pb=common.Pb)
     out
 }
 #' @param J two-element vector with the J-factor and its standard
@@ -301,23 +317,12 @@ age.fissiontracks <- function(x,central=FALSE,i=NA,sigdig=NA,exterr=TRUE,...){
 #' \code{3}: correct the data using the measured present day
 #' \eqn{^{230}}Th/\eqn{^{238}}U, \eqn{^{232}}Th/\eqn{^{238}}U and
 #' \eqn{^{234}}U/\eqn{^{238}}U-ratios in the detritus.
-#'
-#' @param Th02 2-element vector with the assumed initial
-#'     \eqn{^{230}}Th/\eqn{^{232}}Th-ratio of the detritus and its
-#'     standard error. Only used if \code{isochron==FALSE} and
-#'     \code{detritus==2}
-#' @param Th02U48 9-element vector with the measured composition of
-#'     the detritus, containing \code{X=0/8}, \code{sX}, \code{Y=2/8},
-#'     \code{sY}, \code{Z=4/8}, \code{sZ}, \code{rXY}, \code{rXZ},
-#'     \code{rYZ}. Only used if \code{isochron==FALSE} and
-#'     \code{detritus==3}
+#' 
 #' @rdname age
 #' @export
-age.ThU <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,
-                    detritus=0,Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
+age.ThU <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,detritus=0,...){
     if (isochron) out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
-    else out <- ThU.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,
-                        detritus=detritus,Th02=Th02,Th02U48=Th02U48,...)
+    else out <- ThU.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,detritus=detritus,...)
     out
 }
 #' @rdname age
@@ -391,13 +396,13 @@ add.exterr <- function(x,tt,st,cutoff.76=1100,type=4){
 }
 
 get.ages <- function(x,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
-                     i2i=FALSE, detritus=0,Th02=c(0,0),
-                     Th02U48=c(0,0,1e6,0,0,0,0,0,0)){
+                     i2i=FALSE,common.Pb=0,detritus=0){
     if (hasClass(x,'UPb')){
-        out <- filter.UPb.ages(x,type,cutoff.76,
-                               cutoff.disc,exterr=FALSE)
+        out <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
+                               cutoff.disc=cutoff.disc,
+                               exterr=FALSE,common.Pb=common.Pb)
     } else if (hasClass(x,'PbPb')){
-        out <- PbPb.age(x,exterr=FALSE)
+        out <- PbPb.age(x,exterr=FALSE,common.Pb=common.Pb)
     } else if (hasClass(x,'ArAr')){
         out <- ArAr.age(x,exterr=FALSE,i2i=i2i)
     } else if (hasClass(x,'KCa')){
@@ -415,8 +420,7 @@ get.ages <- function(x,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
     } else if (hasClass(x,'fissiontracks')){
         out <- fissiontrack.age(x,exterr=FALSE)
     } else if (hasClass(x,'ThU')){
-        out <- ThU.age(x,exterr=FALSE,i2i=i2i,detritus=detritus,
-                       Th02=Th02,Th02U48=Th02U48)
+        out <- ThU.age(x,exterr=FALSE,i2i=i2i,detritus=detritus)
     }
     out
 }

@@ -1,39 +1,52 @@
+#' @export
 length.UPb  <- function(x){ nrow(x$x) }
+#' @export
 length.PbPb <- function(x){ nrow(x$x) }
+#' @export
 length.ArAr <- function(x){ nrow(x$x) }
+#' @export
+length.PD <- function(x){ nrow(x$x) }
+#' @export
 length.KCa <- function(x){ nrow(x$x) }
-length.RbSr <- function(x){ nrow(x$x) }
-length.SmNd <- function(x){ nrow(x$x) }
-length.ReOs <- function(x){ nrow(x$x) }
-length.LuHf <- function(x){ nrow(x$x) }
+#' @export
 length.ThU <- function(x){ nrow(x$x) }
+#' @export
 length.UThHe <- function(x){ nrow(x) }
+#' @export
 length.KDE <- function(x){ length(x$ages) }
+#' @export
 length.KDEs <- function(x){ length(x$kdes) }
+#' @export
 length.fissiontracks <- function(x){
     if (x$format==1) return(nrow(x$x))
     else return(length(x$Ns))
 }
 
+#' @export
 subset.UPb  <- function(x,subset,...){ subset_helper(x,subset,...) }
+#' @export
 subset.PbPb <- function(x,subset,...){ subset_helper(x,subset,...) }
+#' @export
 subset.ArAr <- function(x,subset,...){ subset_helper(x,subset,...) }
+#' @export
 subset.KCa <- function(x,subset,...){ subset_helper(x,subset,...) }
-subset.RbSr <- function(x,subset,...){ subset_helper(x,subset,...) }
-subset.SmNd <- function(x,subset,...){ subset_helper(x,subset,...) }
-subset.ReOs <- function(x,subset,...){ subset_helper(x,subset,...) }
-subset.LuHf <- function(x,subset,...){ subset_helper(x,subset,...) }
+#' @export
+subset.PD <- function(x,subset,...){ subset_helper(x,subset,...) }
+#' @export
 subset.ThU <- function(x,subset,...){ subset_helper(x,subset,...) }
+#' @export
 subset.detritals <- function(x,subset,...){
     out <- x[subset]
     class(out) <- class(x)
     out
 }
+#' @export
 subset.UThHe <- function(x,subset,...){
     out <- x[subset,]
     class(out) <- class(x)
     out
 }
+#' @export
 subset.fissiontracks <- function(x,subset,...){
     if (x$format==1){
         out <- subset_helper(x,subset,...)
@@ -218,8 +231,12 @@ errorprop <- function(J11,J12,J21,J22,E11,E22,E12){
     out[,'cov'] <- J11*J21*E11 + J12*J21*E12 + J11*J22*E12 + J12*J22*E22
     out
 }
+# returns standard error
 errorprop1x2 <- function(J1,J2,E11,E22,E12){
     sqrt(E11*J1^2 + 2*E12*J1*J2 + E22*J2^2)
+}
+errorprop1x3 <- function(J1,J2,J3,E11,E22,E33,E12=0,E13=0,E23=0){
+    sqrt(E11*J1^2 + E22*J2^2 + E33*J3^2 + 2*J1*J2*E12 + 2*J1*J3*E13 + 2*J2*J3*E23)
 }
 
 quotient <- function(X,sX,Y,sY,rXY){
@@ -387,20 +404,14 @@ mymtext <- function(text,line=0,...){
 
 # if doall==FALSE, only returns the lower right submatrix
 blockinverse <- function(AA,BB,CC,DD,doall=FALSE){
-    out <- list()
     invAA <- solve(AA)
     invDCAB <- solve(DD-CC%*%invAA%*%BB)
     if (doall){
-        invBB <- solve(BB)
-        invCC <- solve(CC)
-        invDD <- solve(DD)
         ul <- invAA + invAA %*% BB %*% invDCAB %*% CC %*% invAA
         ur <- - invAA %*% BB %*% invDCAB
         ll <- - invDCAB %*% CC %*% invAA
         lr <- invDCAB
-        toprow <- cbind(ul,ur)
-        botrow <- cbind(ll,lr)
-        out <- rbind(toprow,botrow)
+        out <- rbind(cbind(ul,ur),cbind(ll,lr))
     } else {
         out <- invDCAB
     }

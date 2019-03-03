@@ -25,11 +25,11 @@ peakfit(x, ...)
   log = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{UPb}(x, k = 1, type = 4, cutoff.76 = 1100,
-  cutoff.disc = c(-15, 5), exterr = TRUE, sigdig = 2, log = TRUE,
-  alpha = 0.05, ...)
+  cutoff.disc = c(-15, 5), common.Pb = 0, exterr = TRUE,
+  sigdig = 2, log = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{PbPb}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, i2i = TRUE, alpha = 0.05, ...)
+  log = TRUE, common.Pb = 0, alpha = 0.05, ...)
 
 \method{peakfit}{ArAr}(x, k = 1, exterr = TRUE, sigdig = 2,
   log = TRUE, i2i = FALSE, alpha = 0.05, ...)
@@ -50,8 +50,7 @@ peakfit(x, ...)
   log = TRUE, i2i = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{ThU}(x, k = 1, exterr = FALSE, sigdig = 2,
-  log = TRUE, i2i = TRUE, alpha = 0.05, detritus = 0, Th02 = c(0,
-  0), Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0), ...)
+  log = TRUE, i2i = TRUE, alpha = 0.05, detritus = 0, ...)
 
 \method{peakfit}{UThHe}(x, k = 1, sigdig = 2, log = TRUE,
   alpha = 0.05, ...)
@@ -103,16 +102,29 @@ between the \eqn{^{206}}Pb/\eqn{^{238}}U and
 \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 \code{cutoff.disc=NA} if you do not want to use this filter.}
 
+\item{common.Pb}{apply a common lead correction using one of three
+    methods:
+
+\code{1}: use the Stacey-Kramers two-stage model to infer the initial
+Pb-composition
+
+\code{2}: use the isochron intercept as the initial Pb-composition
+
+\code{3}: use the Pb-composition stored in
+\code{settings('iratio','Pb207Pb206')} (if \code{x$format}<4) or
+\code{settings('iratio','Pb206Pb204')} and
+\code{settings('iratio','Pb207Pb204')} (if \code{x$format}>3)}
+
 \item{i2i}{`isochron to intercept': calculates the initial (aka
 `inherited', `excess', or `common')
 \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
-\eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
-\eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os or
-\eqn{^{176}}Hf/\eqn{^{177}}Hf ratio from an isochron
-fit. Setting \code{i2i} to \code{FALSE} uses the default values
-stored in \code{settings('iratio',...)}. When applied to data
-of class \code{ThU}, setting \code{i2i} to \code{TRUE} applies
-a detrital Th-correction.}
+\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
+\eqn{^{187}}Os/\eqn{^{188}}Os or \eqn{^{176}}Hf/\eqn{^{177}}Hf
+ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
+uses the default values stored in
+\code{settings('iratio',...)}. When applied to data of class
+\code{ThU}, setting \code{i2i} to \code{TRUE} applies a
+detrital Th-correction.}
 
 \item{detritus}{detrital \eqn{^{230}}Th correction (only applicable
     when \code{x$format == 1} or \code{2}.
@@ -127,16 +139,6 @@ a detrital Th-correction.}
 \code{3}: correct the data using the measured present day
 \eqn{^{230}}Th/\eqn{^{238}}U, \eqn{^{232}}Th/\eqn{^{238}}U and
 \eqn{^{234}}U/\eqn{^{238}}U-ratios in the detritus.}
-
-\item{Th02}{2-element vector with the assumed initial
-\eqn{^{230}}Th/\eqn{^{232}}Th-ratio of the detritus and its
-standard error. Only used if \code{detritus==2}}
-
-\item{Th02U48}{9-element vector with the measured composition of
-the detritus, containing \code{X=0/8}, \code{sX}, \code{Y=2/8},
-\code{sY}, \code{Z=4/8}, \code{sZ}, \code{rXY}, \code{rXZ},
-\code{rYZ}. Only used if \code{isochron==FALSE} and
-\code{detritus==3}}
 }
 \value{
 Returns a list with the following items:

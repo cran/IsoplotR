@@ -46,7 +46,7 @@
 #' \enumerate{
 #' \item{\code{7/5, err[7/5], 6/8, err[6/8], rho}}
 #' \item{\code{8/6, err[8/6], 7/6, err[7/6] (, rho)}}
-#' \item{\code{X=7/6, err[X], Y=7/5, err[Y], Z=6/8, err[Z]}
+#' \item{\code{X=7/6, err[X], Y=6/8, err[Y], Z=7/6, err[Z]}
 #' \code{(, rho[X,Y]) (, rho[Y,Z])}}
 #' \item{\code{X=7/5, err[X], Y=6/8, err[Y], Z=4/8, }
 #' \code{rho[X,Y], rho[X,Z], rho[Y,Z]}}
@@ -170,9 +170,25 @@
 #' \item{2\eqn{\sigma} relative uncertainties (\%).}
 #' 
 #' }
+#'
+#' @param U48 the initial \eqn{^{234}}U/\eqn{^{238}}U-activity ratio
+#' @param Th0U8 the initial \eqn{^{230}}Th/\eqn{^{238}}U-activity ratio
+#' @param Ra6U8 the initial \eqn{^{226}}Ra/\eqn{^{238}}U-activity ratio
+#' @param Pa1U5 the initial \eqn{^{231}}Pa/\eqn{^{235}}U-activity ratio
+#' 
+#' @param Th02 2-element vector with the assumed initial
+#'     \eqn{^{230}}Th/\eqn{^{232}}Th-ratio of the detritus and its
+#'     standard error. Only used if \code{isochron==FALSE} and
+#'     \code{detritus==2} 
+#' @param Th02U48 9-element vector with the measured composition of
+#'     the detritus, containing \code{X=0/8}, \code{sX}, \code{Y=2/8},
+#'     \code{sY}, \code{Z=4/8}, \code{sZ}, \code{rXY}, \code{rXZ},
+#'     \code{rYZ}.
 #' 
 #' @param ... optional arguments to the \code{read.csv} function
+#' 
 #' @seealso \code{\link{examples}}, \code{\link{settings}}
+#' 
 #' @return an object of class \code{UPb}, \code{PbPb}, \code{ArAr},
 #'     \code{KCa}, \code{UThHe}, \code{ReOs}, \code{SmNd},
 #'     \code{RbSr}, \code{LuHf}, \code{detritals},
@@ -220,53 +236,64 @@
 read.data <- function(x,...){ UseMethod("read.data",x) }
 #' @rdname read.data
 #' @export
-read.data.default <- function(x,method='U-Pb',format=1,ierr=1,...){
+read.data.default <- function(x,method='U-Pb',format=1,ierr=1,
+                              U48=1,Th0U8=1,Ra6U8=1,Pa1U5=1,
+                              Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
     X <- as.matrix(utils::read.table(x,sep=',',...))
-    read.data.matrix(X,method=method,format=format,ierr=ierr)
+    read.data.matrix(X,method=method,format=format,ierr=ierr,
+                     U48=U48,Th0U8=Th0U8,Ra6U8=Ra6U8,Pa1U5=Pa1U5,
+                     Th02=Th02,Th02U48=Th02U48)}
+#' @rdname read.data
+#' @export
+read.data.data.frame <- function(x,method='U-Pb',format=1,ierr=1,
+                                 U48=1,Th0U8=1,Ra6U8=1,Pa1U5=1,
+                                 Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
+    read.data.matrix(as.matrix(x),method=method,format=format,ierr=ierr,
+                     U48=U48,Th0U8=Th0U8,Ra6U8=Ra6U8,Pa1U5=Pa1U5,
+                     Th02=Th02,Th02U48=Th02U48,...)
 }
 #' @rdname read.data
 #' @export
-read.data.data.frame <- function(x,method='U-Pb',format=1,ierr=1,...){
-    read.data.matrix(as.matrix(x),method=method,format=format,ierr=ierr,...)
-}
-#' @rdname read.data
-#' @export
-read.data.matrix <- function(x,method='U-Pb',format=1,ierr=1,...){
+read.data.matrix <- function(x,method='U-Pb',format=1,ierr=1,
+                             U48=1,Th0U8=1,Ra6U8=1,Pa1U5=1,
+                             Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0),...){
     if (identical(method,'U-Pb')){
-        out <- as.UPb(x,format,ierr)
+        out <- as.UPb(x,format=format,ierr=ierr,
+                      U48=U48,Th0U8=Th0U8,Ra6U8=Ra6U8,Pa1U5=Pa1U5)
     } else if (identical(method,'Pb-Pb')){
-        out <- as.PbPb(x,format,ierr)
+        out <- as.PbPb(x,format=format,ierr=ierr)
     } else if (identical(method,'Ar-Ar')){
-        out <- as.ArAr(x,format,ierr)
+        out <- as.ArAr(x,format=format,ierr=ierr)
     } else if (identical(method,'K-Ca')){
-        out <- as.KCa(x,format,ierr)
+        out <- as.KCa(x,format=format,ierr=ierr)
     } else if (identical(method,'Re-Os')){
-        out <- as.ReOs(x,format,ierr)
+        out <- as.ReOs(x,format=format,ierr=ierr)
     } else if (identical(method,'Rb-Sr')){
-        out <- as.RbSr(x,format,ierr)
+        out <- as.RbSr(x,format=format,ierr=ierr)
     } else if (identical(method,'Sm-Nd')){
-        out <- as.SmNd(x,format,ierr)
+        out <- as.SmNd(x,format=format,ierr=ierr)
     } else if (identical(method,'Lu-Hf')){
-        out <- as.LuHf(x,format,ierr)
+        out <- as.LuHf(x,format=format,ierr=ierr)
     } else if (identical(method,'Th-U')){
-        out <- as.ThU(x,format,ierr)
+        out <- as.ThU(x,format=format,ierr=ierr,Th02=Th02,Th02U48=Th02U48)
     } else if (identical(method,'U-Th-He')){
-        out <- as.UThHe(x,ierr)
+        out <- as.UThHe(x,ierr=ierr)
     } else if (identical(method,'fissiontracks')){
-        out <- as.fissiontracks(x,format,ierr)
+        out <- as.fissiontracks(x,format=format,ierr=ierr)
     } else if (identical(method,'detritals')){
         out <- as.detritals(x)
     } else if (identical(method,'other')){
-        out <- as.other(x,format,ierr)
+        out <- as.other(x,format=format,ierr=ierr)
     }
     out
 }
 
-as.UPb <- function(x,format=3,ierr=1){
+as.UPb <- function(x,format=3,ierr=1,U48=1,Th0U8=1,Ra6U8=1,Pa1U5=1){
     out <- list()
     class(out) <- "UPb"
     out$x <- NA
     out$format <- format
+    out$d <- diseq(U48=U48,Th0U8=Th0U8,Ra6U8=Ra6U8,Pa1U5=Pa1U5)
     nc <- ncol(x)
     nr <- nrow(x)
     if (is.numeric(x)) X <- x
@@ -293,11 +320,11 @@ as.UPb <- function(x,format=3,ierr=1){
         } else if (nc == 7){
             rhoXY <- X[,7]
             i <- which(is.na(rhoXY))
-            j <- 1:(nr-1)
+            j <- 1:nr
             X <- cbind(X,0)
         } else {
-            i <- 1:(nr-1)
-            j <- 1:(nr-1)
+            i <- 1:nr
+            j <- 1:nr
             X <- cbind(X,0,0)
         }
         X[i,7] <- get.cor.75.68(X[i,1],X[i,2],X[i,3],X[i,4],X[i,5],X[i,6])
@@ -363,8 +390,8 @@ get.cov.76.86 <- function(Pb207Pb206,errPb207Pb206,
                           U238Pb206,errU238Pb206,
                           Pb207U235,errPb207U235){
     get.cov.div(Pb207Pb206,errPb207Pb206,
-                          U238Pb206,errU238Pb206,
-                          Pb207U235,errPb207U235)
+                U238Pb206,errU238Pb206,
+                Pb207U235,errPb207U235)
 }
 get.cov.46.86 <- function(Pb204Pb206,errPb204Pb206,
                           U238Pb206,errU238Pb206,
@@ -373,12 +400,26 @@ get.cov.46.86 <- function(Pb204Pb206,errPb204Pb206,
                 U238Pb206,errU238Pb206,
                 Pb204U238,errPb204U238)
 }
+get.cov.46.68 <- function(Pb204Pb206,errPb204Pb206,
+                          Pb206U238,errPb206U238,
+                          Pb204U238,errPb204U238){
+    get.cov.mult(Pb204Pb206,errPb204Pb206,
+                 Pb206U238,errPb206U238,
+                 Pb204U238,errPb204U238)
+}
 get.cov.46.76 <- function(Pb204Pb206,errPb204Pb206,
                           Pb207Pb206,errPb207Pb206,
                           Pb204Pb207,errPb204Pb207){
     get.cov.div(Pb204Pb206,errPb204Pb206,
                 Pb207Pb206,errPb207Pb206,
                 Pb204Pb207,errPb204Pb207)
+}
+get.cov.47.75 <- function(Pb204Pb207,errPb204Pb207,
+                          Pb207U235,errPb207U235,
+                          Pb204U238,errPb204U238){
+    get.cov.mult(Pb204Pb207,errPb204Pb207,
+                 Pb207U235,errPb207U235,
+                 Pb204U238,errPb204U238)
 }
 as.PbPb <- function(x,format=1,ierr=1){
     out <- list()
@@ -519,11 +560,13 @@ as.PD <- function(x,classname,colnames1,colnames2,format,ierr){
     }
     out
 }
-as.ThU <- function(x,format=1,ierr=1){
+as.ThU <- function(x,format=1,ierr=1,Th02=c(0,0),Th02U48=c(0,0,1e6,0,0,0,0,0,0)){
     out <- list()
     class(out) <- "ThU"
     out$x <- NA
     out$format <- format
+    out$Th02 <- Th02
+    out$Th02U48 <- Th02U48
     nc <- ncol(x)
     nr <- nrow(x)
     if (is.numeric(x)) X <- x
@@ -630,7 +673,7 @@ as.other <- function(x,format='generic',ierr=1){
     has.header <- is.na(suppressWarnings(as.numeric(x[1,1])))
     if (has.header) x <- x[-1,]
     X <- matrix(as.numeric(x),ncol=nc)
-    errconvert(X,'other',format,ierr)
+    errconvert(X,gc='other',format=format,ierr=ierr)
 }
 
 # x = a numerical vector, br = length of the preamble with parameters

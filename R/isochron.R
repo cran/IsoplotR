@@ -192,13 +192,13 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                              plot=TRUE,title=TRUE,model=1,xlab='x',
                              ylab='y',hide=NULL,omit=NULL,
                              omit.col=NA,...){
-    d <- data2york(x)
+    y <- data2york(x)
     d2calc <- clear(x,hide,omit)
     fit <- regression(d2calc,model=model)
     fit <- regression_init(fit,alpha=alpha)
     fit <- ci_isochron(fit)
     if (plot){
-        scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
+        scatterplot(y,xlim=xlim,ylim=ylim,alpha=alpha,
                     show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
                     clabel=clabel,ellipse.col=ellipse.col,fit=fit,
@@ -243,10 +243,9 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' \item{y0}{a four-element list containing:
 #'
 #' \code{y}: the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
-#' \eqn{^{40}}Ca/\eqn{^{44}}Ca, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
-#' \eqn{^{187}}Os/\eqn{^{188}}Os, \eqn{^{87}}Sr/\eqn{^{87}}Rb,
-#' \eqn{^{143}}Nd/\eqn{^{144}}Nd or \eqn{^{176}}Hf/\eqn{^{177}}Hf
-#' ratio.
+#' \eqn{^{40}}Ca/\eqn{^{44}}Ca, \eqn{^{187}}Os/\eqn{^{188}}Os,
+#' \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+#' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio.
 #'
 #' \code{s[y]}: the propagated uncertainty of \code{y}
 #'
@@ -372,9 +371,9 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #'
 #' @examples
 #' data(examples)
-#' isochron(examples$ArAr)
+#' isochron(examples$RbSr)
 #'
-#' fit <- isochron(examples$PbPb,inverse=FALSE,plot=FALSE)
+#' fit <- isochron(examples$ArAr,inverse=FALSE,plot=FALSE)
 #'
 #' dev.new()
 #' isochron(examples$ThU,type=4)
@@ -386,8 +385,8 @@ isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           inverse=TRUE,ci.col='gray80',line.col='black',
                           lwd=1,plot=TRUE,exterr=TRUE,model=1,
                           hide=NULL,omit=NULL,omit.col=NA,...){
-    d <- data2york(x,inverse=inverse)
-    d2calc <- clear(d,hide,omit)
+    y <- data2york(x,inverse=inverse)
+    d2calc <- clear(y,hide,omit)
     fit <- regression(d2calc,model=model)
     out <- isochron_init(fit,alpha=alpha)
     a <- out$a['a']
@@ -421,7 +420,7 @@ isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                                   x$J[1],x$J[2],exterr=exterr)[2]
     }
     if (plot) {
-        scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
+        scatterplot(y,xlim=xlim,ylim=ylim,alpha=alpha,
                     show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
                     clabel=clabel,ellipse.col=ellipse.col,fit=out,
@@ -457,24 +456,23 @@ isochron.PbPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           line.col='black',lwd=1,plot=TRUE,
                           exterr=TRUE,model=1,growth=FALSE,
                           hide=NULL,omit=NULL,omit.col=NA,...){
-    d <- data2york(x,inverse=inverse)
-    d2calc <- clear(d,hide,omit)
+    y <- data2york(x,inverse=inverse)
+    d2calc <- clear(y,hide,omit)
     fit <- regression(d2calc,model=model)
     out <- isochron_init(fit,alpha=alpha)
+    out$y0[c('y','s[y]')] <- out$a
     if (inverse){
         R76 <- out$a
-        out$y0[c('y','s[y]')] <- out$b
         x.lab <- quote(''^204*'Pb/'^206*'Pb')
         y.lab <- quote(''^207*'Pb/'^206*'Pb')
+        out$y0label <- quote(''^207*'Pb/'^206*'Pb = ')
     } else {
         R76 <- out$b
-        out$y0[c('y','s[y]')] <- out$a
         x.lab <- quote(''^206*'Pb/'^204*'Pb')
         y.lab <- quote(''^207*'Pb/'^204*'Pb')
+        out$y0label <- quote('('^207*'Pb/'^204*'Pb)'[o]*' = ')
     }
-    out$displabel <-
-        substitute(a*b*c,list(a='(',b=y.lab,c=')-dispersion = '))
-    out$y0label <- quote('('^207*'Pb/'^204*'Pb)'[o]*' = ')
+    out$displabel <- quote('dispersion = ')
     out$age[c('t','s[t]')] <-
         get.Pb207Pb206.age(R76[1],R76[2],exterr=exterr)
     out <- ci_isochron(out)
@@ -484,7 +482,7 @@ isochron.PbPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                                         exterr=exterr)[2]
     }
     if (plot) {
-        scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
+        scatterplot(y,xlim=xlim,ylim=ylim,alpha=alpha,
                     show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
                     clabel=clabel,ellipse.col=ellipse.col,fit=out,
@@ -599,7 +597,7 @@ isochron.ThU <- function (x,type=2,xlim=NA,ylim=NA,alpha=0.05,
         out$displabel <- quote('('^234*'U/'^238*'U)-dispersion = ')
     }
     if (plot){
-        scatterplot(out$d,xlim=xlim,ylim=ylim,alpha=alpha,
+        scatterplot(out$xyz,xlim=xlim,ylim=ylim,alpha=alpha,
                     show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
                     clabel=clabel,ellipse.col=ellipse.col,fit=out,
@@ -619,8 +617,8 @@ isochron.UThHe <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                            ci.col='gray80',line.col='black',lwd=1,
                            plot=TRUE,model=1,hide=NULL,omit=NULL,
                            omit.col='grey',...){
-    d <- data2york(x)
-    d2calc <- clear(d,hide,omit)
+    y <- data2york(x)
+    d2calc <- clear(y,hide,omit)
     fit <- regression(d2calc,model=model)
     out <- isochron_init(fit,alpha=alpha)
     out$y0[c('y','s[y]')] <- out$a
@@ -631,7 +629,7 @@ isochron.UThHe <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     out$displabel <- quote('He-dispersion = ')
     out$y0label <- quote('He'[o]*' = ')
     if (plot) {
-        scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
+        scatterplot(y,xlim=xlim,ylim=ylim,alpha=alpha,
                     show.ellipses=2*(model!=2),
                     show.numbers=show.numbers,levels=levels,
                     clabel=clabel,ellipse.col=ellipse.col,fit=out,
@@ -645,16 +643,16 @@ isochron.UThHe <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 
 isochron_ThU_3D <- function(x,type=2,model=1,exterr=TRUE,
                             alpha=0.05,hide=NULL,omit=NULL){
-    if (type == 1){
+    if (type == 1){ # 0/2 vs 8/2
         osmond <- FALSE
-        ia <- 'a'
-        ib <- 'b'
+        ia <- 'A'
+        ib <- 'B'
         i48 <- 'b'
         i08 <- 'B'
-        id <- c('X','sX','Y','sY','rXY')
+        id <- c('X','sX','Z','sZ','rXZ')
         x.lab <- quote(''^238*'U/'^232*'Th')
         y.lab <- quote(''^230*'Th/'^232*'Th')
-    } else if (type == 2){
+    } else if (type == 2){ # 0/8 vs 2/8
         osmond <- TRUE
         ia <- 'A'
         ib <- 'B'
@@ -663,16 +661,16 @@ isochron_ThU_3D <- function(x,type=2,model=1,exterr=TRUE,
         id <- c('X','sX','Z','sZ','rXZ')
         x.lab <- quote(''^232*'Th/'^238*'U')
         y.lab <- quote(''^230*'Th/'^238*'U')
-    } else if (type == 3){
+    } else if (type == 3){ # 4/2 vs 8/2
         osmond <- FALSE
-        ia <- 'A'
-        ib <- 'B'
+        ia <- 'a'
+        ib <- 'b'
         i48 <- 'b'
         i08 <- 'B'
-        id <- c('X','sX','Z','sZ','rXZ')
+        id <- c('X','sX','Y','sY','rXY')
         x.lab <- quote(''^238*'U/'^232*'Th')
         y.lab <- quote(''^234*'U/'^232*'Th')
-    } else {
+    } else if (type == 4){ # 4/8 vs 2/8
         osmond <- TRUE
         ia <- 'a'
         ib <- 'b'
@@ -682,11 +680,11 @@ isochron_ThU_3D <- function(x,type=2,model=1,exterr=TRUE,
         x.lab <- quote(''^232*'Th/'^238*'U')
         y.lab <- quote(''^234*'U/'^238*'U')
     }
-    d <- data2tit(x,osmond=osmond)
-    d2calc <- clear(d,hide,omit)
+    tit <- data2tit(x,osmond=osmond)
+    d2calc <- clear(tit,hide,omit)
     fit <- regression(d2calc,model=model,type="titterington")
     out <- isochron_init(fit,alpha=alpha)
-    out$d <- d
+    out$xyz <- tit
     out$a <- c(out$par[ia],sqrt(out$cov[ia,ia]))
     out$b <- c(out$par[ib],sqrt(out$cov[ib,ib]))
     out$cov.ab <- out$cov[ia,ib]
@@ -711,16 +709,16 @@ isochron_ThU_3D <- function(x,type=2,model=1,exterr=TRUE,
     }
     out$xlab <- x.lab
     out$ylab <- y.lab
-    out$d <- subset(out$d,select=id)
+    out$xyz <- subset(out$xyz,select=id)
     out
 }
 isochron_ThU_2D <- function(x,type=2,model=1,exterr=TRUE,
                             alpha=0.05,hide=NULL,omit=NULL){
-    d <- data2york(x,type=type)
-    d2calc <- clear(d,hide,omit)
+    y <- data2york(x,type=type)
+    d2calc <- clear(y,hide,omit)
     fit <- regression(d2calc,model=model,type="york")
     out <- isochron_init(fit,alpha=alpha)
-    out$d <- d
+    out$xyz <- y
     if (type==1){
         Th230U238 <- out$b
         Th230Th232 <- out$a
@@ -758,8 +756,8 @@ isochron_PD <- function(x,nuclide,xlim=NA,ylim=NA,alpha=0.05,
                         ci.col='gray80',line.col='black',lwd=1,
                         plot=TRUE,exterr=TRUE,model=1,bratio=1,
                         hide=NULL,omit=NULL,...){
-    d <- data2york(x)
-    d2calc <- clear(d,hide,omit)
+    y <- data2york(x)
+    d2calc <- clear(y,hide,omit)
     fit <- regression(d2calc,model=model)
     out <- isochron_init(fit,alpha=alpha)
     out$y0[c('y','s[y]')] <- out$a
@@ -793,7 +791,7 @@ isochron_PD <- function(x,nuclide,xlim=NA,ylim=NA,alpha=0.05,
     out$y0label <-
         substitute(a*b*c,list(a='(',b=y.lab,c=quote(')'[o]*' = ')))
     if (plot){
-        scatterplot(d,xlim=xlim,ylim=ylim,alpha=alpha,
+        scatterplot(y,xlim=xlim,ylim=ylim,alpha=alpha,
                     show.ellipses=1*(model!=2),
                     show.numbers=show.numbers,levels=levels,
                     clabel=clabel,ellipse.col=ellipse.col,fit=out,
@@ -932,7 +930,7 @@ isochrontitle <- function(fit,sigdig=2,type=NA,units="Ma",...){
     line1 <- do.call(substitute,list(eval(call1),list1))
     line2 <- do.call(substitute,list(eval(call2),list2))
     if (fit$model==1){
-        line3 <- substitute('MSWD ='~a~', p('~chi^2*')='~b,
+        line3 <- substitute('MSWD ='~a~', p('*chi^2*')='~b,
                             list(a=signif(fit$mswd,sigdig),
                                  b=signif(fit$p.value,sigdig)))
         mymtext(line1,line=2,...)

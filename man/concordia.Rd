@@ -4,12 +4,12 @@
 \alias{concordia}
 \title{Concordia diagram}
 \usage{
-concordia(x, tlim = NULL, alpha = 0.05, wetherill = TRUE,
+concordia(x = NULL, tlim = NULL, alpha = 0.05, wetherill = TRUE,
   show.numbers = FALSE, levels = NA, clabel = "",
   ellipse.col = c("#00FF0080", "#FF000080"),
   concordia.col = "darksalmon", exterr = FALSE, show.age = 0,
-  sigdig = 2, common.Pb = 0, ticks = NULL, anchor = list(FALSE,
-  NA), hide = NULL, omit = NULL, omit.col = NA, ...)
+  sigdig = 2, common.Pb = 0, ticks = 5, anchor = list(FALSE, NA),
+  hide = NULL, omit = NULL, omit.col = NA, ...)
 }
 \arguments{
 \item{x}{an object of class \code{UPb}}
@@ -67,18 +67,19 @@ concordia/discordia age}
 \item{common.Pb}{apply a common lead correction using one of three
     methods:
 
-\code{1}: use the Stacey-Kramer two-stage model to infer the initial
+\code{1}: use the Stacey-Kramers two-stage model to infer the initial
 Pb-composition
 
 \code{2}: use the isochron intercept as the initial Pb-composition
 
 \code{3}: use the Pb-composition stored in
+\code{settings('iratio','Pb207Pb206')} (if \code{x$format}<4) or
 \code{settings('iratio','Pb206Pb204')} and
-\code{settings('iratio','Pb207Pb204')}}
+\code{settings('iratio','Pb207Pb204')} (if \code{x$format}>3)}
 
-\item{ticks}{an optional vector of age ticks to be added to the
-concordia line to override \code{IsoplotR}'s default spacing,
-which is based on \code{R}'s \code{pretty} function.}
+\item{ticks}{either a scalar indicating the desired number of age
+ticks to be placed along the concordia line, OR a vector of
+tick ages.}
 
 \item{anchor}{control parameters to fix the intercept age or common
     Pb composition of the discordia fit. This is a two-element
