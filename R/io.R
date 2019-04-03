@@ -320,11 +320,11 @@ as.UPb <- function(x,format=3,ierr=1,U48=1,Th0U8=1,Ra6U8=1,Pa1U5=1){
         } else if (nc == 7){
             rhoXY <- X[,7]
             i <- which(is.na(rhoXY))
-            j <- 1:nr
+            j <- 1:nrow(X)
             X <- cbind(X,0)
         } else {
-            i <- 1:nr
-            j <- 1:nr
+            i <- 1:nrow(X)
+            j <- 1:nrow(X)
             X <- cbind(X,0,0)
         }
         X[i,7] <- get.cor.75.68(X[i,1],X[i,2],X[i,3],X[i,4],X[i,5],X[i,6])
@@ -435,15 +435,17 @@ as.PbPb <- function(x,format=1,ierr=1){
     if (format==1 & nc>4){
         cnames <- c('Pb206Pb204','errPb206Pb204',
                     'Pb207Pb204','errPb207Pb204','rho')
+        out$x <- read.XsXYsYrXY(X)
     } else if (format==2 & nc>4) {
         cnames <- c('Pb204Pb206','errPb204Pb206',
                     'Pb207Pb206','errPb207Pb206','rho')
+        out$x <- read.XsXYsYrXY(X)
     } else if (format==3 & nc>5){
         cnames <- c('Pb206Pb204','errPb206Pb204',
                     'Pb207Pb204','errPb207Pb204',
                     'Pb207Pb206','errPb207Pb206')
+        out$x <- subset(X,select=1:length(cnames))
     }
-    out$x <- subset(X,select=1:length(cnames))
     colnames(out$x) <- cnames
     out
 }
@@ -457,8 +459,8 @@ as.ArAr <- function(x,format=3,ierr=1){
     bi <- 4 # begin index
     X <- shiny2matrix(x,bi,nr,nc)
     X <- errconvert(X,gc='Ar-Ar',format=format,ierr=ierr)
-    if (format==3 & nc>5){
-        if (nc==8){
+    if (format==3 & nc>6){
+        if (nc==7){
             out$x <- subset(X,select=1:7)
         } else {
             ns <- nr-bi+1 # number of samples

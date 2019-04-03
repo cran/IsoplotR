@@ -136,44 +136,6 @@ twfit2wfit <- function(fit,x){
     out
 }
 
-# used by common Pb correction:
-project.concordia <- function(m76,m86,i76,d=diseq()){
-    t68 <- get.Pb206U238.age(1/m86,d=d)[1]
-    t76 <- get.Pb207Pb206.age(m76,d=d)[1]
-    a <- i76
-    b <- (m76-i76)/m86
-    neg <- (i76>m76) # negative slope?
-    pos <- !neg
-    above <- (t76>t68) # above concordia?
-    below <- !above
-    search.range <- c(t68,t76)
-    go.ahead <- FALSE
-    if (pos & above){
-        go.ahead <- TRUE
-    } else if (pos & below){
-        go.ahead <- TRUE
-    } else if (neg & above){
-        search.range <- c(0,t68)
-        go.ahead <- TRUE
-    } else if (neg & below){           # it is not clear what to do with samples
-        for (tt in seq(from=0,to=5000,by=10)){
-            misfit <- intersection.misfit.york(tt,a=a,b=b,d=d)
-            if (misfit<0){             # that plot in the 'forbidden zone' above
-                search.range[2] <- tt  # Wetherill concordia or below T-W concordia
-                go.ahead <- TRUE       # IsoplotR will still project them on
-                break                  # the concordia line.
-            }
-        }
-    }
-    if (go.ahead){
-        out <- stats::uniroot(intersection.misfit.york,
-                              search.range,a=a,b=b,d=d)$root
-    } else {
-        out <- m76
-    }
-    out
-}
-
 # t1 = 1st Wetherill intercept, t2 = 2nd Wetherill intercept
 # a0 = 64i, b0 = 74i on TW concordia
 intersection.misfit.ludwig <- function(t1,t2,a0,b0,d=diseq()){

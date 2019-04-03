@@ -148,10 +148,10 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' @param common.Pb apply a common lead correction using one of three
 #'     methods:
 #'
-#' \code{1}: use the isochron intercept as the initial Pb-composition
-#'
-#' \code{2}: use the Stacey-Kramer two-stage model to infer the initial
+#' \code{1}: use the Stacey-Kramer two-stage model to infer the initial
 #' Pb-composition
+#'
+#' \code{2}: use the isochron intercept as the initial Pb-composition
 #'
 #' \code{3}: use the Pb-composition stored in
 #' \code{settings('iratio','Pb206Pb204')} and
@@ -225,7 +225,7 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 age.UPb <- function(x,type=1,wetherill=TRUE,exterr=TRUE,i=NA,
                     sigdig=NA,common.Pb=0,show.p=FALSE,...){
     if (common.Pb %in% c(1,2,3))
-        X <- common.Pb.correction(x,option=common.Pb)
+        X <- Pb0corr(x,option=common.Pb)
     else
         X <- x
     if (type==1){
