@@ -150,8 +150,13 @@ mswd.lud <- function(ta0b0,x,anchor=list(FALSE,NA)){
     } else {
         out$df <- 2*ns-3
     }
-    out$mswd <- as.vector(SS/out$df)
-    out$p.value <- as.numeric(1-stats::pchisq(SS,out$df))
+    if (out$df>0){
+        out$mswd <- as.vector(SS/out$df)
+        out$p.value <- as.numeric(1-stats::pchisq(SS,out$df))
+    } else {
+        out$mswd <- 1
+        out$p.value <- 1
+    }
     out
 }
 
@@ -256,8 +261,8 @@ LL.lud.2D <- function(ta0,x,exterr=FALSE,w=0,LL=FALSE){
     out <- t(R) %*% l$omega %*% R
     if (LL){
         k <- length(R)
-        out <- -0.5*(out + k*log(2*pi) +
-                     determinant(2*pi*l$omegainv,logarithm=TRUE)$modulus)
+        detE <- determinant(2*pi*l$omegainv,logarithm=TRUE)$modulus
+        out <- -0.5*(out + k*log(2*pi) + detE)
     }
     out
 }
@@ -285,8 +290,8 @@ LL.lud.3D <- function(ta0b0,x,exterr=FALSE,w=0,LL=FALSE){
     }
     if (LL){
         k <- 2*ns
-        out <- -0.5*(out + k*log(2*pi) +
-                     determinant(l$omegainv,logarithm=TRUE)$modulus)
+        detE <- determinant(l$omegainv,logarithm=TRUE)$modulus
+        out <- -0.5*(out + k*log(2*pi) + detE)
     }
     out
 }
