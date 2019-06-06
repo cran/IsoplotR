@@ -1,15 +1,15 @@
-#' Get error ellipse coordinates for plotting
+#' @title Get error ellipse coordinates for plotting
 #'
-#' Constructs an error ellipse at a given confidence level from its
-#' centre and covariance matrix
+#' @description Constructs an error ellipse at a given confidence level
+#' from its centre and covariance matrix
 #'
 #' @param x x-coordinate (scalar) for the centre of the ellipse
 #' @param y y-coordinate (scalar) for the centre of the ellipse
-#' @param covmat the [\code{2 x 2}] covariance matrix of the x-y coordinates
+#' @param covmat the [\code{2x2}] covariance matrix of the x-y coordinates
 #' @param alpha the probability cutoff for the error ellipses
 #' @param n the resolution (number of segments) of the error ellipses
 #'
-#' @return an [\code{n x 2}] matrix of plot coordinates
+#' @return an [\code{nx2}] matrix of plot coordinates
 #' @examples
 #' x = 99; y = 101;
 #' covmat <- matrix(c(1,0.9,0.9,1),nrow=2)
@@ -34,8 +34,9 @@ ellipse <- function(x,y,covmat,alpha=0.05,n=50){
     out
 }
 
-#' Create a scatter plot with error ellipses or crosses
+#' @title Create a scatter plot with error ellipses or crosses
 #'
+#' @description
 #' Takes bivariate data with (correlated) uncertainties as input and
 #' produces a scatter plot with error ellipses or crosses as output.
 #' (optionally) displays the linear fit on this diagram, and can show
@@ -52,10 +53,26 @@ ellipse <- function(x,y,covmat,alpha=0.05,n=50){
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours within the error ellipses.
 #' @param clabel label for the colour scale
-#' @param ellipse.col a vector of two background colours for the error
-#'     ellipses. If \code{levels=NA}, then only the first colour will
-#'     be used. If \code{levels} is a vector of numbers, then
-#'     \code{ellipse.col} is used to construct a colour ramp.
+#' @param ellipse.col Fill colour for the error ellipses. This can
+#'     either be a single colour or multiple colours to form a colour
+#'     ramp (to be used if \code{levels!=NA}):
+#'
+#' \itemize{
+#'
+#' \item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+#' \code{'white'}, etc.}
+#'
+#' \item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+#' \code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
+#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+#'
+#' \item{a colour palette: \code{rainbow(n=100)},
+#' \code{topo.colors(n=100,alpha=0.5)}, etc.}
+#'
+#' \item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+#' etc.}
+#'
+#' }
 #' @param fit the output of \code{york()} (optional).
 #' @param add if \code{TRUE}, adds the points and lines to the
 #'     existing plot.
@@ -106,8 +123,8 @@ scatterplot <- function(xy,xlim=NA,ylim=NA,alpha=0.05,
         plot_isochron_line(fit,x=seq(xlim[1],xlim[2],length.out=100),
                            ci.col=ci.col,col=line.col,lwd=lwd)
     graphics::box()
-    haslevels <- !all(is.na(levels))
-    if (show.ellipses==2 && all(is.na(levels))){
+    nolevels <- all(is.na(levels))
+    if (show.ellipses==2 && nolevels){
         colour <- rep('black',ns)
     } else {
         colour <- set.ellipse.colours(ns=ns,levels=levels,col=ellipse.col,
@@ -145,7 +162,7 @@ scatterplot <- function(xy,xlim=NA,ylim=NA,alpha=0.05,
                          code=3,angle=90,
                          length=0.05,col=colour)
     }
-    if (haslevels & addcolourbar){
+    if (!nolevels & addcolourbar){
         colourbar(z=levels[calcit],col=ellipse.col,clabel=clabel)
     }
 }

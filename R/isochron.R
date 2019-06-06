@@ -1,5 +1,7 @@
+#' @title
 #' Calculate and plot isochrons
 #'
+#' @description
 #' Plots cogenetic Ar-Ar, K-Ca, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os, Lu-Hf,
 #' U-Th-He or Th-U data as X-Y scatterplots, fits an isochron curve
 #' through them using the \code{york} function, and computes the
@@ -71,19 +73,15 @@
 #'
 #' @param x EITHER a matrix with the following five columns:
 #'
-#' \describe{
+#' \code{X}: the x-variable
 #'
-#' \item{X}{the x-variable}
+#' \code{sX}: the standard error of \code{X}
 #'
-#' \item{sX}{the standard error of \code{X}}
+#' \code{Y}: the y-variable
 #'
-#' \item{Y}{the y-variable}
+#' \code{sY}: the standard error of \code{Y}
 #'
-#' \item{sY}{the standard error of \code{Y}}
-#'
-#' \item{rXY}{the correlation coefficient of \code{X} and \code{Y}}
-#'
-#' }
+#' \code{rXY}: the correlation coefficient of \code{X} and \code{Y}
 #'
 #' OR
 #'
@@ -108,10 +106,28 @@
 #'
 #' @param clabel label for the colour scale
 #'
-#' @param ellipse.col a vector of two background colours for the error
-#'     ellipses. If \code{levels=NA}, then only the first colour will
-#'     be used. If \code{levels} is a vector of numbers, then
-#'     \code{ellipse.col} is used to construct a colour ramp.
+#' @param ellipse.col Fill colour for the error ellipses. This can
+#'     either be a single colour or multiple colours to form a colour
+#'     ramp (to be used if \code{levels!=NA}):
+#'
+#' \itemize{
+#'
+#' \item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+#' \code{'white'}, etc.}
+#'
+#' \item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+#' \code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
+#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+#'
+#' \item{a colour palette: \code{rainbow(n=100)},
+#' \code{topo.colors(n=100,alpha=0.5)}, etc.}
+#'
+#' \item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+#' etc.}
+#'
+#' \item{for empty ellipses, set \code{ellipse.col=NA}}
+#'
+#' }
 #'
 #' @param ci.col the fill colour for the confidence interval of the
 #'     intercept and slope.

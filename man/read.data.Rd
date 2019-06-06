@@ -10,16 +10,16 @@
 read.data(x, ...)
 
 \method{read.data}{default}(x, method = "U-Pb", format = 1, ierr = 1,
-  U48 = 1, Th0U8 = 1, Ra6U8 = 1, Pa1U5 = 1, Th02 = c(0, 0),
-  Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0), ...)
+  d = diseq(), Th02 = c(0, 0), Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0,
+  0, 0), ...)
 
 \method{read.data}{data.frame}(x, method = "U-Pb", format = 1,
-  ierr = 1, U48 = 1, Th0U8 = 1, Ra6U8 = 1, Pa1U5 = 1,
-  Th02 = c(0, 0), Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0), ...)
+  ierr = 1, d = diseq(), Th02 = c(0, 0), Th02U48 = c(0, 0, 1e+06,
+  0, 0, 0, 0, 0, 0), ...)
 
 \method{read.data}{matrix}(x, method = "U-Pb", format = 1, ierr = 1,
-  U48 = 1, Th0U8 = 1, Ra6U8 = 1, Pa1U5 = 1, Th02 = c(0, 0),
-  Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0), ...)
+  d = diseq(), Th02 = c(0, 0), Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0,
+  0, 0), ...)
 }
 \arguments{
 \item{x}{either a file name (\code{.csv} format) OR a matrix}
@@ -153,7 +153,7 @@ if \code{method='other'}, \code{x} is read as a table, unless
 \code{format} is one of either:
 
 \describe{
-\item{\code{radial} or \code{'average'}:}{\code{X, err[X]}}
+\item{\code{radial} or \code{average}:}{\code{X, err[X]}}
 \item{\code{regression}:}{\code{X, err[X], Y, err[Y], rho} \cr
       OR \code{X/Z, err[X/Z], Y/Z, err[Y/Z], X/Y, err[X/Y]}}
 \item{\code{spectrum}:}{\code{f, X, err[X]}} 
@@ -169,18 +169,12 @@ if \code{method='other'}, \code{x} is read as a table, unless
 
 }}
 
-\item{U48}{the initial \eqn{^{234}}U/\eqn{^{238}}U-activity ratio}
-
-\item{Th0U8}{the initial \eqn{^{230}}Th/\eqn{^{238}}U-activity ratio}
-
-\item{Ra6U8}{the initial \eqn{^{226}}Ra/\eqn{^{238}}U-activity ratio}
-
-\item{Pa1U5}{the initial \eqn{^{231}}Pa/\eqn{^{235}}U-activity ratio}
+\item{d}{an object of class \code{\link{diseq}}.}
 
 \item{Th02}{2-element vector with the assumed initial
 \eqn{^{230}}Th/\eqn{^{232}}Th-ratio of the detritus and its
-standard error. Only used if \code{isochron==FALSE} and
-\code{detritus==2}}
+standard error. Only used if \code{isochron=FALSE} and
+\code{detritus=2}}
 
 \item{Th02U48}{9-element vector with the measured composition of
 the detritus, containing \code{X=0/8}, \code{sX}, \code{Y=2/8},

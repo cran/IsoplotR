@@ -1,9 +1,11 @@
+#' @title
 #' Create (a) kernel density estimate(s)
-#'
+#' 
+#' @description
 #' Creates one or more kernel density estimates using a combination of
 #' the Botev (2010) bandwidth selector and the Abramson (1982)
 #' adaptive kernel bandwidth modifier.
-#'
+#' 
 #' @details
 #' Given a set of \eqn{n} age estimates \eqn{\{t_1, t_2, ..., t_n\}},
 #' histograms and KDEs are probability density estimators that display
@@ -28,7 +30,6 @@
 #' dates are closely spaced in time), and a wider bandwidth in the
 #' distribution's sparsely sampled troughs. Thus, the resolution of
 #' the density estimate is optimised according to data availability.
-#'
 #' @param x a vector of numbers OR an object of class \code{UPb},
 #'     \code{PbPb}, \code{ArAr}, \code{KCa}, \code{ReOs}, \code{SmNd},
 #'     \code{RbSr}, \code{UThHe}, \code{fissiontracks}, \code{ThU} or
@@ -108,7 +109,6 @@ kde <- function(x,...){ UseMethod("kde",x) }
 #'
 #' Vermeesch, P., 2012. On the visualisation of detrital age
 #' distributions. Chemical Geology, 312, pp.190-194.
-#'
 #' @examples
 #' kde(examples$UPb)
 #'
@@ -140,20 +140,28 @@ kde.default <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U age (\code{type}=2), the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (\code{type}=3), the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U age
-#'     (\code{type}=4), or the (Wetherill) concordia age
-#'     (\code{type}=5)
+#'     (\code{type}=4), or the concordia age (\code{type}=5), or
+#'     \eqn{^{208}Pb}/\eqn{^{232}}Th age (\code{type}=6, only available
+#'     if \code{x$format}=7 or 8).
 #' @param cutoff.76 the age (in Ma) below which the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U and above which the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 #'     only used if \code{type=4}.
-#' @param cutoff.disc two element vector with the minimum (negative)
-#'     and maximum (positive) percentage discordance allowed between
-#'     the \eqn{^{207}}Pb/\eqn{^{235}}U and
-#'     \eqn{^{206}}Pb/\eqn{^{238}}U age (if
-#'     \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
-#'     \eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb
-#'     age (if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
-#'     \code{cutoff.disc=NA} if you do not want to use this filter.
+#' @param cutoff.disc discordance cutoff filter. This is a three
+#'     element list.
+#'
+#' The first two items contain the minimum (negative) and maximum
+#' (positive) percentage discordance allowed between the
+#' \eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U age
+#' (if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
+#' \eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb age
+#' (if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).
+#'
+#' The third item is a boolean flag that controls whether the
+#' discordance filter should be applied before (\code{TRUE}) or after
+#' (\code{FALSE}) the common-Pb correction.
+#'
+#' Set \code{cutoff.disc=NA} to turn off this filter.
 #' @param common.Pb apply a common lead correction using one of three
 #'     methods:
 #'
@@ -172,9 +180,10 @@ kde.UPb <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
                     n=512,plot=TRUE,pch='|',xlab="age [Ma]",ylab="",
                     kde.col=rgb(1,0,1,0.6),hist.col=rgb(0,1,0,0.2),
                     show.hist=TRUE, bty='n',binwidth=NA,type=4,
-                    cutoff.76=1100,cutoff.disc=c(-15,5),common.Pb=0,
-                    hide=NULL,...){
-    tt <- filter.UPb.ages(x,type,cutoff.76,cutoff.disc,common.Pb=common.Pb)[,1]
+                    cutoff.76=1100,cutoff.disc=list(-15,5,TRUE),
+                    common.Pb=0,hide=NULL,...){
+    tt <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
+                          cutoff.disc=cutoff.disc,common.Pb=common.Pb)[,1]
     kde.default(tt,from=from,to=to,bw=bw,adaptive=adaptive,log=log,
                 n=n,plot=plot,pch=pch,xlab=xlab,ylab=ylab,
                 kde.col=kde.col,hist.col=hist.col,
@@ -185,8 +194,10 @@ kde.UPb <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
 #'     bandwidth should be used for all samples. If
 #'     \code{samebandwidth = TRUE} and \code{bw = NULL}, then the
 #'     function will use the median bandwidth of all the samples.
+#' 
 #' @param normalise logical flag indicating whether or not the KDEs
 #'     should all integrate to the same value.
+#' 
 #' @rdname kde
 #' @export
 kde.detritals <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,
@@ -259,7 +270,7 @@ kde.KCa <- function(x,from=NA,to=NA,bw=NA,adaptive=TRUE,log=FALSE,
                 hide=hide,...)
 }
 #' @param detritus detrital \eqn{^{230}}Th correction (only applicable
-#'     when \code{x$format == 1} or \code{2}).
+#'     when \code{x$format=1} or \code{2}).
 #'
 #' \code{0}: no correction
 #'
@@ -522,7 +533,7 @@ plot.KDE <- function(x,pch='|',xlab="age [Ma]",ylab="",
     graphics::lines(x$x,x$y,col='black')
     graphics::points(ages,rep(graphics::par("usr")[3]/2,
                               length(ages)),pch=pch)
-    mymtext(paste0('n=',length(x)),line=0,adj=1)
+    mymtext(get.ntit(x$ages),line=0,adj=1)
 }
 
 plot.KDEs <- function(x,ncol=NA,pch=NA,xlab="age [Ma]",ylab="",

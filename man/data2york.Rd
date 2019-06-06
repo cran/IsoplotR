@@ -41,32 +41,34 @@ or \code{PD} (which includes objects of class \code{RbSr},
 
 \item{format}{one of
 
-1,2. \code{X}, \code{s[X]}, \code{Y}, \code{s[Y]}, \code{rho}
+\code{1} or \code{2}: \code{X}, \code{s[X]}, \code{Y}, \code{s[Y]},
+\code{rho}; where \code{rho} is the error correlation between
+\code{X} and \code{Y}; or
 
-where \code{rho} is the error correlation between \code{X} and
-\code{Y}, or
-
-3. \code{X/Z}, \code{s[X/Z]}, \code{Y/Z}, \code{s[Y/Z]},
-\code{X/Y}, \code{s[X/Y]} for which the error correlations are
+\code{3}: \code{X/Z}, \code{s[X/Z]}, \code{Y/Z}, \code{s[Y/Z]},
+\code{X/Y}, \code{s[X/Y]}; for which the error correlations are
 automatically computed from the redundancy of the three ratios.}
 
 \item{option}{returns one of
 
 \enumerate{
 
-\item Wetherill concordia ratios: \code{X=7/5}, \code{sX=s[7/5]},
-    \code{Y=6/8}, \code{sY=s[6/8]}, \code{rXY}.
+\item Wetherill concordia ratios: \code{X=07/35}, \code{sX=s[07/35]},
+    \code{Y=06/38}, \code{sY=s[06/38]}, \code{rXY}.
 
-\item Tera-Wasserburg ratios: \code{X=8/6}, \code{sX=s[8/6]},
-    \code{Y=7/6}, \code{sY=s[7/6]}, \code{rho=rXY}.
+\item Tera-Wasserburg ratios: \code{X=08/06}, \code{sX=s[08/06]},
+    \code{Y=07/06}, \code{sY=s[07/06]}, \code{rho=rXY}.
 
-\item \code{X=4/6}, \code{sX=s[4/6]}, \code{Y=8/6},
-    \code{sY=s[8/6]}, \code{rho=rXY} (only valid if \code{format >
-    3}).
+\item \code{X=04/06}, \code{sX=s[04/06]}, \code{Y=08/06},
+    \code{sY=s[08/06]}, \code{rho=rXY} (only valid if \code{format=4,5,6}).
 
-\item \code{X=4/7}, \code{sX=s[4/7]}, \code{Y=5/7},
-    \code{sY=s[5/7]}, \code{rho=rXY} (only valid if \code{format >
-    3}).
+\item \code{X=04/07}, \code{sX=s[04/07]}, \code{Y=05/07},
+    \code{sY=s[05/07]}, \code{rho=rXY} (only valid if
+    \code{format=4,5,6}).
+
+\item \code{X=08/32}, \code{sX=s[08/32]}, \code{Y=06/38},
+    \code{sY=s[06/38]}, \code{rho=rXY} (only valid if
+    \code{format=8,9}). 
 
 }}
 
@@ -141,15 +143,16 @@ a five-column table that can be used as input for
     \code{\link{york}}-regression.
 }
 \description{
-Takes geochronology data as input and produces a
-five-column table as output, which can be used
-for York regression.
+Takes geochronology data as input and produces a five-column table
+with the variables, their uncertainties and error correlations as
+output. These can subsequently be used for York regression.
 }
 \examples{
 f <- system.file("RbSr1.csv",package="IsoplotR")
 dat <- read.csv(f)
 yorkdat <- data2york(dat)
 fit <- york(yorkdat)
+
 }
 \seealso{
 \code{\link{york}}

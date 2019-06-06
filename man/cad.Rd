@@ -20,15 +20,14 @@
 cad(x, ...)
 
 \method{cad}{default}(x, pch = NA, verticals = TRUE,
-  xlab = "age [Ma]", colmap = "heat.colors", col = "black",
-  hide = NULL, ...)
+  xlab = "age [Ma]", col = "black", hide = NULL, ...)
 
 \method{cad}{detritals}(x, pch = NA, verticals = TRUE,
-  xlab = "age [Ma]", colmap = "heat.colors", hide = NULL, ...)
+  xlab = "age [Ma]", col = "heat.colors", hide = NULL, ...)
 
 \method{cad}{UPb}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
-  col = "black", type = 4, cutoff.76 = 1100, cutoff.disc = c(-15,
-  5), common.Pb = 0, hide = NULL, ...)
+  col = "black", type = 4, cutoff.76 = 1100,
+  cutoff.disc = list(-15, 5, TRUE), common.Pb = 0, hide = NULL, ...)
 
 \method{cad}{PbPb}(x, pch = NA, verticals = TRUE, xlab = "age [Ma]",
   col = "black", common.Pb = 1, hide = NULL, ...)
@@ -75,14 +74,11 @@ the CAD should be connected by vertical lines}
 
 \item{xlab}{x-axis label}
 
-\item{colmap}{an optional string with the name of one of \code{R}'s
-built-in colour palettes (e.g., \code{heat.colors},
-\code{terrain.colors}, \code{topo.colors}, \code{cm.colors}),
-which are to be used for plotting data of class
-\code{detritals}.}
-
-\item{col}{colour to give to single sample datasets (not applicable
-if \code{x} has class \code{detritals})}
+\item{col}{either the name of one of \code{R}'s built-in colour
+palettes (e.g., \code{'heat.colors'}, \code{'terrain.colors'},
+\code{'topo.colors'}, \code{'cm.colors'}) (if \code{x} has
+class \code{detritals}) OR the name or code for a colour to
+give to single sample datasets (otherwise).}
 
 \item{hide}{vector with indices of aliquots that should be removed
 from the plot.}
@@ -100,14 +96,21 @@ from the plot.}
 \eqn{^{207}}Pb/\eqn{^{206}}Pb-age is used. This parameter is
 only used if \code{type=4}.}
 
-\item{cutoff.disc}{two element vector with the maximum and minimum
-percentage discordance allowed between the
-\eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U
-age (if \eqn{^{206}}Pb/\eqn{^{238}}U < cutoff.76) or between
-the \eqn{^{206}}Pb/\eqn{^{238}}U and
-\eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
-\eqn{^{206}}Pb/\eqn{^{238}}U > cutoff.76).  Set
-\code{cutoff.disc=NA} if you do not want to use this filter.}
+\item{cutoff.disc}{discordance cutoff filter. This is a three
+    element list.
+
+The first two items contain the minimum (negative) and maximum
+(positive) percentage discordance allowed between the
+\eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U age
+(if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
+\eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb age
+(if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).
+
+The third item is a boolean flag that controls whether the
+discordance filter should be applied before (\code{TRUE}) or after
+(\code{FALSE}) the common-Pb correction.
+
+Set \code{cutoff.disc=NA} to turn off this filter.}
 
 \item{common.Pb}{apply a common lead correction using one of three
     methods:
@@ -134,7 +137,7 @@ or zero (for the Pb-Pb method). When applied to data of class
 detrital Th-correction.}
 
 \item{detritus}{detrital \eqn{^{230}}Th correction (only applicable
-    when \code{x$format == 1} or \code{2}).
+    when \code{x$format=1} or \code{2}).
 
 \code{0}: no correction
 
@@ -153,11 +156,10 @@ as a `empirical cumulative distribution function'.
 }
 \details{
 Empirical cumulative distribution functions or cumulative age
-distributions CADs are the most straightforward way to visualise
-the probability distribution of multiple dates.  Suppose that we
-have a set of \eqn{n} dates \eqn{t_i}. The the CAD is a step
-function that sets out the rank order of the dates against their
-numerical value:
+distributions are the most straightforward way to visualise the
+probability distribution of multiple dates.  Suppose that we have a
+set of \eqn{n} dates \eqn{t_i}. The the CAD is a step function that
+sets out the rank order of the dates against their numerical value:
 
 \eqn{CAD(t) = \sum_i 1(t<t_i)/n}
 

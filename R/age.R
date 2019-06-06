@@ -1,12 +1,16 @@
+#' @title
 #' Calculate isotopic ages
-#'
-#' Calculates U-Pb, Pb-Pb, Ar-Ar, K-Ca, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf, U-Th-He,
-#' Th-U and fission track ages and propagates their analytical
-#' uncertainties. Includes options for single grain, isochron and
-#' concordia ages.
+#' 
+#' @description
+#' Calculates U-Pb, Pb-Pb, Ar-Ar, K-Ca, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf,
+#' U-Th-He, Th-U and fission track ages and propagates their
+#' analytical uncertainties. Includes options for single grain,
+#' isochron and concordia ages.
 #'
 #' @param x can be:
+#' 
 #' \itemize{
+#'
 #' \item a scalar containing an isotopic ratio,
 #'
 #' \item a two element vector containing an isotopic ratio and its standard
@@ -60,19 +64,8 @@
 #' 
 #' @param i (optional) index of a particular aliquot
 #' 
-#' @param U48 the initial \eqn{^{234}}U/\eqn{^{238}}U-activity ratio
-#'     (only used if \code{method='U238-Pb206'}, \code{'U238-Pb206'}
-#'     or \code{'Pb207-Pb206'}).
-#' @param Th0U8 the initial \eqn{^{230}}Th/\eqn{^{238}}U-activity
-#'     ratio (only used if \code{method='U238-Pb206'},
-#'     \code{'U238-Pb206'} or \code{'Pb207-Pb206'}).
-#' @param Ra6U8 the initial \eqn{^{226}}Ra/\eqn{^{238}}U-activity
-#'     ratio (only used if \code{method='U238-Pb206'},
-#'     \code{'U238-Pb206'} or \code{'Pb207-Pb206'}).
-#' @param Pa1U5 the initial \eqn{^{231}}Pa/\eqn{^{235}}U-activity
-#'     ratio (only used if \code{method='U238-Pb206'},
-#'     \code{'U238-Pb206'} or \code{'Pb207-Pb206'}).
-#'
+#' @param d an object of class \code{\link{diseq}}.
+#' 
 #' @param ... additional arguments
 #'
 #' @rdname age
@@ -81,8 +74,7 @@ age <- function(x,...){ UseMethod("age",x) }
 #' @rdname age
 #' @export
 age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
-                        zeta=c(NA,NA),rhoD=c(NA,NA),U48=1,Th0U8=1,Ra6U8=1,Pa1U5=1,...){
-    d <- diseq(U48=U48,Th0U8=Th0U8,Ra6U8=Ra6U8,Pa1U5=Pa1U5)
+                        zeta=c(NA,NA),rhoD=c(NA,NA),d=diseq(),...){
     if (length(x)==1) x <- c(x,0)
     if (identical(method,'U235-Pb207')){
         out <- get.Pb207U235.age(x=x[1],sx=x[2],exterr=exterr,d=d)
@@ -90,6 +82,8 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
         out <- get.Pb206U238.age(x=x[1],sx=x[2],exterr=exterr,d=d)
     } else if (identical(method,'Pb207-Pb206')){
         out <- get.Pb207Pb206.age(x=x[1],sx=x[2],exterr,d=d)
+    } else if (identical(method,'Pb208-Th238')){
+        out <- get.Pb208Th232.age(x=x[1],sx=x[2],exterr,d=d)
     } else if (identical(method,'Ar-Ar')){
         out <- get.ArAr.age(Ar40Ar39=x[1],sAr40Ar39=x[2],
                             J=x[3],sJ=x[4],exterr=exterr)
@@ -119,6 +113,7 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
     }
     out
 }
+
 #' @param type scalar flag indicating whether
 #'
 #' \code{1}: each U-Pb analysis should be considered separately,
@@ -138,13 +133,10 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' maximum likelihood algorithm that accounts for overdispersion by
 #' adding a geological (co)variance term.
 #'
-#' @param wetherill logical flag to indicate whether the data should
-#'     be evaluated in Wetherill (\code{TRUE}) or Tera-Wasserburg
-#'     (\code{FALSE}) space.  This option is only used when
-#'     \code{type=2}
 #' @param sigdig number of significant digits for the uncertainty
 #'     estimate (only used if \code{type=1}, \code{isochron=FALSE} and
 #'     \code{central=FALSE}).
+#' 
 #' @param common.Pb apply a common lead correction using one of three
 #'     methods:
 #'
@@ -156,13 +148,13 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \code{3}: use the Pb-composition stored in
 #' \code{settings('iratio','Pb206Pb204')} and
 #' \code{settings('iratio','Pb207Pb204')}
-#'
+#' 
 #' @param show.p Show the p-value for concordance for each aliquot to
 #'     the output table. Note: it would be unwise to use the p-value
-#'     value as a concordance filter. Doing so would 'punish' high
+#'     value as a concordance filter. Doing so would `punish' high
 #'     precision measurements, which are more likely to fail the
 #'     Chi-square test than low precision measurements. The latter
-#'     would therefore be 'rewarded' by such a criterion.
+#'     would therefore be `rewarded' by such a criterion.
 #'
 #' @return
 #' \enumerate{
@@ -173,12 +165,14 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' \item if \code{x} has class \code{UPb} and \code{type=1}, returns a
 #' table with the following columns: \code{t.75}, \code{err[t.75]},
 #' \code{t.68}, \code{err[t.68]}, \code{t.76}, \code{err[t.76]},
-#' \code{t.conc}, \code{err[t.conc]}, \code{err[p.conc]}, containing
-#' the \eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
+#' (\code{t.82}, \code{err[t.82]},) \code{t.conc}, \code{err[t.conc]},
+#' (\code{err[p.conc]},) containing the
+#' \eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
 #' \eqn{^{206}}Pb/\eqn{^{238}}U-age and standard error, the
-#' \eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, the single
-#' grain concordia age and standard error, and the p-value for
-#' concordance, respectively.
+#' \eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, (the
+#' \eqn{^{208}}Pb/\eqn{^{232}}Th-age and standard error,) the single
+#' grain concordia age and standard error, (and the p-value for
+#' concordance,) respectively.
 #'
 #' \item if \code{x} has class \code{UPb} and \code{type=2, 3, 4} or
 #' \code{5}, returns the output of the \code{\link{concordia}}
@@ -222,19 +216,19 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' tcentral <- age(examples$FT1,central=TRUE)
 #' @rdname age
 #' @export
-age.UPb <- function(x,type=1,wetherill=TRUE,exterr=TRUE,i=NA,
+age.UPb <- function(x,type=1,exterr=TRUE,i=NA,
                     sigdig=NA,common.Pb=0,show.p=FALSE,...){
-    if (common.Pb %in% c(1,2,3))
+    if (common.Pb %in% c(1,2,3)){
         X <- Pb0corr(x,option=common.Pb)
-    else
+    } else {
         X <- x
+    }
     if (type==1){
         out <- UPb.age(X,exterr=exterr,i=i,sigdig=sigdig,show.p=show.p,...)
     } else if (type==2){
-        out <- concordia.age(X,wetherill=wetherill,exterr=exterr)
+        out <- concordia.age(X,wetherill=TRUE,exterr=exterr)
     } else if (type %in% c(3,4,5)){
-        out <- concordia.intersection.ludwig(x,wetherill=wetherill,
-                                             exterr=exterr,model=type-2)
+        out <- concordia.intersection.ludwig(x,wetherill=FALSE,exterr=exterr,model=type-2)
     }
     out
 }
@@ -248,6 +242,7 @@ age.PbPb <- function(x,isochron=TRUE,common.Pb=1,
         out <- PbPb.age(x,exterr=exterr,i=i,sigdig=sigdig,common.Pb=common.Pb)
     out
 }
+
 #' @param J two-element vector with the J-factor and its standard
 #'     error.
 #' 
@@ -281,6 +276,7 @@ age.KCa <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
     else out <- KCa.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
     out
 }
+
 #' @param central logical flag indicating whether each analysis should
 #'     be considered separately (\code{central=FALSE}) or a central
 #'     age should be calculated from all analyses together
@@ -293,6 +289,7 @@ age.UThHe <- function(x,isochron=FALSE,central=FALSE,i=NA,sigdig=NA,...){
     else out <- UThHe.age(x,i=i,sigdig=sigdig)
     out
 }
+
 #' @param zeta two-element vector with the zeta-factor and its standard
 #'     error.
 #' @param rhoD two-element vector with the track density of the
@@ -304,6 +301,7 @@ age.fissiontracks <- function(x,central=FALSE,i=NA,sigdig=NA,exterr=TRUE,...){
     else out <- fissiontrack.age(x,i=i,sigdig=sigdig,exterr=exterr)
     out
 }
+
 #' @param detritus detrital \eqn{^{230}}Th correction (only applicable
 #'     when \code{x$format = 1} or \code{2}).
 #'
@@ -395,8 +393,8 @@ add.exterr <- function(x,tt,st,cutoff.76=1100,type=4){
     out
 }
 
-get.ages <- function(x,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
-                     i2i=FALSE,common.Pb=0,detritus=0){
+get.ages <- function(x,type=4,cutoff.76=1100,i2i=FALSE,
+                     cutoff.disc=list(-15,5,TRUE),common.Pb=0,detritus=0){
     if (hasClass(x,'UPb')){
         out <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
                                cutoff.disc=cutoff.disc,

@@ -1,5 +1,7 @@
+#' @title
 #' Calculate the weighted mean age
-#'
+#' 
+#' @description
 #' Models the data as a Normal distribution with two sources of
 #' variance.  Estimates the mean and `overdispersion' using the method
 #' of Maximum Likelihood. Computes the MSWD of a Normal fit without
@@ -7,7 +9,7 @@
 #' and reject outliers. Only propagates the analytical uncertainty
 #' associated with decay constants and \eqn{\zeta} and J-factors after
 #' computing the weighted mean isotopic composition.
-#'
+#' 
 #' @details
 #' Let \eqn{\{t_1, ..., t_n\}} be a set of n age estimates
 #' determined on different aliquots of the same sample, and let
@@ -46,7 +48,7 @@
 #' the data do not exhibit any overdispersion, then the heuristic
 #' outlier detection method is equivalent to Ludwig (2003)'s `2-sigma'
 #' method.
-#'
+#' 
 #' @param x a two column matrix of values (first column) and their
 #'     standard errors (second column) OR an object of class
 #'     \code{UPb}, \code{PbPb}, \code{ArAr}, \code{KCa}, \code{ReOs},
@@ -62,6 +64,7 @@
 #'     `model-1' isochron regression.
 #' @param ... optional arguments
 #' @seealso \code{\link{central}}
+#' 
 #' @return Returns a list with the following items:
 #'
 #' \describe{
@@ -119,10 +122,28 @@ weightedmean <- function(x,...){
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours of the plot symbols.
 #' @param clabel label of the colour legend
-#' @param rect.col a vector of two fill colours used to show the
-#'     measurements or age estimates.  If \code{levels=NA}, then only
-#'     the first colour is used. If \code{levels} is a vector of
-#'     numbers, then \code{bg} is used to construct a colour ramp.
+#' @param rect.col Fill colour for the measurements or age estimates. This can
+#'     either be a single colour or multiple colours to form a colour
+#'     ramp (to be used if \code{levels!=NA}):
+#'
+#' \itemize{
+#'
+#' \item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+#' \code{'white'}, etc.}
+#'
+#' \item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+#' \code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
+#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+#'
+#' \item{a colour palette: \code{rainbow(n=100)},
+#' \code{topo.colors(n=100,alpha=0.5)}, etc.}
+#'
+#' \item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+#' etc.}
+#'
+#' \item{for plot symbols, set \code{rect.col=NA}}
+#'
+#' }
 #' @param outlier.col if \code{detect.outliers=TRUE}, the outliers are
 #'     given a different colour.
 #' @param sigdig the number of significant digits of the numerical
@@ -175,19 +196,26 @@ weightedmean.default <- function(x,from=NA,to=NA,random.effects=TRUE,
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U age (\code{type}=2), the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (\code{type}=3), the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U age
-#'     (\code{type}=4), or the (Wetherill) concordia age (\code{type}=5)
+#'     (\code{type}=4), or the (Wetherill) concordia age (\code{type}=5) 
 #' @param cutoff.76 the age (in Ma) below which the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U age and above which the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 #'     only used if \code{type=4}.
-#' @param cutoff.disc two element vector with the maximum and minimum
-#'     percentage discordance allowed between the
-#'     \eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U
-#'     age (if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or
-#'     between the \eqn{^{206}}Pb/\eqn{^{238}}U and
-#'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
-#'     \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
-#'     \code{cutoff.disc=NA} if you do not want to use this filter.
+#' @param cutoff.disc discordance cutoff filter. This is a three
+#'     element list.
+#'
+#' The first two items contain the minimum (negative) and maximum
+#' (positive) percentage discordance allowed between the
+#' \eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U age
+#' (if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
+#' \eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb age
+#' (if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).
+#'
+#' The third item is a boolean flag that controls whether the
+#' discordance filter should be applied before (\code{TRUE}) or after
+#' (\code{FALSE}) the common-Pb correction.
+#'
+#' Set \code{cutoff.disc=NA} to turn off this filter.
 #' @param exterr propagate decay constant uncertainties?
 #' @param common.Pb apply a common lead correction using one of three
 #'     methods:
@@ -200,7 +228,6 @@ weightedmean.default <- function(x,from=NA,to=NA,random.effects=TRUE,
 #' \code{3}: use the Pb-composition stored in
 #' \code{settings('iratio','Pb206Pb204')} and
 #' \code{settings('iratio','Pb207Pb204')}
-#'
 #' @examples
 #' ages <- c(251.9,251.59,251.47,251.35,251.1,251.04,250.79,250.73,251.22,228.43)
 #' errs <- c(0.28,0.28,0.63,0.34,0.28,0.63,0.28,0.4,0.28,0.33)
@@ -215,8 +242,8 @@ weightedmean.UPb <- function(x,random.effects=TRUE,
                              from=NA,to=NA,levels=NA,clabel="",
                              rect.col=c("#00FF0080","#FF000080"),
                              outlier.col="#00FFFF80",sigdig=2,
-                             type=4,cutoff.76=1100,
-                             cutoff.disc=c(-15,5),alpha=0.05,
+                             type=4,cutoff.76=1100,alpha=0.05,
+                             cutoff.disc=list(-15,5,TRUE),
                              exterr=TRUE,ranked=FALSE,common.Pb=0,
                              hide=NULL,omit=NULL,omit.col=NA,...){
     weightedmean_helper(x,random.effects=random.effects,
@@ -257,7 +284,7 @@ weightedmean.PbPb <- function(x,random.effects=TRUE,
 #'     uses the default values stored in
 #'     \code{settings('iratio',...)}.
 #' @param detritus detrital \eqn{^{230}}Th correction (only applicable
-#'     when \code{x$format == 1} or \code{2}).
+#'     when \code{x$format=1} or \code{2}).
 #'
 #' \code{0}: no correction
 #'
@@ -269,7 +296,6 @@ weightedmean.PbPb <- function(x,random.effects=TRUE,
 #' \code{3}: correct the data using the measured present day
 #' \eqn{^{230}}Th/\eqn{^{238}}U, \eqn{^{232}}Th/\eqn{^{238}}U and
 #' \eqn{^{234}}U/\eqn{^{238}}U-ratios in the detritus.
-#'
 #' @rdname weightedmean
 #' @export
 weightedmean.ThU <- function(x,random.effects=TRUE,
@@ -589,7 +615,7 @@ wtdmean.title <- function(fit,sigdig=2,units='',...){
         line1line <- 1
         line2line <- 0
     }
-    line2 <- substitute('MSWD ='~a~', p('*chi^2*') ='~b,
+    line2 <- substitute('MSWD ='~a*', p('*chi^2*') ='~b,
                         list(a=roundit(fit$mswd,fit$mswd,sigdig=sigdig),
                              b=roundit(fit$p.value,fit$p.value,
                                        sigdig=sigdig)))

@@ -1,11 +1,11 @@
 #' @title
 #' Finite mixture modelling of geochronological datasets
-#'
+#' 
 #' @description
 #' Implements the discrete mixture modelling algorithms of Galbraith
 #' and Laslett (1993) and applies them to fission track and other
 #' geochronological datasets.
-#'
+#' 
 #' @details
 #' Consider a dataset of \eqn{n} dates \eqn{\{t_1, t_2, ..., t_n\}}
 #' with analytical uncertainties \eqn{\{s[t_1], s[t_2], ...,
@@ -13,25 +13,24 @@
 #' s[t_i]/t_i}.  Suppose that these \eqn{n} values are derived from a
 #' mixture of \eqn{k>2} populations with means
 #' \eqn{\{\mu_1,...,\mu_k\}}. Such a \emph{discrete mixture} may be
-#' mathematically described by:
-#' \eqn{P(z_i|\mu,\omega) = \sum_{j=1}^k \pi_j N(z_i | \mu_j, s[z_j]^2 )}
-#' where \eqn{\pi_j} is the proportion of the population that belongs
-#' to the \eqn{j^{th}} component, and
-#' \eqn{\pi_k=1-\sum_{j=1}^{k-1}\pi_j}. This equation can be solved by
-#' the method of maximum likelihood (Galbraith and Laslett, 1993).
-#' \code{IsoplotR} implements the Bayes Information Criterion (BIC) as
-#' a means of automatically choosing \eqn{k}. This option should be
-#' used with caution, as the number of peaks steadily rises with
-#' sample size (\eqn{n}).  If one is mainly interested in the youngest
-#' age component, then it is more productive to use an alternative
-#' parameterisation, in which all grains are assumed to come from one
-#' of two components, whereby the first component is a single discrete
-#' age peak (\eqn{\exp(m)}, say) and the second component is a
-#' continuous distribution (as descibed by the \code{\link{central}}
-#' age model), but truncated at this discrete value (Van der Touw et
-#' al., 1997).
-#'
-#' @param x either an \code{[n x 2]} matrix with measurements and
+#' mathematically described by: \eqn{P(z_i|\mu,\omega) = \sum_{j=1}^k
+#' \pi_j N(z_i | \mu_j, s[z_j]^2 )} where \eqn{\pi_j} is the
+#' proportion of the population that belongs to the \eqn{j^{th}}
+#' component, and \eqn{\pi_k=1-\sum_{j=1}^{k-1}\pi_j}. This equation
+#' can be solved by the method of maximum likelihood (Galbraith and
+#' Laslett, 1993).  \code{IsoplotR} implements the Bayes Information
+#' Criterion (BIC) as a means of automatically choosing \eqn{k}. This
+#' option should be used with caution, as the number of peaks steadily
+#' rises with sample size (\eqn{n}).  If one is mainly interested in
+#' the youngest age component, then it is more productive to use an
+#' alternative parameterisation, in which all grains are assumed to
+#' come from one of two components, whereby the first component is a
+#' single discrete age peak (\eqn{\exp(m)}, say) and the second
+#' component is a continuous distribution (as descibed by the
+#' \code{\link{central}} age model), but truncated at this discrete
+#' value (Van der Touw et al., 1997).
+#' 
+#' @param x either an \code{[nx2]} matrix with measurements and
 #'     their standard errors, or an object of class
 #'     \code{fissiontracks}, \code{UPb}, \code{PbPb}, \code{ArAr},
 #'     \code{KCa}, \code{ReOs}, \code{SmNd}, \code{RbSr}, \code{LuHf},
@@ -49,7 +48,8 @@
 #' @param alpha cutoff value for confidence intervals
 #' @param ... optional arguments (not used)
 #' @seealso \code{\link{radialplot}}, \code{\link{central}}
-#' @return Returns a list with the following items:
+#' @return
+#' Returns a list with the following items:
 #'
 #' \describe{
 #'
@@ -75,6 +75,11 @@
 #'     legend}
 #'
 #' }
+#' @examples
+#' data(examples)
+#' peakfit(examples$FT1,k=2)
+#'
+#' peakfit(examples$LudwigMixture,k='min')
 #' @references
 #' Galbraith, R.F. and Laslett, G.M., 1993. Statistical models for
 #' mixed fission track ages. Nuclear Tracks and Radiation
@@ -84,11 +89,6 @@
 #' truncated normal mixture model for overdispersed binomial
 #' data. Journal of Statistical Computation and Simulation,
 #' 59(4):349-373, 1997.
-#' @examples
-#' data(examples)
-#' peakfit(examples$FT1,k=2)
-#'
-#' peakfit(examples$LudwigMixture,k='min')
 #' @rdname peakfit
 #' @export
 peakfit <- function(x,...){ UseMethod("peakfit",x) }
@@ -136,7 +136,6 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
     out$legend <- peaks2legend(out,sigdig=sigdig,k=k)
     out
 }
-#'
 #' @param type scalar valueindicating whether to plot the
 #'     \eqn{^{207}}Pb/\eqn{^{235}}U age (\code{type}=1), the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U age (\code{type}=2), the
@@ -144,12 +143,10 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U age
 #'     (\code{type}=4), or the (Wetherill) concordia age
 #'     (\code{type}=5)
-#' 
 #' @param cutoff.76 the age (in Ma) below which the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U and above which the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 #'     only used if \code{type=4}.
-#' 
 #' @param cutoff.disc two element vector with the maximum and minimum
 #'     percentage discordance allowed between the
 #'     \eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U
@@ -158,7 +155,6 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 #'     \code{cutoff.disc=NA} if you do not want to use this filter.
-#' 
 #' @param common.Pb apply a common lead correction using one of three
 #'     methods:
 #'
@@ -171,7 +167,6 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #' \code{settings('iratio','Pb207Pb206')} (if \code{x$format}<4) or
 #' \code{settings('iratio','Pb206Pb204')} and
 #' \code{settings('iratio','Pb207Pb204')} (if \code{x$format}>3)
-#' 
 #' @rdname peakfit
 #' @export
 peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
@@ -186,7 +181,6 @@ peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,common.Pb=common.Pb,alpha=alpha,...)
 }
-#'
 #' @param i2i `isochron to intercept': calculates the initial (aka
 #'     `inherited', `excess', or `common')
 #'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
@@ -197,7 +191,6 @@ peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,
 #'     \code{settings('iratio',...)}. When applied to data of class
 #'     \code{ThU}, setting \code{i2i} to \code{TRUE} applies a
 #'     detrital Th-correction.
-#' 
 #' @rdname peakfit
 #' @export
 peakfit.ArAr <- function(x,k=1,exterr=TRUE,sigdig=2,
@@ -241,7 +234,7 @@ peakfit.LuHf <- function(x,k=1,exterr=TRUE,sigdig=2,
                    log=log,i2i=i2i,alpha=alpha,...)
 }
 #' @param detritus detrital \eqn{^{230}}Th correction (only applicable
-#'     when \code{x$format == 1} or \code{2}.
+#'     when \code{x$format=1} or \code{2}.
 #'
 #' \code{0}: no correction
 #'
@@ -253,7 +246,6 @@ peakfit.LuHf <- function(x,k=1,exterr=TRUE,sigdig=2,
 #' \code{3}: correct the data using the measured present day
 #' \eqn{^{230}}Th/\eqn{^{238}}U, \eqn{^{232}}Th/\eqn{^{238}}U and
 #' \eqn{^{234}}U/\eqn{^{238}}U-ratios in the detritus.
-#'
 #' @rdname peakfit
 #' @export
 peakfit.ThU <- function(x,k=1,exterr=FALSE,sigdig=2, log=TRUE,

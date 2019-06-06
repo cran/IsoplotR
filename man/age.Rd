@@ -19,11 +19,11 @@
 age(x, ...)
 
 \method{age}{default}(x, method = "U238-Pb206", exterr = TRUE,
-  J = c(NA, NA), zeta = c(NA, NA), rhoD = c(NA, NA), U48 = 1,
-  Th0U8 = 1, Ra6U8 = 1, Pa1U5 = 1, ...)
+  J = c(NA, NA), zeta = c(NA, NA), rhoD = c(NA, NA), d = diseq(),
+  ...)
 
-\method{age}{UPb}(x, type = 1, wetherill = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, common.Pb = 0, show.p = FALSE, ...)
+\method{age}{UPb}(x, type = 1, exterr = TRUE, i = NA, sigdig = NA,
+  common.Pb = 0, show.p = FALSE, ...)
 
 \method{age}{PbPb}(x, isochron = TRUE, common.Pb = 1, exterr = TRUE,
   i = NA, sigdig = NA, ...)
@@ -57,7 +57,9 @@ age(x, ...)
 }
 \arguments{
 \item{x}{can be:
+
 \itemize{
+
 \item a scalar containing an isotopic ratio,
 
 \item a two element vector containing an isotopic ratio and its standard
@@ -120,21 +122,7 @@ error.}
 \item{rhoD}{two-element vector with the track density of the
 dosimeter glass and its standard error.}
 
-\item{U48}{the initial \eqn{^{234}}U/\eqn{^{238}}U-activity ratio
-(only used if \code{method='U238-Pb206'}, \code{'U238-Pb206'}
-or \code{'Pb207-Pb206'}).}
-
-\item{Th0U8}{the initial \eqn{^{230}}Th/\eqn{^{238}}U-activity
-ratio (only used if \code{method='U238-Pb206'},
-\code{'U238-Pb206'} or \code{'Pb207-Pb206'}).}
-
-\item{Ra6U8}{the initial \eqn{^{226}}Ra/\eqn{^{238}}U-activity
-ratio (only used if \code{method='U238-Pb206'},
-\code{'U238-Pb206'} or \code{'Pb207-Pb206'}).}
-
-\item{Pa1U5}{the initial \eqn{^{231}}Pa/\eqn{^{235}}U-activity
-ratio (only used if \code{method='U238-Pb206'},
-\code{'U238-Pb206'} or \code{'Pb207-Pb206'}).}
+\item{d}{an object of class \code{\link{diseq}}.}
 
 \item{type}{scalar flag indicating whether
 
@@ -154,11 +142,6 @@ uncertainties.
 \code{5}: a discordia line should be fitted using a modified
 maximum likelihood algorithm that accounts for overdispersion by
 adding a geological (co)variance term.}
-
-\item{wetherill}{logical flag to indicate whether the data should
-be evaluated in Wetherill (\code{TRUE}) or Tera-Wasserburg
-(\code{FALSE}) space.  This option is only used when
-\code{type=2}}
 
 \item{i}{(optional) index of a particular aliquot}
 
@@ -180,10 +163,10 @@ Pb-composition
 
 \item{show.p}{Show the p-value for concordance for each aliquot to
 the output table. Note: it would be unwise to use the p-value
-value as a concordance filter. Doing so would 'punish' high
+value as a concordance filter. Doing so would `punish' high
 precision measurements, which are more likely to fail the
 Chi-square test than low precision measurements. The latter
-would therefore be 'rewarded' by such a criterion.}
+would therefore be `rewarded' by such a criterion.}
 
 \item{isochron}{logical flag indicating whether each analysis
 should be considered separately (\code{isochron=FALSE}) or an
@@ -229,12 +212,14 @@ the geochronometer given by \code{method} and its standard error.
 \item if \code{x} has class \code{UPb} and \code{type=1}, returns a
 table with the following columns: \code{t.75}, \code{err[t.75]},
 \code{t.68}, \code{err[t.68]}, \code{t.76}, \code{err[t.76]},
-\code{t.conc}, \code{err[t.conc]}, \code{err[p.conc]}, containing
-the \eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
+(\code{t.82}, \code{err[t.82]},) \code{t.conc}, \code{err[t.conc]},
+(\code{err[p.conc]},) containing the
+\eqn{^{207}}Pb/\eqn{^{235}}U-age and standard error, the
 \eqn{^{206}}Pb/\eqn{^{238}}U-age and standard error, the
-\eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, the single
-grain concordia age and standard error, and the p-value for
-concordance, respectively.
+\eqn{^{207}}Pb/\eqn{^{206}}Pb-age and standard error, (the
+\eqn{^{208}}Pb/\eqn{^{232}}Th-age and standard error,) the single
+grain concordia age and standard error, (and the p-value for
+concordance,) respectively.
 
 \item if \code{x} has class \code{UPb} and \code{type=2, 3, 4} or
 \code{5}, returns the output of the \code{\link{concordia}}
@@ -268,10 +253,10 @@ and \code{central=TRUE}, returns the output of the
 }
 }
 \description{
-Calculates U-Pb, Pb-Pb, Ar-Ar, K-Ca, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf, U-Th-He,
-Th-U and fission track ages and propagates their analytical
-uncertainties. Includes options for single grain, isochron and
-concordia ages.
+Calculates U-Pb, Pb-Pb, Ar-Ar, K-Ca, Re-Os, Sm-Nd, Rb-Sr, Lu-Hf,
+U-Th-He, Th-U and fission track ages and propagates their
+analytical uncertainties. Includes options for single grain,
+isochron and concordia ages.
 }
 \examples{
 data(examples)

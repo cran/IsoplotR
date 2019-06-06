@@ -45,10 +45,28 @@ different background colours within the error ellipses.}
 
 \item{clabel}{label of the colour legend.}
 
-\item{ellipse.col}{a vector of two background colours for the error
-ellipses. If \code{levels=NA}, then only the first colour will
-be used. If \code{levels} is a vector of numbers, then
-\code{ellipse.col} is used to construct a colour ramp.}
+\item{ellipse.col}{Fill colour for the error ellipses. This can
+    either be a single colour or multiple colours to form a colour
+    ramp (to be used if \code{levels!=NA}):
+
+\itemize{
+
+\item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+\code{'white'}, etc.}
+
+\item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+\code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
+\code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+
+\item{a colour palette: \code{rainbow(n=100)},
+\code{topo.colors(n=100,alpha=0.5)}, etc.}
+
+\item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+etc.}
+
+\item{for empty ellipses, set \code{ellipse.col=NA}}
+
+}}
 
 \item{line.col}{colour of the age grid}
 
@@ -99,9 +117,10 @@ aliquots.}
 \description{
 Plots Th-U data on a
 \eqn{^{234}}U/\eqn{^{238}}U-\eqn{^{230}}Th/\eqn{^{238}}U evolution
-diagram, a \eqn{^{234}}U/\eqn{^{238}}U-age diagram, or
-(if \eqn{^{234}}U/\eqn{^{238}}U is assumed to be in secular equilibrium),
-a \eqn{^{230}}Th/\eqn{^{232}}Th-\eqn{^{238}}U/\eqn{^{232}}Th diagram,
+diagram, a \eqn{^{234}}U/\eqn{^{238}}U-age diagram, or (if
+\eqn{^{234}}U/\eqn{^{238}}U is assumed to be in secular
+equilibrium), a
+\eqn{^{230}}Th/\eqn{^{232}}Th-\eqn{^{238}}U/\eqn{^{232}}Th diagram,
 calculates isochron ages.
 }
 \details{

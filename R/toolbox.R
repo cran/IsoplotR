@@ -125,6 +125,26 @@ cor2cov3 <- function(sX,sY,sZ,rXY,rXZ,rYZ){
     covmat[3,2] <- covmat[2,3]
     covmat
 }
+cor2cov4 <- function(sW,sX,sY,sZ,rWX,rWY,rWZ,rXY,rXZ,rYZ){
+    covmat <- matrix(0,4,4)
+    covmat[1,1] <- sW^2
+    covmat[2,2] <- sX^2
+    covmat[3,3] <- sY^2
+    covmat[4,4] <- sZ^2
+    covmat[1,2] <- rWX*sW*sX
+    covmat[1,3] <- rWY*sW*sY
+    covmat[1,4] <- rWZ*sW*sZ
+    covmat[2,3] <- rXY*sX*sZ
+    covmat[2,4] <- rXZ*sX*sZ
+    covmat[3,4] <- rYZ*sY*sZ
+    covmat[2,1] <- covmat[1,2]
+    covmat[3,1] <- covmat[1,3]
+    covmat[4,1] <- covmat[1,4]
+    covmat[3,2] <- covmat[2,3]
+    covmat[4,2] <- covmat[2,4]
+    covmat[4,3] <- covmat[3,4]
+    covmat
+}
 
 get.cov.div <- function(A,err.A,B,err.B,AB,err.AB){
     0.5*A*B*((err.A/A)^2+(err.B/B)^2-(err.AB/AB)^2)
@@ -485,4 +505,12 @@ clear <- function(x,...){
     if (is.numeric(i)) out <- subset(x,subset=sn%ni%i)
     else out <- x
     out
+}
+
+get.ntit <- function(x){
+    ns <- length(x)
+    nisnan <- length(which(is.na(x)))
+    out <- 'n='
+    if (nisnan>0) out <- paste0(out,ns-nisnan,'/')
+    paste0(out,ns)
 }

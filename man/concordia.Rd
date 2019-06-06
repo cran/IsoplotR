@@ -4,7 +4,7 @@
 \alias{concordia}
 \title{Concordia diagram}
 \usage{
-concordia(x = NULL, tlim = NULL, alpha = 0.05, wetherill = TRUE,
+concordia(x = NULL, tlim = NULL, alpha = 0.05, type = 1,
   show.numbers = FALSE, levels = NA, clabel = "",
   ellipse.col = c("#00FF0080", "#FF000080"),
   concordia.col = "darksalmon", exterr = FALSE, show.age = 0,
@@ -19,7 +19,21 @@ concordia(x = NULL, tlim = NULL, alpha = 0.05, wetherill = TRUE,
 \item{alpha}{probability cutoff for the error ellipses and
 confidence intervals}
 
-\item{wetherill}{logical flag (\code{FALSE} for Tera-Wasserburg)}
+\item{type}{one of
+
+\enumerate{
+
+\item{Wetherill: \eqn{{}^{206}}Pb/\eqn{{}^{238}}U
+vs. \eqn{{}^{207}}Pb/\eqn{{}^{235}}U}
+
+\item{Tera-Wasserburg: \eqn{{}^{207}}Pb/\eqn{{}^{206}}Pb
+vs. \eqn{{}^{238}}U/\eqn{{}^{206}}Pb}
+
+\item{U-Th-Pb concordia: \eqn{{}^{208}}Pb/\eqn{{}^{232}}Th
+vs. \eqn{{}^{206}}Pb/\eqn{{}^{238}}U (only available if
+\code{x$format=7} or \code{x$format=8}})
+
+}}
 
 \item{show.numbers}{logical flag (\code{TRUE} to show grain
 numbers)}
@@ -28,12 +42,29 @@ numbers)}
 as different background colours within the error ellipses.}
 
 \item{clabel}{label for the colour legend (only used if
-\code{levels} is not \code{NA}.}
+\code{levels} is not \code{NA}).}
 
-\item{ellipse.col}{a vector of two background colours for the error
-ellipses. If \code{levels=NA}, then only the first colour is
-used. If \code{levels} is a vector of numbers, then
-\code{ellipse.col} is used to construct a colour ramp.}
+\item{ellipse.col}{Fill colour for the error ellipses. This can either be a single
+colour or multiple colours to form a colour ramp. Examples:
+
+\itemize{
+
+\item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+\code{'white'}, etc.}
+
+\item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+\code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
+\code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+
+\item{a colour palette: \code{rainbow(n=100)},
+\code{topo.colors(n=100,alpha=0.5)}, etc.}
+
+\item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+etc.}
+
+\item{for empty ellipses, set \code{ellipse.col=NA}}
+
+}}
 
 \item{concordia.col}{colour of the concordia line}
 
@@ -64,8 +95,7 @@ geological (co)variance term.}
 \item{sigdig}{number of significant digits for the
 concordia/discordia age}
 
-\item{common.Pb}{apply a common lead correction using one of three
-    methods:
+\item{common.Pb}{apply a common lead correction using one of three methods:
 
 \code{1}: use the Stacey-Kramers two-stage model to infer the initial
 Pb-composition
@@ -81,9 +111,8 @@ Pb-composition
 ticks to be placed along the concordia line, OR a vector of
 tick ages.}
 
-\item{anchor}{control parameters to fix the intercept age or common
-    Pb composition of the discordia fit. This is a two-element
-    list.
+\item{anchor}{control parameters to fix the intercept age or common Pb
+composition of the discordia fit. This is a two-element list.
 
 \itemize{
 
@@ -96,9 +125,10 @@ age are estimated.
 \code{NA}, then the common Pb composition is fixed at the values
 stored in \code{settings('iratio',...)}.
 
-item If the first element is \code{TRUE} and the second element is a
-number, then the discordia line is forced to intersect the
+\item If the first element is \code{TRUE} and the second element is
+a number, then the discordia line is forced to intersect the
 concordia line at an age equal to that number.
+
 }}
 
 \item{hide}{vector with indices of aliquots that should be removed
@@ -161,15 +191,13 @@ following items:
 
 \item{model}{ the fitting model (\code{=show.age-1}).}
 
-\item{x}{ a two-element vector with the upper and lower intercept
-ages (if \code{wetherill=TRUE}) or the lower intercept age and
-\eqn{^{207}}Pb/\eqn{^{206}}Pb intercept (if
-\code{wetherill=FALSE}).}
+\item{x}{ a vector with the upper and lower intercept
+ages (if \code{type=1}) or the lower intercept age and
+common Pb intercept(s) (if \code{type=2}).}
 
 \item{cov}{ the covariance matrix of the elements in \code{x}.}
 
-\item{err}{ a \code{[2 x 2]} or \code{[3 x 2]} matrix with the
-following rows:
+\item{err}{ a matrix with the following rows:
 
 \code{s}: the estimated standard deviation for \code{x}
 
@@ -228,21 +256,20 @@ shown as 100(1-\code{alpha})\% confidence ellipses. Concordant
 samples plot near to, or overlap with, the concordia line. They
 represent the pinnacle of geochronological robustness. Samples that
 plot away from the concordia line but are aligned along a linear
-trend form an isochron (or `discordia' line) that can be used
-to infer the composition of the non-radiogenic
-(`common') lead or to constrain the timing of prior lead loss.
+trend form an isochron (or `discordia' line) that can be used to
+infer the composition of the non-radiogenic (`common') lead or to
+constrain the timing of prior lead loss.
 }
 \examples{
 data(examples)
 concordia(examples$UPb,show.age=2)
 
 dev.new()
-concordia(examples$UPb,wetherill=FALSE,
-          xlim=c(24.9,25.4),ylim=c(0.0508,0.0518),
-          ticks=249:254,exterr=TRUE)
+concordia(examples$UPb,type=1,xlim=c(24.9,25.4),
+          ylim=c(0.0508,0.0518),ticks=249:254,exterr=TRUE)
 
 dev.new()
-concordia(examples$UPb,wetherill=FALSE,show.age=2,anchor=list(TRUE,0))
+concordia(examples$UPb,type=2,show.age=2,anchor=list(TRUE,0))
 
 }
 \references{

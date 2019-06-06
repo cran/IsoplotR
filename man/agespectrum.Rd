@@ -22,9 +22,9 @@ agespectrum(x, ...)
   line.col = "red", lwd = 2, i2i = FALSE, hide = NULL, ...)
 }
 \arguments{
-\item{x}{a three-column matrix whose first column gives the amount
-    of \eqn{^{39}}Ar in each aliquot, and whose second and third
-    columns give the age and its uncertainty.
+\item{x}{a three-column matrix whose first column gives the amount of
+\eqn{^{39}}Ar in each aliquot, and whose second and third columns
+give the age and its uncertainty.
 
 OR
 
@@ -55,11 +55,28 @@ different background colours of the plot symbols.}
 
 \item{clabel}{label of the colour legend}
 
-\item{plateau.col}{a vector of two fill colours of the rectangles
-used to mark the steps belonging to the age plateau.  If
-\code{levels=NA}, then only the first colour is used. If
-\code{levels} is a vector of numbers, then \code{bg} is used to
-construct a colour ramp.}
+\item{plateau.col}{Fill colours of the rectangles used to mark the steps belonging to
+the age plateau. This can either be a single colour or multiple
+colours to form a colour ramp (to be used if \code{levels!=NA}):
+
+\itemize{
+
+\item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+\code{'white'}, etc.}
+
+\item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+\code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
+\code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+
+\item{a colour palette: \code{rainbow(n=100)},
+\code{topo.colors(n=100,alpha=0.5)}, etc.}
+
+\item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+etc.}
+
+\item{for plot symbols, set \code{plateau.col=NA}}
+
+}}
 
 \item{non.plateau.col}{if \code{plateau=TRUE}, the steps that do
 NOT belong to the plateau are given a different colour.}
@@ -81,18 +98,15 @@ from the plot.}
 \item{exterr}{propagate the external (decay constant and
 calibration factor) uncertainties?}
 
-\item{i2i}{`isochron to intercept':
-calculates the initial (aka `inherited',
-`excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar ratio from
-an isochron fit. Setting \code{i2i} to \code{FALSE} uses the
-default values stored in \code{settings('iratio',...)}}
+\item{i2i}{`isochron to intercept': calculates the initial (aka
+`inherited', `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar
+ratio from an isochron fit. Setting \code{i2i} to \code{FALSE}
+uses the default values stored in \code{settings('iratio',...)}}
 }
 \value{
-If \code{plateau=TRUE}, returns a list with the following
-    items:
+If \code{plateau=TRUE}, returns a list with the following items:
 
-\describe{
-\item{mean}{a 3-element vector with:
+\describe{ \item{mean}{a 3-element vector with:
 
 \code{x}: the plateau mean
 
@@ -114,7 +128,8 @@ confidence interval for the overdispersion}
 
 \item{df}{the degrees of freedom for the weighted mean plateau fit}
 
-\item{mswd}{the mean square of the weighted deviates of the plateau}
+\item{mswd}{the mean square of the weighted deviates of the
+plateau}
 
 \item{p.value}{the p-value of a Chi-square test with \eqn{df=n-2}
 degrees of freedom, where \eqn{n} is the number of steps in the
@@ -134,8 +149,8 @@ calculation}
 }
 \description{
 Produces a plot of boxes whose widths correspond to the cumulative
-amount of \eqn{^{39}}Ar (or any other variable), and whose
-heights express the analytical uncertainties.  Only propagates the
+amount of \eqn{^{39}}Ar (or any other variable), and whose heights
+express the analytical uncertainties.  Only propagates the
 analytical uncertainty associated with decay constants and
 J-factors \emph{after} computing the plateau composition.
 }

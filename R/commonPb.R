@@ -1,5 +1,6 @@
-#' Common Pb correction
+#' @title Common Pb correction
 #'
+#' @description
 #' Applies a common-Pb correction to a U-Pb dataset using either the
 #' Stacey-Kramers mantle evolution model, isochron regression, or any
 #' nominal inital Pb isotope composition.
@@ -91,7 +92,7 @@
 #' }
 #'
 #' @param omit vector with indices of aliquots that should be omitted
-#'     from the isochron regression (only used if \code{option==2})
+#'     from the isochron regression (only used if \code{option=2})
 #'
 #' @return
 #' Returns a list in which \code{x.raw} contains the original data and
@@ -105,6 +106,7 @@
 #' Stacey, J.T. and Kramers, 1., 1975. Approximation of terrestrial
 #' lead isotope evolution by a two-stage model. Earth and planetary
 #' science letters, 26(2), pp.207-221.
+#' 
 #' @examples
 #' data(examples)
 #' UPb <- Pb0corr(examples$UPb,option=1)
@@ -155,6 +157,14 @@ Pb0corr <- function(x,option=1,omit=NULL){
         out$x[,c('Pb207Pb206','errPb207Pb206')] <- tw[,3:4]
         out$x[,c('Pb204Pb207','errPb204Pb207',
                  'Pb204Pb206','errPb204Pb206')] <- 0
+    } else if (x$format==7){ # TODO: correct Pb208 as well.
+        out$x[,c('Pb207U235','errPb207U235',
+                 'Pb206U238','errPb206U238','rhoXY')] <- tw2w(x.corr)
+    } else if (x$format==8){ # TODO: correct Pb208 as well.
+        out$x[,c('U238Pb206','errU238Pb206',
+                 'Pb207Pb206','errPb207Pb206','rhoXY')] <- x.corr
+    } else {
+        stop('Incorrect input format.')
     }
     out
 }
@@ -167,11 +177,13 @@ correct.common.Pb.without.204 <- function(x,i,c76,lower=TRUE,project.err=TRUE){
     cctw <- age_to_terawasserburg_ratios(tt=tint,st=0,d=x$d)
     r86 <- cctw$x['U238Pb206']
     r76 <- cctw$x['Pb207Pb206']
+    cnames <- c('U238Pb206','Pb207Pb206')
+    covmat <- tw$cov[cnames,cnames]
     if (project.err){
         f <- (m76-r76)/(c76-r76)
-        E <- tw$cov/((1-f)^2)
+        E <- covmat/((1-f)^2)
     } else {
-        E <- tw$cov
+        E <- covmat
     }
     sr86 <- sqrt(E[1,1])
     sr76 <- sqrt(E[2,2])
@@ -203,7 +215,7 @@ correct.common.Pb.with.204 <- function(x,i,c46,c47){
 common.Pb.stacey.kramers <- function(x){
     ns <- length(x)
     out <- matrix(0,ns,5)
-    if (x$format < 4){
+    if (x$format %in% c(1,2,3,7,8)){
         for (i in 1:ns){
             tint <- stats::optimise(SS.SK.without.204,
                                     interval=c(0,5000),x=x,i=i)$minimum
@@ -230,7 +242,7 @@ common.Pb.isochron <- function(x,omit=NULL){
     fit <- ludwig(subset(x,subset=calcit))
     out <- matrix(0,ns,5)
     tt <- fit$par[1]
-    if (x$format<4){
+    if (x$format %in% c(1,2,3,7,8)){
         rr <- age_to_terawasserburg_ratios(tt,d=x$d)$x
         slope <- (rr['Pb207Pb206']-fit$par['76i'])/rr['U238Pb206']
         m76 <- get.Pb207Pb206.ratios(x)[,1]
@@ -262,12 +274,12 @@ common.Pb.isochron <- function(x,omit=NULL){
 common.Pb.nominal <- function(x){
     ns <- length(x)
     out <- matrix(0,ns,5)
-    if (x$format < 4){
+    if (x$format %in% c(1,2,3,7,8)){
         c76 <- settings('iratio','Pb207Pb206')[1]
         for (i in 1:ns){
             out[i,] <- correct.common.Pb.without.204(x,i,c76,lower=TRUE)
         }
-    } else {
+    } else if (x$format %in% c(4,5,6)){
         c46 <- 1/settings('iratio','Pb206Pb204')[1]
         c47 <- 1/settings('iratio','Pb207Pb204')[1]
         for (i in 1:ns){
@@ -285,7 +297,9 @@ SS.SK.without.204 <- function(tt,x,i){
     cct <- age_to_terawasserburg_ratios(tt,st=0,d=x$d)
     a <- i6474[2]/i6474[1] # intercept
     b <- (cct$x['Pb207Pb206']-a)/cct$x['U238Pb206'] # slope
-    omega <- solve(tw$cov)
+    cnames <- c('U238Pb206','Pb207Pb206')
+    covmat <- tw$cov[cnames,cnames]
+    omega <- solve(covmat)
     x.fitted <- (X*omega[1,1]+Y*omega[1,2]-a*omega[1,2])/
                 (omega[1,1]+b*omega[1,2])
     y.fitted <- a + b*x.fitted
