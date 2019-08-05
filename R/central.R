@@ -52,28 +52,22 @@
 #' \item{p.value}{the p-value of a Chi-square test with \code{df}
 #' degrees of freedom (only reported if \code{model=1}.)}
 #'
-#' }
-#'
-#' \item{age}{a three- or four-element vector with:
-#'
-#' \code{t}: the central age.
-#'
-#' \code{s[t]}: the standard error of \code{t}.
-#'
+#' \item{age}{a three- or four-element vector with:\cr
+#' \code{t}: the central age.\cr
+#' \code{s[t]}: the standard error of \code{t}.\cr
 #' \code{ci[t]}: the width of a \eqn{100(1-\alpha)\%} confidence
-#' interval for \code{t}.
-#'
+#' interval for \code{t}.\cr
 #' \code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
 #' interval enhanced by a factor of \eqn{\sqrt{mswd}} (only reported
-#' if \code{model=1}).
-#'
-#' }
+#' if \code{model=1}). }
 #'
 #' \item{w}{the geological overdispersion term. If \code{model=3},
 #' this is a three-element vector with the standard deviation of the
 #' (assumedly) Normal dispersion and the lower and upper half-widths
 #' of its \eqn{100(1-\alpha)\%} confidence interval. \code{w=0} if
-#' code{model<3}.}
+#' \code{model<3}.}
+#'
+#' }
 #'
 #' OR, otherwise:
 #'
@@ -143,26 +137,21 @@ central.default <- function(x,alpha=0.05,...){
     names(out$disp) <- c('s','ll','ul')
     out
 }
-
-#' @param model choose one of the following statistical models:
+#' @param model if the scatter between the data points is solely
+#'     caused by the analytical uncertainty, then the MSWD value
+#'     should be approximately equal to one. There are three
+#'     strategies to deal with the case where MSWD>1.choose one of the
+#'     following statistical models:
 #'
-#' \code{1}: weighted mean. This model assumes that the scatter
-#' between the data points is solely caused by the analytical
-#' uncertainty. If the assumption is correct, then the MSWD value
-#' should be approximately equal to one. There are three strategies to
-#' deal with the case where MSWD>1. The first of these is to assume
-#' that the analytical uncertainties have been underestimated by a
-#' factor \eqn{\sqrt{MSWD}}.
+#' \code{1}: assume that the analytical uncertainties have been
+#' underestimated by a factor \eqn{\sqrt{MSWD}}.
 #'
-#' \code{2}: unweighted mean. A second way to deal with over- or
-#' underdispersed datasets is to simply ignore the analytical
+#' \code{2}: ignore the analytical
 #' uncertainties.
 #'
-#' \code{3}: weighted mean with overdispersion: instead of attributing
-#' any overdispersion (MSWD > 1) to underestimated analytical
-#' uncertainties (model 1), one could also attribute it to the
-#' presence of geological uncertainty, which manifests itself as an
-#' added (co)variance term.
+#' \code{3}: attribute any excess dispersion to the presence of
+#' geological uncertainty, which manifests itself as an added
+#' (co)variance term.
 #'
 #' @rdname central
 #' @export
@@ -194,9 +183,11 @@ central.UThHe <- function(x,alpha=0.05,model=1,...){
 #'     \code{zircon} changes the default efficiency factor, initial
 #'     fission track length and density to preset values (only affects
 #'     results if \code{x$format=2})
+#' @param exterr include the zeta or decay constant uncertainty into
+#'     the error propagation for the central age?
 #' @rdname central
 #' @export
-central.fissiontracks <- function(x,mineral=NA,alpha=0.05,...){
+central.fissiontracks <- function(x,mineral=NA,alpha=0.05,exterr=FALSE,...){
     out <- list()
     if (x$format<2){
         L8 <- lambda('U238')[1]
@@ -217,9 +208,7 @@ central.fissiontracks <- function(x,mineral=NA,alpha=0.05,...){
             theta <- sum(wj*pj)/sum(wj)
         }
         tt <- log(1+0.5*L8*(x$zeta[1]/1e6)*x$rhoD[1]*theta/(1-theta))/L8
-        st <- tt * sqrt( 1/(sum(wj)*(theta*(1-theta))^2) +
-                         (x$rhoD[2]/x$rhoD[1])^2 +
-                         (x$zeta[2]/x$zeta[1])^2 )
+        st <- tt * sqrt((sum(wj)*(theta*(1-theta))^2) + (x$rhoD[2]/x$rhoD[1])^2)
         mu <- log(theta/(1-theta))
         # remove two d.o.f. for mu and sigma
         out$df <- length(Nsj)-2
@@ -234,6 +223,10 @@ central.fissiontracks <- function(x,mineral=NA,alpha=0.05,...){
     } else if (x$format>1){
         tst <- age(x,exterr=FALSE,mineral=mineral)
         out <- central.default(tst,alpha=alpha)
+    }
+    if (exterr & x$format<3){
+        out$age[1:2] <- add.exterr(x,tt=out$age[1],st=out$age[2])
+        out$age[3] <- out$age[2]*nfact(alpha)
     }
     out
 }
@@ -271,12 +264,12 @@ average_uvw <- function(x,model=1,w=0){
         nms <- c('u','v','w')
         logratios <- flat.uvw.table(x,w=w)
         fit <- wtdmean3D(logratios)
-        uvw <- logratios[,c(1,3,5)]
+        uvw <- logratios[,c(1,3,5),drop=FALSE]
     } else {
         nms <- c('u','v')
         logratios <- flat.uv.table(x,w=w)
         fit <- wtdmean2D(logratios)
-        uvw <- logratios[,c(1,3)]
+        uvw <- logratios[,c(1,3),drop=FALSE]
     }
     if (model==2){
         out$uvw <- apply(uvw,2,mean)

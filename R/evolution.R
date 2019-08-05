@@ -9,7 +9,6 @@
 #' calculates isochron ages.
 #'
 #' @details
-#'
 #' Similar to the \code{\link{concordia}} diagram (for U-Pb data) and
 #' the \code{\link{helioplot}} diagram (for U-Th-He data), the
 #' evolution diagram simultaneously displays the isotopic composition
@@ -60,28 +59,24 @@
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours within the error ellipses.
 #' @param clabel label of the colour legend.
-#' @param ellipse.col Fill colour for the error ellipses. This can
-#'     either be a single colour or multiple colours to form a colour
-#'     ramp (to be used if \code{levels!=NA}):
+#' @param ellipse.col
+#' Fill colour for the error ellipses. This can either be a single
+#' colour or multiple colours to form a colour ramp. Examples:
 #'
-#' \itemize{
+#' a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+#' \code{'white'}, etc.;
 #'
-#' \item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
-#' \code{'white'}, etc.}
-#'
-#' \item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+#' multiple colours: \code{c(rbg(1,0,0,0.5)},
 #' \code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
-#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.;
 #'
-#' \item{a colour palette: \code{rainbow(n=100)},
-#' \code{topo.colors(n=100,alpha=0.5)}, etc.}
+#' a colour palette: \code{rainbow(n=100)},
+#' \code{topo.colors(n=100,alpha=0.5)}, etc.; or
 #'
-#' \item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
-#' etc.}
+#' a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+#' etc.
 #'
-#' \item{for empty ellipses, set \code{ellipse.col=NA}}
-#'
-#' }
+#' For empty ellipses, set \code{ellipse.col=NA}
 #' @param line.col colour of the age grid
 #' @param isochron fit a 3D isochron to the data?
 #' @param exterr propagate the decay constant uncertainty in the
@@ -232,7 +227,8 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detritus=0,
         e08 <- b08 + fit$par['A']*(e48-b48)/fit$par['a']
         graphics::lines(c(b08,e08),c(b48,e48))
     }
-    pdat <- y[,c('Th230U238','sTh230U238','U234U238','sU234U238','rYZ')]
+    pdat <- y[,c('Th230U238','sTh230U238',
+                 'U234U238','sU234U238','rYZ'),drop=FALSE]
     scatterplot(pdat,alpha=alpha,show.numbers=show.numbers,
                 show.ellipses=show.ellipses,levels=levels,
                 clabel=clabel,ellipse.col=ellipse.col,add=TRUE,

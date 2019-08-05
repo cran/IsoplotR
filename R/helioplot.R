@@ -70,28 +70,24 @@
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours within the error ellipses.
 #' @param clabel label of the colour scale
-#' @param ellipse.col Fill colour for the error ellipses. This can
-#'     either be a single colour or multiple colours to form a colour
-#'     ramp (to be used if \code{levels!=NA}):
+#' @param ellipse.col
+#' Fill colour for the error ellipses. This can either be a single
+#' colour or multiple colours to form a colour ramp. Examples:
 #'
-#' \itemize{
+#' a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+#' \code{'white'}, etc.;
 #'
-#' \item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
-#' \code{'white'}, etc.}
-#'
-#' \item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+#' multiple colours: \code{c(rbg(1,0,0,0.5)},
 #' \code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
-#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.;
 #'
-#' \item{a colour palette: \code{rainbow(n=100)},
-#' \code{topo.colors(n=100,alpha=0.5)}, etc.}
+#' a colour palette: \code{rainbow(n=100)},
+#' \code{topo.colors(n=100,alpha=0.5)}, etc.; or
 #'
-#' \item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
-#' etc.}
+#' a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+#' etc.
 #'
-#' \item{for empty ellipses, set \code{ellipse.col=NA}}
-#'
-#' }
+#' For empty ellipses, set \code{ellipse.col=NA}
 #' @param sigdig number of significant digits for the central age
 #' @param xlim optional limits of the x-axis (log[U/He]) of the
 #'     logratio plot. If \code{xlim=NA}, the axis limits are
@@ -251,7 +247,7 @@ plot_helioplot_ellipses <- function(x,ellipse.cols,fact=c(1,1,1),
 plot_helioplot_points <- function(x,fact=c(1,1,1),mybg=NA,
                                   show.numbers=FALSE,hide=NULL,
                                   omit=NULL,...){
-    xyz <- renormalise(x[,c('He','U','Th')],fact=fact)
+    xyz <- renormalise(x[,c('He','U','Th'),drop=FALSE],fact=fact)
     xy <- xyz2xy(xyz)
     plot_points(xy[,1],xy[,2],mybg=mybg,
                 show.numbers=show.numbers,
@@ -322,13 +318,13 @@ helioplot_title <- function(fit,sigdig=2,...){
                   b=rounded.age[2],
                   c=rounded.age[3],
                   n=fit$n)
+    line1line <- 1
     if (fit$model==1 && fit$mswd>1){
         args1 <- quote(~a%+-%b~'|'~c~'|'~d~'Ma'~'(n='*n*')')
         list1$d <- rounded.age[4]
         line2 <- substitute('MSWD ='~a~', p('*chi^2*') ='~b,
                             list(a=signif(fit$mswd,2),
                                  b=signif(fit$p.value,2)))
-        line1line <- 1
         mymtext(line2,line=0,...)
     } else if (fit$model==2){
         line1line <- 0
@@ -339,7 +335,6 @@ helioplot_title <- function(fit,sigdig=2,...){
         args2 <- quote(a+c-b~'%')
         call2 <- substitute(e~a,list(e=expr2,a=args2))
         line2 <- do.call(substitute,list(eval(call2),list2))
-        line1line <- 1
         mymtext(line2,line=0,...)
     }
     call1 <- substitute(e~a,list(e=expr,a=args1))

@@ -21,77 +21,83 @@ radialplot(x, ...)
 \method{radialplot}{default}(x, from = NA, to = NA, t0 = NA,
   transformation = "log", sigdig = 2, show.numbers = FALSE,
   pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", title = TRUE, k = 0, markers = NULL,
-  alpha = 0.05, units = "", hide = NA, omit = NA, omit.col = NA,
-  ...)
+  col = "black", k = 0, markers = NULL, alpha = 0.05, units = "",
+  hide = NA, omit = NA, omit.col = NA, ...)
 
 \method{radialplot}{fissiontracks}(x, from = NA, to = NA, t0 = NA,
   transformation = "arcsin", sigdig = 2, show.numbers = FALSE,
   pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", title = TRUE, markers = NULL, k = 0,
-  exterr = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  alpha = 0.05, hide = NULL, omit = NULL, omit.col = NA, ...)
 
 \method{radialplot}{UPb}(x, from = NA, to = NA, t0 = NA,
   transformation = "log", type = 4, cutoff.76 = 1100,
   cutoff.disc = list(-15, 5, TRUE), show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, exterr = TRUE, common.Pb = 0,
-  alpha = 0.05, hide = NULL, omit = NULL, omit.col = NA, ...)
-
-\method{radialplot}{PbPb}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, exterr = TRUE, common.Pb = 1,
-  alpha = 0.05, hide = NULL, omit = NULL, omit.col = NA, ...)
-
-\method{radialplot}{ArAr}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, exterr = TRUE, i2i = FALSE,
-  alpha = 0.05, hide = NULL, omit = NULL, omit.col = NA, ...)
-
-\method{radialplot}{KCa}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, exterr = TRUE, i2i = FALSE,
-  alpha = 0.05, hide = NULL, omit = NULL, omit.col = NA, ...)
-
-\method{radialplot}{UThHe}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, alpha = 0.05, hide = NULL, omit = NULL,
+  sigdig = 2, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  common.Pb = 0, alpha = 0.05, hide = NULL, omit = NULL,
   omit.col = NA, ...)
 
-\method{radialplot}{ReOs}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, exterr = TRUE, i2i = TRUE, alpha = 0.05,
+\method{radialplot}{PbPb}(x, from = NA, to = NA, t0 = NA,
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  common.Pb = 1, alpha = 0.05, hide = NULL, omit = NULL,
+  omit.col = NA, ...)
+
+\method{radialplot}{ArAr}(x, from = NA, to = NA, t0 = NA,
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  i2i = FALSE, alpha = 0.05, hide = NULL, omit = NULL,
+  omit.col = NA, ...)
+
+\method{radialplot}{KCa}(x, from = NA, to = NA, t0 = NA,
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  i2i = FALSE, alpha = 0.05, hide = NULL, omit = NULL,
+  omit.col = NA, ...)
+
+\method{radialplot}{UThHe}(x, from = NA, to = NA, t0 = NA,
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, alpha = 0.05,
   hide = NULL, omit = NULL, omit.col = NA, ...)
+
+\method{radialplot}{ReOs}(x, from = NA, to = NA, t0 = NA,
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
+  omit.col = NA, ...)
 
 \method{radialplot}{SmNd}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, exterr = TRUE, i2i = TRUE, alpha = 0.05,
-  hide = NULL, omit = NULL, omit.col = NA, ...)
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
+  omit.col = NA, ...)
 
 \method{radialplot}{RbSr}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, exterr = TRUE, i2i = TRUE, alpha = 0.05,
-  hide = NULL, omit = NULL, omit.col = NA, ...)
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
+  omit.col = NA, ...)
 
 \method{radialplot}{LuHf}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, exterr = TRUE, i2i = TRUE, alpha = 0.05,
-  hide = NULL, omit = NULL, omit.col = NA, ...)
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, exterr = TRUE,
+  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
+  omit.col = NA, ...)
 
 \method{radialplot}{ThU}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", show.numbers = FALSE, pch = 21,
-  levels = NA, clabel = "", bg = c("yellow", "red"), col = "black",
-  markers = NULL, k = 0, i2i = TRUE, alpha = 0.05, detritus = 0,
-  hide = NULL, omit = NULL, omit.col = NA, ...)
+  sigdig = 2, transformation = "log", show.numbers = FALSE,
+  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
+  col = "black", markers = NULL, k = 0, i2i = TRUE, alpha = 0.05,
+  detritus = 0, hide = NULL, omit = NULL, omit.col = NA, ...)
 }
 \arguments{
 \item{x}{Either an \code{[nx2]} matix of (transformed) values z
@@ -134,28 +140,21 @@ different background colours of the plot symbols.}
     either be a single colour or multiple colours to form a colour
     ramp (to be used if \code{levels!=NA}):
 
-\itemize{
+a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+\code{'white'}, etc.;
 
-\item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
-\code{'white'}, etc.}
-
-\item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+multiple colours: \code{c(rbg(1,0,0,0.5)},
 \code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
-\code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+\code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.;
 
-\item{a colour palette: \code{rainbow(n=100)},
-\code{topo.colors(n=100,alpha=0.5)}, etc.}
+a colour palette: \code{rainbow(n=100)},
+\code{topo.colors(n=100,alpha=0.5)}, etc.; or
 
-\item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
-etc.}
+a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))}, etc.
 
-\item{for plot symbols, set \code{bg=NA}}
-
-}}
+for plot symbols, set \code{bg=NA}}
 
 \item{col}{text colour to be used if \code{show.numbers=TRUE}}
-
-\item{title}{add a title to the plot?}
 
 \item{k}{number of peaks to fit using the finite mixture models of
 Galbraith and Laslett (1993). Setting \code{k='auto'}
@@ -181,16 +180,16 @@ but omitted from the central age calculation or mixture models.}
 \item{omit.col}{colour that should be used for the omitted
 aliquots.}
 
-\item{exterr}{propagate the external sources of uncertainty into
-the mixture model errors?}
+\item{exterr}{include the external sources of uncertainty into
+the error propagation for the central age and mixture models?}
 
 \item{type}{scalar indicating whether to plot the
 \eqn{^{207}}Pb/\eqn{^{235}}U age (\code{type}=1), the
 \eqn{^{206}}Pb/\eqn{^{238}}U age (\code{type}=2), the
-\eqn{^{207}}Pb/\eqn{^{206}}Pb age (type=3), the
+\eqn{^{207}}Pb/\eqn{^{206}}Pb age (\code{type}=3), the
 \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U age
-(\code{type}=4), or the (Wetherill) concordia age
-(\code{type}=5)}
+(\code{type}=4), the concordia age (\code{type}=5), or the
+\eqn{^{208}}Pb/\eqn{^{232}}Th age (\code{type}=6).}
 
 \item{cutoff.76}{the age (in Ma) below which the
 \eqn{^{206}}Pb/\eqn{^{238}}U and above which the
@@ -216,14 +215,24 @@ Set \code{cutoff.disc=NA} to turn off this filter.}
 \item{common.Pb}{apply a common lead correction using one of three
     methods:
 
-\code{1}: use the isochron intercept as the initial Pb-composition
-
-\code{2}: use the Stacey-Kramers two-stage model to infer the initial
+\code{1}: the Stacey-Kramer two-stage model to infer the initial
 Pb-composition
 
-\code{3}: use the Pb-composition stored in
+\code{2}: the isochron intercept as the initial Pb-composition
+
+\code{3}: the Pb-composition stored in
+
+\code{settings('iratio','Pb206Pb204')} (if \code{x} has class
+\code{UPb} and \code{x$format<4});
+
 \code{settings('iratio','Pb206Pb204')} and
-\code{settings('iratio','Pb207Pb204')}}
+\code{settings('iratio','Pb207Pb204')} (if \code{x} has class
+\code{PbPb} or \code{x} has class \code{UPb} and
+\code{3<x$format<7}); or
+
+\code{settings('iratio','Pb208Pb206')} and
+\code{settings('iratio','Pb208Pb207')} (if \code{x} has class
+\code{UPb} and \code{x$format=7} or \code{8}).}
 
 \item{i2i}{`isochron to intercept': calculates the initial (aka
 `inherited', `excess', or `common')

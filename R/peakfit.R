@@ -13,7 +13,7 @@
 #' s[t_i]/t_i}.  Suppose that these \eqn{n} values are derived from a
 #' mixture of \eqn{k>2} populations with means
 #' \eqn{\{\mu_1,...,\mu_k\}}. Such a \emph{discrete mixture} may be
-#' mathematically described by: \eqn{P(z_i|\mu,\omega) = \sum_{j=1}^k
+#' mathematically described by \eqn{P(z_i|\mu,\omega) = \sum_{j=1}^k
 #' \pi_j N(z_i | \mu_j, s[z_j]^2 )} where \eqn{\pi_j} is the
 #' proportion of the population that belongs to the \eqn{j^{th}}
 #' component, and \eqn{\pi_k=1-\sum_{j=1}^{k-1}\pi_j}. This equation
@@ -103,11 +103,11 @@ peakfit.default <- function(x,k='auto',sigdig=2,log=TRUE,alpha=0.05,...){
         x[,1] <- log(x[,1])
     }
     if (identical(k,'min')) {
-        out <- min_age_model(x,sigdig=sigdig,alpha=alpha)
+        out <- min_age_model(x,alpha=alpha)
     } else if (identical(k,'auto')) {
-        out <- normal.mixtures(x,k=BIC_fit(x,5),sigdig=sigdig,alpha=alpha,...)
+        out <- normal.mixtures(x,k=BIC_fit(x,5),alpha=alpha,...)
     } else {
-        out <- normal.mixtures(x,k,sigdig=sigdig,alpha=alpha,...)
+        out <- normal.mixtures(x,k,alpha=alpha,...)
     }
     if (log) {
         out$peaks['t',] <- exp(out$peaks['t',])
@@ -136,13 +136,13 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
     out$legend <- peaks2legend(out,sigdig=sigdig,k=k)
     out
 }
-#' @param type scalar valueindicating whether to plot the
+#' @param type scalar indicating whether to plot the
 #'     \eqn{^{207}}Pb/\eqn{^{235}}U age (\code{type}=1), the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U age (\code{type}=2), the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (\code{type}=3), the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U age
-#'     (\code{type}=4), or the (Wetherill) concordia age
-#'     (\code{type}=5)
+#'     (\code{type}=4), the concordia age (\code{type}=5), or the
+#'     \eqn{^{208}}Pb/\eqn{^{232}}Th age (\code{type}=6).
 #' @param cutoff.76 the age (in Ma) below which the
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U and above which the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
@@ -155,18 +155,29 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 #'     \code{cutoff.disc=NA} if you do not want to use this filter.
+#'
 #' @param common.Pb apply a common lead correction using one of three
 #'     methods:
 #'
-#' \code{1}: use the Stacey-Kramers two-stage model to infer the initial
+#' \code{1}: the Stacey-Kramer two-stage model to infer the initial
 #' Pb-composition
 #'
-#' \code{2}: use the isochron intercept as the initial Pb-composition
+#' \code{2}: the isochron intercept as the initial Pb-composition
 #'
-#' \code{3}: use the Pb-composition stored in
-#' \code{settings('iratio','Pb207Pb206')} (if \code{x$format}<4) or
+#' \code{3}: the Pb-composition stored in
+#' 
+#' \code{settings('iratio','Pb206Pb204')} (if \code{x} has class
+#' \code{UPb} and \code{x$format<4});
+#' 
 #' \code{settings('iratio','Pb206Pb204')} and
-#' \code{settings('iratio','Pb207Pb204')} (if \code{x$format}>3)
+#' \code{settings('iratio','Pb207Pb204')} (if \code{x} has class
+#' \code{PbPb} or \code{x} has class \code{UPb} and
+#' \code{3<x$format<7}); or
+#'
+#' \code{settings('iratio','Pb208Pb206')} and
+#' \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
+#' \code{UPb} and \code{x$format=7} or \code{8}).
+#'
 #' @rdname peakfit
 #' @export
 peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
@@ -268,7 +279,7 @@ peakfit_helper <- function(x,k=1,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
     }
     tt <- get.ages(x,i2i=i2i,common.Pb=common.Pb,type=type,cutoff.76=cutoff.76,
                    cutoff.disc=cutoff.disc,detritus=detritus)
-    fit <- peakfit.default(tt,k=k,sigdig=sigdig,log=log,alpha=alpha)
+    fit <- peakfit.default(tt,k=k,log=log,alpha=alpha)
     if (exterr){
         if (identical(k,'min')) numpeaks <- 1
         else numpeaks <- k
@@ -327,7 +338,7 @@ get.props.err <- function(E){
 }
 
 peaks2legend <- function(fit,sigdig=2,k=NULL){
-    if (identical(k,'min')) return(min_age_to_legend(fit,sigdig))
+    if (identical(k,'min')) return(min_age_to_legend(fit,sigdig=sigdig))
     out <- NULL
     for (i in 1:ncol(fit$peaks)){
         rounded.age <- roundit(fit$peaks[1,i],fit$peaks[2:3,i],sigdig=sigdig)
@@ -346,7 +357,7 @@ min_age_to_legend <- function(fit,sigdig=2){
     paste0('Minimum: ',rounded.age[1],'\u00B1',rounded.age[2],' | ',rounded.age[3])
 }
 
-normal.mixtures <- function(x,k,sigdig=2,alpha=0.05,...){
+normal.mixtures <- function(x,k,alpha=0.05,...){
     good <- !is.na(x[,1]+x[,2])
     zu <- x[good,1]
     su <- x[good,2]
@@ -392,7 +403,6 @@ normal.mixtures <- function(x,k,sigdig=2,alpha=0.05,...){
                         props.err=get.props.err(E),
                         df=n-2*k+1,alpha=alpha)
     out$L <- L
-    out$legend <- peaks2legend(out,sigdig=sigdig,k=k)
     out
 }
 # uses sum-of-logs identity from Wikipedia
@@ -517,7 +527,7 @@ BIC_fit <- function(x,max.k,type=4,cutoff.76=1100,cutoff.disc=c(-15,5),
 }
 
 # Simple 3-parameter Normal model (Section 6.11 of Galbraith, 2005)
-min_age_model <- function(zs,sigdig=2,alpha=0.05){
+min_age_model <- function(zs,alpha=0.05){
     z <- zs[,1]
     mu <- seq(min(z),max(z),length.out=100)
     sigma <- seq(stats::sd(z)/10,2*stats::sd(z),length.out=10)

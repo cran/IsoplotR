@@ -9,10 +9,11 @@
 #'
 #' @details
 #' \code{IsoplotR} defines the `plateau age' as the weighted mean age
-#' of the longest sequence (in terms of cumulative \eqn{^{39}}Ar
-#' content) of consecutive heating steps that pass the modified
-#' Chauvenet criterion (see \code{\link{weightedmean}}).  Note that
-#' this definition is different (and simpler) than the one used by
+#' (using a random effects model with two sources of dispersion) of
+#' the longest sequence (in terms of cumulative \eqn{^{39}}Ar content)
+#' of consecutive heating steps that pass the modified Chauvenet
+#' criterion (see \code{\link{weightedmean}}).  Note that this
+#' definition is different (and simpler) than the one used by
 #' \code{Isoplot} (Ludwig, 2003). However, it is important to mention
 #' that all definitions of an age plateau are heuristic by nature and
 #' should not be used for quantitative inference.
@@ -30,10 +31,10 @@
 #'     confidence intervals.
 #' 
 #' @param plateau logical flag indicating whether a plateau age should
-#'     be calculated. If \code{plateau=TRUE}, the function will
-#'     compute the weighted mean of the largest succession of steps
-#'     that pass the Chi-square test for age homogeneity.  If
-#'     \code{TRUE}, returns a list with plateau parameters.
+#'     be calculated. If \code{plateau=TRUE}, the function computes
+#'     the weighted mean of the largest succession of steps that pass
+#'     the Chi-square test for age homogeneity.  If \code{TRUE}, it
+#'     returns a list with plateau parameters.
 #' 
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours of the plot symbols.
@@ -43,25 +44,21 @@
 #' the age plateau. This can either be a single colour or multiple
 #' colours to form a colour ramp (to be used if \code{levels!=NA}):
 #'
-#' \itemize{
+#' a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+#' \code{'white'}, etc.;
 #'
-#' \item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
-#' \code{'white'}, etc.}
-#'
-#' \item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+#' multiple colours: \code{c(rbg(1,0,0,0.5)},
 #' \code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
-#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.;
 #'
-#' \item{a colour palette: \code{rainbow(n=100)},
-#' \code{topo.colors(n=100,alpha=0.5)}, etc.}
+#' a colour palette: \code{rainbow(n=100)},
+#' \code{topo.colors(n=100,alpha=0.5)}, etc.; or
 #'
-#' \item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
-#' etc.}
+#' a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+#' etc.
 #'
-#' \item{for plot symbols, set \code{plateau.col=NA}}
+#' For empty boxes, set \code{plateau.col=NA}
 #'
-#' }
-#' 
 #' @param non.plateau.col if \code{plateau=TRUE}, the steps that do
 #'     NOT belong to the plateau are given a different colour.
 #' @param clabel label of the colour legend
@@ -175,7 +172,7 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
                              i2i=FALSE,hide=NULL,...){
     x <- clear(x,hide)
     tt <- ArAr.age(x,exterr=FALSE,i2i=i2i)
-    X <- cbind(x$x[,'Ar39'],tt)
+    X <- cbind(x$x[,'Ar39',drop=FALSE],tt)
     x.lab <- expression(paste("cumulative ",""^"39","Ar fraction"))
     y.lab='age [Ma]'
     XY <- plot.spectrum.axes(x=X,alpha=alpha,xlab=x.lab,
@@ -200,7 +197,7 @@ plot.spectrum.axes <- function(x,alpha=0.05,xlab='cumulative fraction',
                                plateau.col=c("#00FF0080","#FF000080"),
                                clabel="",...){
     ns <- nrow(x)
-    x <- clear(x[,1:3],hide)
+    x <- clear(x[,1:3,drop=FALSE],hide)
     valid <- !is.na(rowSums(x))
     X <- c(0,cumsum(x[valid,1])/sum(x[valid,1]))
     Y <- x[valid,2]
@@ -289,7 +286,7 @@ get.plateau <- function(x,alpha=0.05,random.effects=TRUE){
             valid <- chauvenet(Y,sY,valid=rep(TRUE,j-i+1),
                                random.effects=random.effects)
             if (all(valid) & (fract > out$fract)){
-                out <- weightedmean(YsY[i:j,],random.effects=random.effects,
+                out <- weightedmean(YsY[i:j,,drop=FALSE],random.effects=random.effects,
                                     plot=FALSE,detect.outliers=FALSE,
                                     alpha=alpha)
                 out$i <- i:j

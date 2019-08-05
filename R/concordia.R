@@ -1,11 +1,12 @@
 #' @title Concordia diagram
 #'
 #' @description
-#' Plots U-Pb data on Wetherill and Tera-Wasserburg concordia
-#' diagrams, calculate concordia ages and compositions, evaluates the
+#' Plots U-Pb data on Wetherill, Tera-Wasserburg or U-Th-Pb concordia
+#' diagrams, calculates concordia ages and compositions, evaluates the
 #' equivalence of multiple
-#' (\eqn{^{206}}Pb/\eqn{^{238}}U-\eqn{^{207}}Pb/\eqn{^{235}}U or
-#' \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U)
+#' (\eqn{^{206}}Pb/\eqn{^{238}}U-\eqn{^{207}}Pb/\eqn{^{235}}U,
+#' \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U, or
+#' \eqn{^{208}}Th/\eqn{^{232}}Th-\eqn{^{206}}Pb/\eqn{^{238}}U)
 #' compositions, computes the weighted mean isotopic composition and
 #' the corresponding concordia age using the method of maximum
 #' likelihood, computes the MSWD of equivalence and concordance and
@@ -20,17 +21,19 @@
 #' internal consistency of U-Pb data. It sets out the measured
 #' \eqn{^{206}}Pb/\eqn{^{238}}U- and
 #' \eqn{^{207}}Pb/\eqn{^{235}}U-ratios against each other (`Wetherill'
-#' diagram) or, equivalently, the \eqn{^{207}}Pb/\eqn{^{206}}Pb- and
+#' diagram); or, equivalently, the \eqn{^{207}}Pb/\eqn{^{206}}Pb- and
 #' \eqn{^{206}}Pb/\eqn{^{238}}U-ratios (`Tera-Wasserburg'
-#' diagram). The space of concordant isotopic compositions is marked
-#' by a curve, the `concordia line'. Isotopic ratio measurements are
-#' shown as 100(1-\code{alpha})\% confidence ellipses. Concordant
-#' samples plot near to, or overlap with, the concordia line. They
-#' represent the pinnacle of geochronological robustness. Samples that
-#' plot away from the concordia line but are aligned along a linear
-#' trend form an isochron (or `discordia' line) that can be used to
-#' infer the composition of the non-radiogenic (`common') lead or to
-#' constrain the timing of prior lead loss.
+#' diagram). Alternatively, for data formats 7 and 8, it is also
+#' possible to plot \eqn{^{208}}Pb/\eqn{^{232}}Th against the
+#' \eqn{^{206}}Pb/\eqn{^{238}}U.  The space of concordant isotopic
+#' compositions is marked by a curve, the `concordia line'. Isotopic
+#' ratio measurements are shown as 100(1-\code{alpha})\% confidence
+#' ellipses. Concordant samples plot near to, or overlap with, the
+#' concordia line. They represent the pinnacle of geochronological
+#' robustness. Samples that plot away from the concordia line but are
+#' aligned along a linear trend form an isochron (or `discordia' line)
+#' that can be used to infer the composition of the non-radiogenic
+#' (`common') lead or to constrain the timing of prior lead loss.
 #'
 #' @param x an object of class \code{UPb}
 #' 
@@ -41,19 +44,15 @@
 #' 
 #' @param type one of
 #'
-#' \enumerate{
+#' \code{1}: Wetherill -- \eqn{{}^{206}}Pb/\eqn{{}^{238}}U
+#' vs. \eqn{{}^{207}}Pb/\eqn{{}^{235}}U
 #'
-#' \item{Wetherill: \eqn{{}^{206}}Pb/\eqn{{}^{238}}U
-#' vs. \eqn{{}^{207}}Pb/\eqn{{}^{235}}U}
+#' \code{2}: Tera-Wasserburg -- \eqn{{}^{207}}Pb/\eqn{{}^{206}}Pb
+#' vs. \eqn{{}^{238}}U/\eqn{{}^{206}}Pb
 #'
-#' \item{Tera-Wasserburg: \eqn{{}^{207}}Pb/\eqn{{}^{206}}Pb
-#' vs. \eqn{{}^{238}}U/\eqn{{}^{206}}Pb}
-#'
-#' \item{U-Th-Pb concordia: \eqn{{}^{208}}Pb/\eqn{{}^{232}}Th
+#' \code{3}: U-Th-Pb concordia -- \eqn{{}^{208}}Pb/\eqn{{}^{232}}Th
 #' vs. \eqn{{}^{206}}Pb/\eqn{{}^{238}}U (only available if
-#' \code{x$format=7} or \code{x$format=8}})
-#'
-#' }
+#' \code{x$format=7} or \code{8})
 #' 
 #' @param show.numbers logical flag (\code{TRUE} to show grain
 #'     numbers)
@@ -68,28 +67,24 @@
 #' Fill colour for the error ellipses. This can either be a single
 #' colour or multiple colours to form a colour ramp. Examples:
 #'
-#' \itemize{
+#' a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
+#' \code{'white'}, etc.;
 #'
-#' \item{a single colour: \code{rgb(0,1,0,0.5)}, \code{'#FF000080'},
-#' \code{'white'}, etc.}
-#'
-#' \item{multiple colours: \code{c(rbg(1,0,0,0.5)},
+#' multiple colours: \code{c(rbg(1,0,0,0.5)},
 #' \code{rgb(0,1,0,0.5))}, \code{c('#FF000080','#00FF0080')},
-#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.}
+#' \code{c('blue','red')}, \code{c('blue','yellow','red')}, etc.;
 #'
-#' \item{a colour palette: \code{rainbow(n=100)},
-#' \code{topo.colors(n=100,alpha=0.5)}, etc.}
+#' a colour palette: \code{rainbow(n=100)},
+#' \code{topo.colors(n=100,alpha=0.5)}, etc.; or
 #'
-#' \item{a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
-#' etc.}
+#' a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
+#' etc.
 #'
-#' \item{for empty ellipses, set \code{ellipse.col=NA}}
-#'
-#' }
+#' For empty ellipses, set \code{ellipse.col=NA}
 #' 
 #' @param concordia.col colour of the concordia line
 #' 
-#' @param exterr show decay constant uncertainty?
+#' @param exterr show decay constant uncertainties?
 #' 
 #' @param show.age one of either:
 #'
@@ -116,39 +111,41 @@
 #' @param sigdig number of significant digits for the
 #'     concordia/discordia age
 #' 
-#' @param common.Pb
-#' apply a common lead correction using one of three methods:
+#' @param common.Pb apply a common lead correction using one of three
+#'     methods:
 #'
-#' \code{1}: use the Stacey-Kramers two-stage model to infer the initial
+#' \code{1}: the Stacey-Kramer two-stage model to infer the initial
 #' Pb-composition
 #'
-#' \code{2}: use the isochron intercept as the initial Pb-composition
+#' \code{2}: the isochron intercept as the initial Pb-composition
 #'
-#' \code{3}: use the Pb-composition stored in
-#' \code{settings('iratio','Pb207Pb206')} (if \code{x$format}<4) or
+#' \code{3}: the Pb-composition stored in
+#' 
+#' \code{settings('iratio','Pb206Pb204')} (if \code{x$format<4});
+#' 
 #' \code{settings('iratio','Pb206Pb204')} and
-#' \code{settings('iratio','Pb207Pb204')} (if \code{x$format}>3)
+#' \code{settings('iratio','Pb207Pb204')} (if \code{3<x$format<7}); or
+#' 
+#' \code{settings('iratio','Pb208Pb206')} and
+#' \code{settings('iratio','Pb208Pb207')} (if \code{x$format=7} or
+#' \code{8}).
 #' 
 #' @param anchor
 #' control parameters to fix the intercept age or common Pb
 #' composition of the discordia fit. This is a two-element list.
 #'
-#' \itemize{
-#'
-#' \item The first element is a boolean flag indicating whether the
+#' The first element is a boolean flag indicating whether the
 #' discordia line should be anchored. If this is \code{FALSE}, then
 #' the second item is ignored and both the common Pb composition and
 #' age are estimated.
 #'
-#' \item If the first element is \code{TRUE} and the second element is
+#' If the first element is \code{TRUE} and the second element is
 #' \code{NA}, then the common Pb composition is fixed at the values
 #' stored in \code{settings('iratio',...)}.
 #'
-#' \item If the first element is \code{TRUE} and the second element is
+#' If the first element is \code{TRUE} and the second element is
 #' a number, then the discordia line is forced to intersect the
 #' concordia line at an age equal to that number.
-#'
-#' }
 #'
 #' @param ticks either a scalar indicating the desired number of age
 #'     ticks to be placed along the concordia line, OR a vector of
@@ -163,7 +160,7 @@
 #'
 #' @return
 #'
-#' if \code{show.age=1}, returns a list with the following items:
+#' If \code{show.age=1}, returns a list with the following items:
 #'
 #' \describe{
 #'
@@ -183,28 +180,20 @@
 #' combined goodness of fit, respectively. }
 #'
 #' \item{df}{ a three-element vector with the number of degrees of
-#' freedom used for the \code{mswd} calculation.  These values are
-#' useful when expanding the analytical uncertainties if
-#' \code{mswd>1}.
+#' freedom used for the \code{mswd} calculation. }
 #'
-#' }
-#'
-#' \item{age}{a 4-element vector with:
-#'
-#' \code{t}: the concordia age (in Ma)
-#'
-#' \code{s[t]}: the estimated uncertainty of \code{t}
-#'
+#' \item{age}{a 4-element vector with:\cr
+#' \code{t}: the concordia age (in Ma)\cr
+#' \code{s[t]}: the estimated uncertainty of \code{t}\cr
 #' \code{ci[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
-#' interval of \code{t} for the appropriate degrees of freedom
-#'
+#' interval of \code{t} for the appropriate degrees of freedom\cr
 #' \code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
 #' interval for \code{t} augmented by \eqn{\sqrt{mswd}} to account for
 #' overdispersed datasets.}
 #'
 #' }
 #'
-#' if \code{show.age=2}, \code{3} or \code{4}, returns a list with the
+#' If \code{show.age=2}, \code{3} or \code{4}, returns a list with the
 #' following items:
 #'
 #' \describe{
@@ -270,7 +259,6 @@ concordia <- function(x=NULL,tlim=NULL,alpha=0.05,type=1,
                       show.age=0,sigdig=2,common.Pb=0,ticks=5,
                       anchor=list(FALSE,NA),hide=NULL,omit=NULL,
                       omit.col=NA,...){
-    wetherill <- (type==1) # TO BE REMOVED!
     if (is.null(x)){
         emptyconcordia(tlim=tlim,alpha=alpha,type=type,exterr=exterr,
                        concordia.col=concordia.col,ticks=ticks,...)
@@ -282,13 +270,14 @@ concordia <- function(x=NULL,tlim=NULL,alpha=0.05,type=1,
     if (common.Pb<1) X <- x
     else X <- Pb0corr(x,option=common.Pb,omit=unique(c(hide,omit)))
     X2plot <- subset(X,subset=plotit)
-    lims <- prepare.concordia.line(X2plot,tlim=tlim,type=type,...)
+    lims <- prepare.concordia.line(x=X2plot,tlim=tlim,type=type,...)
     fit <- NULL
     if (show.age>1){
+        wetherill <- (type==1)
         x2calc <- subset(x,subset=calcit)
         fit <- concordia.intersection.ludwig(x2calc,wetherill=wetherill,exterr=exterr,
                                              alpha=alpha,model=(show.age-1),anchor=anchor)
-        discordia.line(fit,wetherill=(type==1),d=x$d)
+        discordia.line(fit,wetherill=wetherill,d=x$d)
         fit$n <- length(x2calc)
         graphics::title(discordia.title(fit,wetherill=wetherill,sigdig=sigdig))
     }
@@ -304,7 +293,7 @@ concordia <- function(x=NULL,tlim=NULL,alpha=0.05,type=1,
                 hide=hide,omit=omit,omit.col=omit.col,addcolourbar=FALSE,...)
     if (show.age==1){
         X2calc <- subset(X,subset=calcit)
-        fit <- concordia.age(X2calc,wetherill=wetherill,exterr=exterr,alpha=alpha)
+        fit <- concordia.age(X2calc,type=type,exterr=exterr,alpha=alpha)
         ell <- ellipse(fit$x[1],fit$x[2],fit$cov)
         graphics::polygon(ell,col='white')
         fit$n <- length(X2calc)
@@ -330,7 +319,7 @@ plot.concordia.line <- function(x,lims,type=1,col='darksalmon',
     conc <- matrix(0,nn,2)
     colnames(conc) <- c('x','y')
     for (i in 1:nn){ # build the concordia line
-        xy <- age_to_concordia_ratios(tt[i],type=type,exterr=exterr,d=x$d)
+        xy <- age_to_concordia_ratios(tt[i],type=type,exterr=exterr,d=x$d[i])
         if (exterr){ # show decay constant uncertainty
             if (i > 1) oldell <- ell
             ell <- ellipse(xy$x[1],xy$x[2],xy$cov,alpha=alpha)
@@ -346,7 +335,7 @@ plot.concordia.line <- function(x,lims,type=1,col='darksalmon',
         ticks <- prettier(lims$t,type=type,n=ticks)
     graphics::lines(conc[,'x'],conc[,'y'],col=col,lwd=2)
     for (i in 1:length(ticks)){
-        xy <- age_to_concordia_ratios(ticks[i],type=type,exterr=exterr,d=x$d)
+        xy <- age_to_concordia_ratios(ticks[i],type=type,exterr=exterr,d=x$d[i])
         if (exterr){ # show ticks as ellipse
             ell <- ellipse(xy$x[1],xy$x[2],xy$cov,alpha=alpha)
             graphics::polygon(ell,col='white')
@@ -354,8 +343,8 @@ plot.concordia.line <- function(x,lims,type=1,col='darksalmon',
             graphics::points(xy$x[1],xy$x[2],pch=21,bg='white')
         }
         pos <- 2
-        if ((type%in%c(1,2)  & diff(range(conc[,'x']))<0.05) |
-            (type==2 & diff(range(conc[,'x']))<2.5) & exterr){ pos <- NULL }
+        if ((type%in%c(1,2)  & diff(range(conc[,'x'],na.rm=TRUE))<0.05) |
+            (type==2 & diff(range(conc[,'x'],na.rm=TRUE))<2.5) & exterr){ pos <- NULL }
         graphics::text(xy$x[1],xy$x[2],as.character(ticks[i]),pos=pos)
     }
     graphics::box()
@@ -364,8 +353,8 @@ plot.concordia.line <- function(x,lims,type=1,col='darksalmon',
 prepare.concordia.line <- function(x,tlim,type=1,...){
     lims <- get.concordia.limits(x,tlim=tlim,type=type,...)
     if (type==1){
-        x.lab <- expression(paste(""^"207","Pb/"^"235","U"))
         y.lab <- expression(paste(""^"206","Pb/"^"238","U"))
+        x.lab <- expression(paste(""^"207","Pb/"^"235","U"))
     } else if (type==2){
         x.lab <- expression(paste(""^"238","U/"^"206","Pb"))
         y.lab <- expression(paste(""^"207","Pb/"^"206","Pb"))
@@ -378,11 +367,11 @@ prepare.concordia.line <- function(x,tlim,type=1,...){
     graphics::plot(lims$x,lims$y,type='n',xlab=x.lab,ylab=y.lab,bty='n',...)
     lims
 }
+# concordia sequence
 cseq <- function(m,M,type=1,n=50){
-    if (type%in%c(1,2)){
-        return(seq(m,M,length.out=n))
-    }
-    if (m>0){
+    if (type==1){
+        out <- seq(m,M,length.out=n)
+    } else if (m>0){
         out <- exp(seq(0,log(M/m),length.out=n))*m
     } else {
         out <- exp(seq(0,log(M+1-m),length.out=n))+1-m
@@ -417,7 +406,7 @@ age_to_concordia_ratios <- function(tt,type=1,exterr=FALSE,d=diseq()){
     else if (type==2)
         return(age_to_terawasserburg_ratios(tt,exterr=exterr,d=d))
     else if (type==3)
-        return(age_to_cottle_ratios(tt,exterr=exterr))
+        return(age_to_cottle_ratios(tt,exterr=exterr,d=d))
     else
         stop('Invalid concordia type.')
 }
@@ -493,7 +482,7 @@ get.concordia.limits <- function(x,tlim=NULL,type=1,...){
             maxy <- max(Pb207Pb206[,1]+nse*Pb207Pb206[,2],na.rm=TRUE)
         }
         out$t[1] <- get.Pb206U238.age(1/maxx,d=x$d)[1]
-        out$t[2] <- get.Pb207Pb206.age(maxy,d=x$d)[1]
+        out$t[2] <- get.Pb207Pb206.age(maxy,d=x$d,interval=c(out$t[1],10000))[1]
         if (!xset)
             minx <- min(minx,age_to_U238Pb206_ratio(out$t[2],d=x$d)[,'86'])
         if (!yset)
@@ -549,22 +538,25 @@ concordia.title <- function(fit,sigdig=2,alpha=0.05,...){
     mymtext(line2,line=0,...)
 }
 
-concordia.age <- function(x,...){ UseMethod("concordia.age",x) }
-concordia.age.default <- function(x,...){
-    stop("no default method implemented for concordia.age()")
-}
-concordia.age.UPb <- function(x,i=NA,wetherill=TRUE,exterr=TRUE,alpha=0.05,...){
+concordia.age <- function(x,i=NA,type=1,exterr=TRUE,alpha=0.05,...){
     if (is.na(i)){
-        ccw <- concordia.comp(x,wetherill=TRUE)
-        cct <- concordia.comp(x,wetherill=FALSE)
+        cc <- concordia.comp(x,type=type)
+        if (type==3){
+            cc4age <- cc
+            type4age <- 3
+        } else { # use wetherill
+            cc4age <- concordia.comp(x,type=1)
+            type4age <- 1
+        }
     } else {
-        ccw <- wetherill(x,i)
-        cct <- tera.wasserburg(x,i)
+        cc <- wetherill(x,i)
+        cc4age <- cc
+        type4age <- 1
     }
-    tt <- concordia.age(ccw,d=x$d,exterr=exterr)
+    tt <- concordia_age_helper(cc4age,d=x$d,type=type4age,exterr=exterr)
     out <- list()
     if (is.na(i)){ # these calculations are only relevant to weighted means
-        out <- c(out,mswd.concordia(x,ccw,tt[1],exterr=exterr))
+        out <- c(out,mswd.concordia(x,cc4age,type=type4age,tt=tt[1],exterr=exterr))
         out$age <- rep(NA,4)
         names(out$age) <- c('t','s[t]','ci[t]','disp[t]')
         tfact <- stats::qt(1-alpha/2,out$df['combined'])
@@ -572,8 +564,6 @@ concordia.age.UPb <- function(x,i=NA,wetherill=TRUE,exterr=TRUE,alpha=0.05,...){
         out$age['ci[t]'] <- tfact*out$age['s[t]']
         if (out$mswd['combined']>1)
             out$age['disp[t]'] <- tfact*out$mswd['combined']*out$age['s[t]']
-        if (wetherill) cc <- ccw
-        else cc <- cct
         out$x <- cc$x
         out$cov <- cc$cov
     } else {
@@ -581,12 +571,23 @@ concordia.age.UPb <- function(x,i=NA,wetherill=TRUE,exterr=TRUE,alpha=0.05,...){
     }
     out
 }
-concordia.age.wetherill <- function(x,d=diseq(),exterr=FALSE,...){
-    fit <- stats::optimise(LL.concordia.age,interval=c(0,5000),
-                           exterr=FALSE,ccw=x,d=d)
-    tt <- fit$minimum
-    hess <- stats::optimHess(tt,fn=LL.concordia.age,
-                             ccw=x,exterr=exterr,d=d)
+concordia_age_helper <- function(cc,d=diseq(),type=1,exterr=FALSE,...){
+    if (type==1) Pb206U238 <- cc$x['Pb206U238']
+    else if (type==2) Pb206U238 <- 1/cc$x['U238Pb206']
+    else if (type==3) Pb206U238 <- 1/cc$x['Pb206U238']
+    else stop('Incorrect concordia type.')
+    midpoint <- get.Pb206U238.age(x=Pb206U238,d=d)[1]
+    fit1 <- stats::optimise(LL.concordia.age,interval=c(0,midpoint),
+                            exterr=FALSE,cc=cc,type=type,d=d)
+    fit2 <- stats::optimise(LL.concordia.age,interval=c(midpoint,5000),
+                            exterr=FALSE,cc=cc,type=type,d=d)
+    if (fit1$objective<fit2$objective){
+        tt <- fit1$minimum
+    } else {
+        tt <- fit2$minimum
+    }
+    hess <- stats::optimHess(tt,fn=LL.concordia.age,cc=cc,
+                             exterr=exterr,type=type,d=d)
     if (det(hess)>1e-15)
         tt.err <- as.numeric(sqrt(solve(hess)))
     else
@@ -597,14 +598,13 @@ concordia.age.wetherill <- function(x,d=diseq(),exterr=FALSE,...){
 }
 
 # x has class 'UPb'
-concordia.comp <- function(x,wetherill=TRUE){
-    X <- flat.UPb.table(x,wetherill=wetherill)
+concordia.comp <- function(x,type=1){
+    X <- flat.UPb.table(x,type=type)
     out <- wtdmean2D(X)
     cnames <- colnames(X)[c(1,3)]
     names(out$x) <- cnames
     colnames(out$cov) <- cnames
-    if (wetherill) class(out) <- 'wetherill'
-    else class(out) <- 'terawasserburg'
+    rownames(out$cov) <- cnames
     out
 }
 
@@ -622,11 +622,11 @@ initial.concordia.age <- function(x,d=diseq()){
     fit[1]
 }
 
-mswd.concordia <- function(x,ccw,tt,exterr=TRUE){
+mswd.concordia <- function(x,cc,type=1,tt=0,exterr=TRUE){
     SS.equivalence <- 
-        LL.concordia.comp(mu=ccw$x,x=x,wetherill=TRUE,mswd=TRUE)
+        LL.concordia.comp(mu=cc$x,x=x,type=type,mswd=TRUE)
     SS.concordance <- 
-        LL.concordia.age(tt=tt,ccw=ccw,mswd=TRUE,exterr=exterr,d=x$d)
+        LL.concordia.age(tt=tt,cc=cc,type=type,exterr=exterr,d=x$d,mswd=TRUE)
     df.equivalence <- 2*length(x)-2
     df.concordance <- 1
     mswd <- rep(0,3)
@@ -655,30 +655,65 @@ mswd.concordia <- function(x,ccw,tt,exterr=TRUE){
     list(mswd=mswd,p.value=p.value,df=df)
 }
 
-LL.concordia.comp <- function(mu,x,wetherill=TRUE,mswd=FALSE,...){
+LL.concordia.comp <- function(mu,x,type=1,mswd=FALSE,...){
     out <- 0
     for (i in 1:length(x)){
-        if (wetherill) xi <- wetherill(x,i)
-        else xi <- tera.wasserburg(x,i)
-        X <- matrix(xi$x[1:2]-mu[1:2],1,2)
-        covmat <- xi$cov[1:2,1:2]
+        if (type==1){
+            xi <- wetherill(x,i)
+            j <- c(1,2)
+        } else if (type==2){
+            xi <- tera.wasserburg(x,i)
+            j <- c(1,2)
+        } else if (type==3){
+            xi <- wetherill(x,i)
+            j <- c(2,3)
+        } else {
+            stop('Incorrect concordia type.')
+        }
+        X <- matrix(xi$x[j]-mu,1,2)
+        covmat <- xi$cov[j,j]
         if (mswd) out <- out + get.concordia.SS(X,covmat)
         else out <- out + LL.norm(X,covmat)
     }
     out
 }
 
-LL.concordia.age <- function(tt,ccw,mswd=FALSE,exterr=TRUE,d=diseq()){
-    y <- age_to_wetherill_ratios(tt,d=d)
-    dx <- matrix(ccw$x[1:2]-y$x,1,2)
-    covmat <- ccw$cov[1:2,1:2]
+LL.concordia.age <- function(tt,cc,type=1,exterr=TRUE,d=diseq(),mswd=FALSE){
+    if (type==1){
+        y <- age_to_wetherill_ratios(tt,d=d)
+        cols <- c('Pb207U235','Pb206U238')
+    } else if (type==2){
+        y <- age_to_terawasserburg_ratios(tt,d=d)
+        cols <- c('U238Pb206','Pb207Pb206')
+    } else if (type==3){
+        y <- age_to_cottle_ratios(tt,d=d)
+        cols <- c('Pb206U238','Pb208Th232')
+    } else {
+        stop('Incorrect concordia type.')
+    }
+    dx <- matrix(cc$x[cols]-y$x[cols],1,2)
+    covmat <- cc$cov[cols,cols]
     if (exterr){
-        l8 <- settings('lambda','U238')
         l5 <- settings('lambda','U235')
-        P235 <- tt*exp(l5[1]*tt)
-        P238 <- tt*exp(l8[1]*tt)
-        E <- diag(c(P235*l5[2],P238*l8[2]))^2
-        covmat <- ccw$cov[1:2,1:2] + E
+        l8 <- settings('lambda','U238')
+        l2 <- settings('lambda','Th232')
+        U <- settings('iratio','U238U235')
+        Lcov <- diag(c(l5[2],l8[2],l2[2]))^2
+        J <- matrix(0,2,3)
+        D <- mclean(tt=tt,d=d,exterr=TRUE)
+        if (type==1){
+            J[1,1] <- D$dPb207U235dl35
+            J[2,2] <- D$dPb206U238dl38
+        } else if (type==2){
+            J[1,2] <- -D$dPb206U238dl38/D$Pb206U238^2
+            J[2,1] <- D$dPb207U235dl35/(U*D$Pb206U238)
+            J[2,2] <- -D$dPb206U238dl38/(U*D$Pb206U238^2)
+        } else { # type == 3
+            J[1,2] <- D$dPb206U238dl38
+            J[2,3] <- tt*exp(l2[1]*tt)
+        }
+        E <- J %*% Lcov %*% t(J)
+        covmat <- covmat + E
     }
     if (mswd) out <- get.concordia.SS(dx,covmat)
     else out <- LL.norm(dx,covmat)
