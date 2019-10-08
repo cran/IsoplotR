@@ -87,7 +87,7 @@
 #'
 #' OR
 #'
-#' an object of class \code{ArAr}, \code{KCa}, \code{PbPb},
+#' an object of class \code{ArAr}, \code{KCa}, \code{PbPb}, \code{UPb},
 #' \code{ReOs}, \code{RbSr}, \code{SmNd}, \code{LuHf}, \code{UThHe} or
 #' \code{ThU}.
 #'
@@ -318,10 +318,16 @@
 #'
 #' \describe{
 #'
-#' \item{par}{a three element vector containing the isochron age and
-#' the common Pb isotope ratios}
+#' \item{par}{if \code{model=1} or \code{2}, a three element vector
+#' containing the isochron age and the common Pb isotope ratios. If
+#' \code{model=3}, adds a fourth element with the overdispersion
+#' parameter \eqn{w}.}
 #'
 #' \item{cov}{the covariance matrix of \code{par}}
+#'
+#' \item{logpar}{the logarithm of \code{par}}
+#'
+#' \item{logcov}{the logarithm of \code{cov}}
 #'
 #' \item{n}{the number of analyses in the dataset}
 #'
@@ -375,12 +381,6 @@
 #' \code{disp[t]}: the studentised \eqn{100(1-\alpha)\%} confidence
 #' interval for \code{t} enhanced by \eqn{\sqrt{mswd}} (only reported
 #' if \code{model=1}).}
-#'
-#' \item{w}{the overdispersion term, i.e. a three-element vector with
-#' the standard deviation of the (assumedly) Normally distributed
-#' geological scatter that underlies the measurements, and the lower
-#' and upper half-width of its \eqn{100(1-\alpha)\%} confidence
-#' interval (only returned if \code{model=3}).}
 #'
 #' \item{xlab}{the x-label of the isochron plot}
 #'
@@ -443,12 +443,12 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                              show.ellipses=1*(model!=2),xlab='x',
                              ylab='y',hide=NULL,omit=NULL,
                              omit.col=NA,...){
-    y <- data2york(x)
     d2calc <- clear(x,hide,omit)
-    fit <- regression(d2calc,model=model)
+    fit <- regression(data2york(d2calc),model=model)
     fit <- regression_init(fit,alpha=alpha)
     fit <- ci_isochron(fit)
     if (plot){
+        y <- data2york(x)
         scatterplot(y,xlim=xlim,ylim=ylim,alpha=alpha,
                     show.ellipses=show.ellipses,
                     show.numbers=show.numbers,levels=levels,
@@ -460,6 +460,25 @@ isochron.default <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     }
     invisible(fit)
 }
+#' @param anchor
+#' control parameters to fix the intercept age or common Pb
+#' composition of the isochron fit. This is a two-element list.
+#'
+#' The first element is a boolean flag indicating whether the
+#' isochron line should be anchored. If this is \code{FALSE}, then
+#' the second item is ignored and both the common Pb composition and
+#' age are estimated.
+#'
+#' If the first element is \code{TRUE} and the second element is
+#' \code{NA}, then the common Pb composition is fixed at the values
+#' stored in \code{settings('iratio',...)}.
+#'
+#' If the first element is \code{TRUE} and the second element is
+#' a number, then the isochron line is forced to intersect the
+#' concordia line at an age equal to that number.
+#'
+#' @rdname isochron
+#' @export
 isochron.UPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                          show.numbers=FALSE,levels=NA,clabel="",
                          ellipse.col=c("#00FF0080","#FF000080"),
@@ -490,33 +509,43 @@ isochron.UPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
         E <- lud$cov[c(1,3),c(1,3)]
         x.lab <- quote(''^235*'U/'^207*'Pb')
     }
+    if (model==3) lud$w <- ci_log2lin_lud(fit=lud,fact=nfact(alpha))
     out <- isochron_init(lud,alpha=0.05)
     out$age[1] <- tt
     out$age[2] <- sqrt(lud$cov[1,1])
     if (x$format%in%c(4,5,6) & type==1){        # 04/06 vs. 38/06
         XY <- data2york(x,option=3)
-        a <- 1/lud$par['64i']
-        y.lab <- quote(''^204*'Pb/'^206*'Pb')
+        y0par <- '64i'
+        out$y0[1] <- lud$par[y0par]
+        out$y0[2] <- sqrt(lud$cov[y0par,y0par])
         out$y0label <- quote('('^206*'Pb/'^204*'Pb)'[o]*'=')
+        y.lab <- quote(''^204*'Pb/'^206*'Pb')
     } else if (x$format%in%c(4,5,6) & type==2){ # 04/07 vs. 35/07
         XY <- data2york(x,option=4)
-        a <- 1/lud$par['74i']
-        y.lab <- quote(''^204*'Pb/'^207*'Pb')
+        y0par <- '74i'
+        out$y0[1] <- lud$par[y0par]
+        out$y0[2] <- sqrt(lud$cov[y0par,y0par])
         out$y0label <- quote('('^207*'Pb/'^204*'Pb)'[o]*'=')
+        y.lab <- quote(''^204*'Pb/'^207*'Pb')
     } else if (x$format%in%c(7,8) & type==1){   # 08/06 vs. 38/06
         XY <- data2york(x,option=6,tt=tt)
-        a <- 1/lud$par['68i']
-        y.lab <- quote(''^208*'Pb'[o]*'/'^206*'Pb')
+        y0par <- '68i'
+        out$y0[1] <- 1/lud$par[y0par]
+        out$y0[2] <- out$y0[1]*sqrt(lud$cov[y0par,y0par])/lud$par[y0par]
         out$y0label <- quote('('^208*'Pb/'^206*'Pb)'[o]*'=')
+        y.lab <- quote(''^208*'Pb'[o]*'/'^206*'Pb')
     } else if (x$format%in%c(7,8) & type==2){   # 08/07 vs. 35/07
         XY <- data2york(x,option=7,tt=tt)
         U <- settings('iratio','U238U235')[1]
-        a <- 1/lud$par['78i']
+        y0par <- '78i'
+        out$y0[1] <- 1/lud$par[y0par]
+        out$y0[2] <- out$y0[1]*sqrt(lud$cov[y0par,y0par])/lud$par[y0par]
         y.lab <- quote(''^208*'Pb'[o]*'/'^207*'Pb')
         out$y0label <- quote('('^208*'Pb/'^207*'Pb)'[o]*'=')
     } else {
         stop('Isochron regression is not available for this input format.')
     }
+    a <- 1/lud$par[y0par]
     b <- -a*x0inv
     J <- matrix(0,2,2)
     J[1,2] <- -a^2
@@ -526,10 +555,8 @@ isochron.UPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     out$a <- c(a,sqrt(cov.ab[1,1]))
     out$b <- c(b,sqrt(cov.ab[2,2]))
     out$cov.ab <- cov.ab[1,2]
-    out$y0[1] <- out$a[1]
-    out$y0[2] <- out$a[2]
-    out$age['ci[t]'] <- out$fact*out$age['s[t]']
     out$y0['ci[y]'] <- out$fact*out$y0['s[y]']
+    out$age['ci[t]'] <- out$fact*out$age['s[t]']
     if (model==1){
         out$age['disp[t]'] <- sqrt(out$mswd)*out$age['ci[t]']
         out$y0['disp[y]'] <- sqrt(out$mswd)*out$y0['ci[y]']
@@ -634,7 +661,23 @@ isochron.PbPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                     clabel=clabel,ellipse.col=ellipse.col,fit=out,
                     ci.col=ci.col,line.col=line.col,lwd=lwd,
                     hide=hide,omit=omit,omit.col=omit.col,...)
-        if (growth) plot_PbPb_evolution(out$age['t'],inverse=inverse)
+        if (growth){
+            xylim <- graphics::par('usr')
+            if (xylim[1]<0) xylim[1] <- xylim[2]/100
+            if (xylim[3]<0) xylim[3] <- xylim[4]/100
+            if (inverse){
+                Pb64 <- 1/xylim[1:2]
+                Pb74 <- xylim[3:4]/xylim[2:1]
+            } else {
+                Pb64 <- xylim[1:2]
+                Pb74 <- xylim[3:4]
+            }
+            tx <- sk2t(Pb206Pb204=Pb64)
+            ty <- sk2t(Pb207Pb204=Pb74)
+            tmin <- max(min(tx),min(ty))
+            tmax <- min(max(tx),max(ty))
+            plot_PbPb_evolution(from=tmin,to=tmax,inverse=inverse)
+        }
         graphics::title(isochrontitle(out,sigdig=sigdig,type='Pb-Pb'),
                         xlab=x.lab,ylab=y.lab)
     }
@@ -1128,9 +1171,9 @@ get.limits <- function(x,sx){
     c(minx,maxx)
 }
 
-plot_PbPb_evolution <- function(tt,inverse=TRUE){
+plot_PbPb_evolution <- function(from=0,to=4570,inverse=TRUE){
     nn <- 50
-    tijd <- seq(0,tt,length.out=nn)
+    tijd <- seq(from=from,to=to,length.out=nn)
     ticks <- pretty(tijd)
     tijd[nn] <- max(ticks)
     xy <- stacey.kramers(tijd,inverse=inverse)
@@ -1190,7 +1233,7 @@ isochrontitle <- function(fit,sigdig=2,type=NA,units="Ma",...){
     line1 <- do.call(substitute,list(eval(call1),list1))
     line2 <- do.call(substitute,list(eval(call2),list2))
     if (fit$model==1){
-        line3 <- substitute('MSWD ='~a~', p('*chi^2*')='~b,
+        line3 <- substitute('MSWD ='~a*', p('*chi^2*')='~b,
                             list(a=signif(fit$mswd,sigdig),
                                  b=signif(fit$p.value,sigdig)))
         mymtext(line1,line=2,...)
@@ -1200,9 +1243,9 @@ isochrontitle <- function(fit,sigdig=2,type=NA,units="Ma",...){
         mymtext(line1,line=1,...)
         mymtext(line2,line=0,...)
     } else if (fit$model==3){
-        if (type=='U-Pb'){
-            rounded.disp <- roundit(100*fit$w[1],100*fit$w[2:3],sigdig=sigdig)
-            line3 <- substitute('overdispersion ='~a+b/-c~'% of Pb'[o],
+        if (!is.na(type) & type=='U-Pb'){
+            rounded.disp <- roundit(fit$w[1],fit$w[2:3],sigdig=sigdig)
+            line3 <- substitute('overdispersion ='~a+b/-c~'Ma',
                                 list(a=rounded.disp[1],
                                      b=rounded.disp[3],
                                      c=rounded.disp[2]))

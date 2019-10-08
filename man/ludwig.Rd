@@ -3,21 +3,19 @@
 \name{ludwig}
 \alias{ludwig}
 \alias{ludwig.default}
-\alias{ludwig.UPb}
 \title{Linear regression of U-Pb data with correlated errors, taking
 into account decay constant uncertainties.}
 \usage{
-ludwig(x, ...)
+ludwig(x, exterr = FALSE, alpha = 0.05, model = 1,
+  anchor = list(FALSE, NA))
 
-\method{ludwig}{default}(x, ...)
+ludwig.default(x, ...)
 
-\method{ludwig}{UPb}(x, exterr = FALSE, alpha = 0.05, model = 1,
-  anchor = list(FALSE, NA), ...)
+ludwig(x, exterr = FALSE, alpha = 0.05, model = 1,
+  anchor = list(FALSE, NA))
 }
 \arguments{
 \item{x}{an object of class \code{UPb}}
-
-\item{...}{optional}
 
 \item{exterr}{propagate external sources of
 uncertainty (i.e. decay constants)?}
@@ -58,28 +56,31 @@ stored in \code{settings('iratio',...)}.
 If the first element is \code{TRUE} and the second element is a
 number, then the discordia line is forced to intersect the
 concordia line at an age equal to that number.}
+
+\item{...}{optional}
 }
 \value{
 \describe{
 
-\item{par}{a two-element vector with the lower concordia intercept
-and initial \eqn{^{207}}Pb/\eqn{^{206}}Pb-ratio.}
+\item{LL}{the log likelihood of the discordia fit}
+
+\item{par}{a vector with the lower concordia intercept, the common
+Pb ratios and (if \code{model=3}) the dispersion parameter}
 
 \item{cov}{the covariance matrix of \code{par}}
 
-\item{df}{the degrees of freedom of the model fit (\eqn{3n-3},
-where \eqn{n} is the number of aliquots).}
+\item{logpar}{the logarithms of \code{par}}
+
+\item{logcov}{the logarithms of \code{cov}}
+
+\item{df}{the degrees of freedom of the model fit (\eqn{n-2} if
+\code{x$format<4} or \eqn{2n-3} if \code{x$format>3}, where \eqn{n}
+is the number of aliquots).}
 
 \item{mswd}{the mean square of weighted deviates (a.k.a. reduced
 Chi-square statistic) for the fit.}
 
 \item{p.value}{p-value of a Chi-square test for the linear fit}
-
-\item{w}{the overdispersion, i.e., a three-element vector with the
-estimated standard deviation of the (assumedly) Normal distribution
-that underlies the true isochron; and the lower and upper
-half-widths of its \eqn{100(1-\alpha)\%} confidence interval (only
-relevant if \code{model = 3}).}
 
 }
 }

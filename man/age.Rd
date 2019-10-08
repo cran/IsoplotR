@@ -25,7 +25,7 @@ age(x, ...)
 \method{age}{UPb}(x, type = 1, exterr = TRUE, i = NA, sigdig = NA,
   common.Pb = 0, show.p = FALSE, ...)
 
-\method{age}{PbPb}(x, isochron = TRUE, common.Pb = 1, exterr = TRUE,
+\method{age}{PbPb}(x, isochron = TRUE, common.Pb = 2, exterr = TRUE,
   i = NA, sigdig = NA, ...)
 
 \method{age}{ArAr}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE,
@@ -149,15 +149,11 @@ adding a geological (co)variance term.}
 estimate (only used if \code{type=1}, \code{isochron=FALSE} and
 \code{central=FALSE}).}
 
-\item{common.Pb}{apply a common lead correction using one of three
-    methods:
+\item{common.Pb}{common lead correction:
 
-\code{1}: the Stacey-Kramer two-stage model to infer the initial
-Pb-composition
+\code{0}: none
 
-\code{2}: the isochron intercept as the initial Pb-composition
-
-\code{3}: the Pb-composition stored in
+\code{1}: use the Pb-composition stored in
 
 \code{settings('iratio','Pb206Pb204')} (if \code{x} has class
 \code{UPb} and \code{x$format<4});
@@ -169,7 +165,12 @@ Pb-composition
 
 \code{settings('iratio','Pb208Pb206')} and
 \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
-\code{UPb} and \code{x$format=7} or \code{8}).}
+\code{UPb} and \code{x$format=7} or \code{8}).
+
+\code{2}: use the isochron intercept as the initial Pb-composition
+
+\code{3}: use the Stacey-Kramer two-stage model to infer the initial
+Pb-composition}
 
 \item{show.p}{Show the p-value for concordance for each aliquot to
 the output table. Note: it would be unwise to use the p-value

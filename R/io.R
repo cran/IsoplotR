@@ -50,7 +50,7 @@
 #' \enumerate{
 #' \item{\code{07/35, err[07/35],} \code{06/38, err[06/38], rho}} 
 #' \item{\code{38/06, err[38/06],}\code{07/06, err[07/06] (, rho)}}
-#' \item{\code{X=07/06, err[X],} \code{Y=06/38, err[Y],}
+#' \item{\code{X=07/35, err[X],} \code{Y=06/38, err[Y],}
 #'       \code{Z=07/06, err[Z]} \code{(, rho[X,Y]) (, rho[Y,Z])}} 
 #' \item{\code{X=07/35, err[X], Y=06/38, err[Y], Z=04/38, }
 #'       \code{rho[X,Y], rho[X,Z], rho[Y,Z]}} 
@@ -58,7 +58,7 @@
 #'       \code{Z=04/06, err[Z]}, \code{rho[X,Y], rho[X,Z], rho[Y,Z]}}
 #' \item{\code{07/35, err[07/35]}, \code{06/38, err[06/38]},
 #'       \code{04/38, err[04/38]}, \code{07/06, err[07/06]},
-#'       \code{04/07, err[04/07]}, code{04/06, err[04/06]}}
+#'       \code{04/07, err[04/07]}, \code{04/06, err[04/06]}}
 #' \item{\code{W=07/35, err[W]}, \code{X=06/38, err[X]},
 #'       \code{Y=08/32, err[Y]}, and \code{Z=32/38, err[Z]},
 #'       \code{rho[W,X], rho[W,Y]}, \code{rho[W,Z], rho[X,Y]},
@@ -781,7 +781,7 @@ insert.data <- function(x,cnames){
 
 read.XsXYsYrXY <- function(x,cnames){
     out <- insert.data(x=x,cnames=cnames)
-    i <- which(is.na(x[,5]))
+    i <- which(is.na(out[,5]))
     out[i,5] <- 0
     out
 }

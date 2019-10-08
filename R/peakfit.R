@@ -156,15 +156,11 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
 #'     \code{cutoff.disc=NA} if you do not want to use this filter.
 #'
-#' @param common.Pb apply a common lead correction using one of three
-#'     methods:
+#' @param common.Pb common lead correction:
 #'
-#' \code{1}: the Stacey-Kramer two-stage model to infer the initial
-#' Pb-composition
+#' \code{0}:none
 #'
-#' \code{2}: the isochron intercept as the initial Pb-composition
-#'
-#' \code{3}: the Pb-composition stored in
+#' \code{1}: use the Pb-composition stored in
 #' 
 #' \code{settings('iratio','Pb206Pb204')} (if \code{x} has class
 #' \code{UPb} and \code{x$format<4});
@@ -177,6 +173,12 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #' \code{settings('iratio','Pb208Pb206')} and
 #' \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
 #' \code{UPb} and \code{x$format=7} or \code{8}).
+#'
+#' \code{2}: use the isochron intercept as the initial Pb-composition
+#'
+#' \code{3}: use the Stacey-Kramers two-stage model to infer the
+#' initial Pb-composition (only applicable if \code{x} has class
+#' \code{UPb})
 #'
 #' @rdname peakfit
 #' @export
@@ -531,7 +533,7 @@ min_age_model <- function(zs,alpha=0.05){
     z <- zs[,1]
     mu <- seq(min(z),max(z),length.out=100)
     sigma <- seq(stats::sd(z)/10,2*stats::sd(z),length.out=10)
-    prop <- seq(0,1,length.out=20)
+    prop <- seq(from=0,to=1,length.out=20)
     L <- Inf
     # grid search!
     for (mui in mu){ # mu
@@ -568,11 +570,15 @@ get.minage.L <- function(pars,zs){
     prop <- pars[3]
     AA  <- prop/sqrt(2*pi*s^2)
     BB <- -0.5*((z-mu)/s)^2
-    CC <- (1-prop)/sqrt(s*pi*(sigma^2+s^2))
+    CC <- (1-prop)/sqrt(2*pi*(sigma^2+s^2))
     mu0 <- (mu/sigma^2 + z/s^2)/(1/sigma^2 + 1/s^2)
     s0 <- 1/sqrt(1/sigma^2 + 1/s^2)
     DD <- 2*(1-stats::pnorm((mu-mu0)/s0))
     EE <- -0.5*((z-mu)^2)/(sigma^2+s^2)
-    fu <- AA*exp(BB) + CC*DD*exp(EE)
-    -sum(log(fu))
+    pos <- AA>0
+    logfu <- z*0
+    logfu[pos] <- log(AA[pos]) + BB + # log(a + b) = log(a) + log(1 + b/a):
+        log(1 + exp(EE[pos]-BB[pos])*CC[pos]*DD[pos]/AA[pos])
+    logfu[!pos] <- log(AA[!pos]*exp(BB[!pos]) + CC*DD[!pos]*exp(EE[!pos]))
+    -sum(logfu)
 }
