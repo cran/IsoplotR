@@ -25,7 +25,7 @@ peakfit(x, ...)
   log = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{UPb}(x, k = 1, type = 4, cutoff.76 = 1100,
-  cutoff.disc = c(-15, 5), common.Pb = 0, exterr = TRUE,
+  cutoff.disc = list(-15, 5, TRUE), common.Pb = 0, exterr = TRUE,
   sigdig = 2, log = TRUE, alpha = 0.05, ...)
 
 \method{peakfit}{PbPb}(x, k = 1, exterr = TRUE, sigdig = 2,
@@ -93,19 +93,25 @@ the component age errors?}
 \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 only used if \code{type=4}.}
 
-\item{cutoff.disc}{two element vector with the maximum and minimum
-percentage discordance allowed between the
-\eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U
-age (if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or
-between the \eqn{^{206}}Pb/\eqn{^{238}}U and
-\eqn{^{207}}Pb/\eqn{^{206}}Pb age (if
-\eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).  Set
-\code{cutoff.disc=NA} if you do not want to use this filter.}
+\item{cutoff.disc}{discordance cutoff filter. This is a three
+    element list.
 
-\item{common.Pb}{apply a common lead correction using one of three
-    methods:
+The first two items contain the minimum (negative) and maximum
+(positive) percentage discordance allowed between the
+\eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U age
+(if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
+\eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb age
+(if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).
 
-\code{1}: the Pb-composition stored in
+The third item is a boolean flag that controls whether the
+discordance filter should be applied before (\code{TRUE}) or after
+(\code{FALSE}) the common-Pb correction.}
+
+\item{common.Pb}{common lead correction:
+
+\code{0}:none
+
+\code{1}: use the Pb-composition stored in
 
 \code{settings('iratio','Pb206Pb204')} (if \code{x} has class
 \code{UPb} and \code{x$format<4});
@@ -119,10 +125,11 @@ between the \eqn{^{206}}Pb/\eqn{^{238}}U and
 \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
 \code{UPb} and \code{x$format=7} or \code{8}).
 
-\code{2}: the isochron intercept as the initial Pb-composition
+\code{2}: use the isochron intercept as the initial Pb-composition
 
-\code{3}: the Stacey-Kramers two-stage model to infer the initial
-Pb-composition (only applicable if \code{x} has class \code{UPb})}
+\code{3}: use the Stacey-Kramers two-stage model to infer the
+initial Pb-composition (only applicable if \code{x} has class
+\code{UPb})}
 
 \item{i2i}{`isochron to intercept': calculates the initial (aka
 `inherited', `excess', or `common')
