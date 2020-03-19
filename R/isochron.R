@@ -2,9 +2,9 @@
 #' Calculate and plot isochrons
 #'
 #' @description
-#' Plots cogenetic Ar-Ar, K-Ca, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os, Lu-Hf,
-#' U-Th-He or Th-U data as X-Y scatterplots, fits an isochron curve
-#' through them using the \code{york} function, and computes the
+#' Plots cogenetic Ar-Ar, K-Ca, Pb-Pb, Th-Pb, Rb-Sr, Sm-Nd, Re-Os,
+#' Lu-Hf, U-Th-He or Th-U data as X-Y scatterplots, fits an isochron
+#' curve through them using the \code{york} function, and computes the
 #' corresponding isochron age, including decay constant uncertainties.
 #'
 #' @details
@@ -35,11 +35,11 @@
 #' (1979).
 #'
 #' \code{IsoplotR} uses the York et al. (2004) algorithm for its
-#' Ar-Ar, K-Ca, Pb-Pb, Rb-Sr, Sm-Nd, Re-Os and Lu-Hf isochrons. The
-#' maximum likelihood algorithm of Titterington and Halliday (1979)
-#' was generalised from two to three dimensions by Ludwig and
-#' Titterington (1994) for U-series disequilibrium dating.  Also this
-#' algorithm is implemented in \code{IsoplotR}. Finally, the
+#' Ar-Ar, K-Ca, Pb-Pb, Th-Pb, Rb-Sr, Sm-Nd, Re-Os and Lu-Hf
+#' isochrons. The maximum likelihood algorithm of Titterington and
+#' Halliday (1979) was generalised from two to three dimensions by
+#' Ludwig and Titterington (1994) for U-series disequilibrium dating.
+#' Also this algorithm is implemented in \code{IsoplotR}. Finally, the
 #' constrained maximum likelihood algorithm of Ludwig (1998) is used
 #' for isochron regression of U-Pb data. The extent to which the
 #' observed scatter in the data can be explained by the analytical
@@ -87,9 +87,9 @@
 #'
 #' OR
 #'
-#' an object of class \code{ArAr}, \code{KCa}, \code{PbPb}, \code{UPb},
-#' \code{ReOs}, \code{RbSr}, \code{SmNd}, \code{LuHf}, \code{UThHe} or
-#' \code{ThU}.
+#' an object of class \code{ArAr}, \code{KCa}, \code{PbPb},
+#' \code{UPb}, \code{ThPb}, \code{ReOs}, \code{RbSr}, \code{SmNd},
+#' \code{LuHf}, \code{UThHe} or \code{ThU}.
 #'
 #' @param xlim 2-element vector with the x-axis limits
 #'
@@ -170,9 +170,10 @@
 #' @param ... optional arguments to be passed on to the generic plot
 #'     function if \code{model=2}
 #'
-#' @return If \code{x} has class \code{PbPb}, \code{ArAr}, \code{KCa},
-#'     \code{RbSr}, \code{SmNd}, \code{ReOs} or \code{LuHf}, or
-#'     \code{UThHe}, returns a list with the following items:
+#' @return If \code{x} has class \code{PbPb}, \code{ThPb},
+#'     \code{ArAr}, \code{KCa}, \code{RbSr}, \code{SmNd}, \code{ReOs}
+#'     or \code{LuHf}, or \code{UThHe}, returns a list with the
+#'     following items:
 #'
 #' \describe{
 #'
@@ -189,8 +190,9 @@
 #'
 #' \code{y}: the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
 #' \eqn{^{40}}Ca/\eqn{^{44}}Ca, \eqn{^{187}}Os/\eqn{^{188}}Os,
-#' \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
-#' \eqn{^{176}}Hf/\eqn{^{177}}Hf ratio.
+#' \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
+#' \eqn{^{176}}Hf/\eqn{^{177}}Hf or \eqn{^{208}}Pb/\eqn{^{204}}Pb
+#' ratio.
 #'
 #' \code{s[y]}: the propagated uncertainty of \code{y}
 #'
@@ -204,9 +206,10 @@
 #' \item{age}{a four-element list containing:
 #'
 #' \code{t}: the \eqn{^{207}}Pb/\eqn{^{206}}Pb,
-#' \eqn{^{40}}Ar/\eqn{^{39}}Ar, \eqn{^{40}}K/\eqn{^{40}}Ca,
-#' \eqn{^{187}}Os/\eqn{^{187}}Re, \eqn{^{87}}Sr/\eqn{^{87}}Rb,
-#' \eqn{^{143}}Nd/\eqn{^{144}}Nd or \eqn{^{176}}Hf/\eqn{^{177}}Hf age.
+#' \eqn{^{208}}Pb/\eqn{^{232}}Th, \eqn{^{40}}Ar/\eqn{^{39}}Ar,
+#' \eqn{^{40}}K/\eqn{^{40}}Ca, \eqn{^{187}}Os/\eqn{^{187}}Re,
+#' \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd or
+#' \eqn{^{176}}Hf/\eqn{^{177}}Hf age.
 #'
 #' \code{s[t]}: the propagated uncertainty of \code{t}
 #'
@@ -356,7 +359,7 @@
 #' \eqn{^{208}}Pb/\eqn{^{206}}U-ratio (if \code{type=1} and
 #' \code{x$format=7} or \code{8}); or
 #' \eqn{^{208}}Pb/\eqn{^{207}}U-ratio (if \code{type=2} and
-#' \code{x$format=7} or \code{8}).
+#' \code{x$format=7}).
 #'
 #' \code{s[y]}: the propagated uncertainty of \code{y}
 #'
@@ -498,16 +501,28 @@ isochron.UPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
     l8 <- settings('lambda','U238')[1]
     l5 <- settings('lambda','U235')[1]
     D <- mclean(tt,d=x$d)
-    if (type==1){                               # 38/06
+    if (type==1){                           # 04-08c/06 vs. 38/06
         x0inv <- age_to_Pb206U238_ratio(tt=tt,st=0,d=x$d)[1]
         dx0invdt <- D$dPb206U238dt
         E <- lud$cov[1:2,1:2]
         x.lab <- quote(''^238*'U/'^206*'Pb')
-    } else {                                    # 35/07
+    } else if (type==2){                    # 04-08c/07 vs. 35/07
         x0inv <- age_to_Pb207U235_ratio(tt=tt,st=0,d=x$d)[1]
         dx0invdt <- D$dPb207U235dt
         E <- lud$cov[c(1,3),c(1,3)]
         x.lab <- quote(''^235*'U/'^207*'Pb')
+    } else if (type==3 & x$format%in%c(7,8)){  # 06c/08 vs. 32/08
+        x0inv <- age_to_Pb208Th232_ratio(tt=tt,st=0)[1]
+        dx0invdt <- D$dPb208Th232dt
+        E <- lud$cov[1:2,1:2]
+        x.lab <- quote(''^232*'Th/'^208*'Pb')
+    } else if (type==4 & x$format%in%c(7,8)){  # 07c/08 vs. 32/08
+        x0inv <- age_to_Pb208Th232_ratio(tt=tt,st=0)[1]
+        dx0invdt <- D$dPb208Th232dt
+        E <- lud$cov[c(1,3),c(1,3)]
+        x.lab <- quote(''^232*'Th/'^208*'Pb')
+    } else {
+        stop('Invalid isochron type.')
     }
     if (model==3) lud$w <- ci_log2lin_lud(fit=lud,fact=nfact(alpha))
     out <- isochron_init(lud,alpha=0.05)
@@ -542,13 +557,32 @@ isochron.UPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
         out$y0[2] <- out$y0[1]*sqrt(lud$cov[y0par,y0par])/lud$par[y0par]
         y.lab <- quote(''^208*'Pb'[o]*'/'^207*'Pb')
         out$y0label <- quote('('^208*'Pb/'^207*'Pb)'[o]*'=')
+    } else if (x$format%in%c(7,8) & type==3){   # 06c/08 vs. 32/08
+        XY <- data2york(x,option=8,tt=tt)
+        y0par <- '68i'
+        out$y0[1] <- lud$par[y0par]
+        out$y0[2] <- sqrt(lud$cov[y0par,y0par])
+        y.lab <- quote(''^206*'Pb'[o]*'/'^208*'Pb')
+        out$y0label <- quote('('^206*'Pb/'^208*'Pb)'[o]*'=')
+    } else if (x$format%in%c(7,8) & type==4){   # 07c/08 vs. 32/08
+        XY <- data2york(x,option=9,tt=tt)
+        y0par <- '78i'
+        out$y0[1] <- lud$par[y0par]
+        out$y0[2] <- sqrt(lud$cov[y0par,y0par])
+        y.lab <- quote(''^207*'Pb'[o]*'/'^208*'Pb')
+        out$y0label <- quote('('^207*'Pb/'^208*'Pb)'[o]*'=')
     } else {
         stop('Isochron regression is not available for this input format.')
     }
-    a <- 1/lud$par[y0par]
-    b <- -a*x0inv
     J <- matrix(0,2,2)
-    J[1,2] <- -a^2
+    if (type<3){
+        a <- 1/lud$par[y0par]
+        J[1,2] <- -a^2
+    } else {
+        a <- lud$par[y0par]
+        J[1,2] <- 1
+    }
+    b <- -a*x0inv
     J[2,1] <- -a*dx0invdt
     J[2,2] <- x0inv*a^2
     cov.ab <- J%*%E%*%t(J)
@@ -576,45 +610,43 @@ isochron.UPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 #' @param inverse toggles between normal and inverse isochrons. If the
 #'     isochron plots \code{Y} against \code{X}, and
 #'
-#' if \code{inverse=FALSE}, then \code{X} =
-#'     \eqn{{}^{206}}Pb/\eqn{{}^{204}}Pb and \code{Y} =
-#'     \eqn{{}^{207}}Pb/\eqn{{}^{204}}Pb (if \code{x} has class
-#'     \code{PbPb}), or \code{X} = \eqn{{}^{39}}Ar/\eqn{{}^{36}}Ar and
-#'     \code{Y} = \eqn{{}^{40}}Ar/\eqn{{}^{36}}Ar (if \code{x} has
-#'     class \code{ArAr}), or \code{X} =
-#'     \eqn{{}^{40}}K/\eqn{{}^{44}}Ca and \code{Y} =
-#'     \eqn{{}^{40}}Ca/\eqn{{}^{44}}Ca (if \code{x} has class
-#'     \code{KCa}), or \code{X} = \eqn{{}^{87}}Rb/\eqn{{}^{86}}Sr and
-#'     \code{Y} = \eqn{{}^{87}}Sr/\eqn{{}^{86}}Sr (if \code{x} has
-#'     class \code{RbSr}), or \code{X} =
-#'     \eqn{{}^{147}}Sm/\eqn{{}^{144}}Nd and \code{Y} =
-#'     \eqn{{}^{143}}Nd/\eqn{{}^{144}}Nd (if \code{x} has class
-#'     \code{SmNd}), or \code{X} = \eqn{{}^{187}}Re/\eqn{{}^{188}}Os
-#'     and \code{Y} = \eqn{{}^{187}}Os/\eqn{{}^{188}}Os (if \code{x}
-#'     has class \code{ReOs}), or \code{X} =
-#'     \eqn{{}^{176}}Lu/\eqn{{}^{177}}Hf and \code{Y} =
-#'     \eqn{{}^{176}}Hf/\eqn{{}^{177}}Hf (if \code{x} has class
-#'     \code{LuHf}).
-#'
-#' if \code{inverse=TRUE}, then \code{X} =
-#'     \eqn{{}^{204}}Pb/\eqn{{}^{206}}Pb and \code{Y} =
-#'     \eqn{{}^{207}}Pb/\eqn{{}^{206}}Pb (if \code{x} has class
-#'     \code{PbPb}), or \code{X} = \eqn{{}^{39}}Ar/\eqn{{}^{40}}Ar and
-#'     \code{Y} = \eqn{{}^{36}}Ar/\eqn{{}^{40}}Ar (if \code{x} has
-#'     class \code{ArAr}), or \code{X} =
-#'     \eqn{{}^{40}}K/\eqn{{}^{40}}Ca and \code{Y} =
-#'     \eqn{{}^{44}}Ca/\eqn{{}^{40}}Ca (if \code{x} has class
-#'     \code{KCa}), or \code{X} = \eqn{{}^{87}}Rb/\eqn{{}^{87}}Sr and
-#'     \code{Y} = \eqn{{}^{86}}Sr/\eqn{{}^{87}}Sr (if \code{x} has
-#'     class \code{RbSr}), or \code{X} =
-#'     \eqn{{}^{147}}Sm/\eqn{{}^{143}}Nd and \code{Y} =
-#'     \eqn{{}^{144}}Nd/\eqn{{}^{143}}Nd (if \code{x} has class
-#'     \code{SmNd}), or \code{X} = \eqn{{}^{187}}Re/\eqn{{}^{187}}Os
-#'     and \code{Y} = \eqn{{}^{188}}Os/\eqn{{}^{187}}Os (if \code{x}
-#'     has class \code{ReOs}), or \code{X} =
-#'     \eqn{{}^{176}}Lu/\eqn{{}^{176}}Hf and \code{Y} =
-#'     \eqn{{}^{177}}Hf/\eqn{{}^{176}}Hf (if \code{x} has class
-#'     \code{LuHf}).
+#' If \code{inverse=TRUE}, then \code{X} =
+#' \eqn{{}^{204}}Pb/\eqn{{}^{206}}Pb and \code{Y} =
+#' \eqn{{}^{207}}Pb/\eqn{{}^{206}}Pb (if \code{x} has class
+#' \code{PbPb}), or \code{X} = \eqn{{}^{232}}Th/\eqn{{}^{208}}Pb and
+#' \code{Y} = \eqn{{}^{204}}Pb/\eqn{{}^{208}}Pb (if \code{x} has class
+#' \code{ThPb}), or \code{X} = \eqn{{}^{39}}Ar/\eqn{{}^{40}}Ar and
+#' \code{Y} = \eqn{{}^{36}}Ar/\eqn{{}^{40}}Ar (if \code{x} has class
+#' \code{ArAr}), or \code{X} = \eqn{{}^{40}}K/\eqn{{}^{40}}Ca and
+#' \code{Y} = \eqn{{}^{44}}Ca/\eqn{{}^{40}}Ca (if \code{x} has class
+#' \code{KCa}), or \code{X} = \eqn{{}^{87}}Rb/\eqn{{}^{87}}Sr and
+#' \code{Y} = \eqn{{}^{86}}Sr/\eqn{{}^{87}}Sr (if \code{x} has class
+#' \code{RbSr}), or \code{X} = \eqn{{}^{147}}Sm/\eqn{{}^{143}}Nd and
+#' \code{Y} = \eqn{{}^{144}}Nd/\eqn{{}^{143}}Nd (if \code{x} has class
+#' \code{SmNd}), or \code{X} = \eqn{{}^{187}}Re/\eqn{{}^{187}}Os and
+#' \code{Y} = \eqn{{}^{188}}Os/\eqn{{}^{187}}Os (if \code{x} has class
+#' \code{ReOs}), or \code{X} = \eqn{{}^{176}}Lu/\eqn{{}^{176}}Hf and
+#' \code{Y} = \eqn{{}^{177}}Hf/\eqn{{}^{176}}Hf (if \code{x} has class
+#' \code{LuHf}).
+#' 
+#' If \code{inverse=FALSE}, then \code{X} =
+#' \eqn{{}^{206}}Pb/\eqn{{}^{204}}Pb and \code{Y} =
+#' \eqn{{}^{207}}Pb/\eqn{{}^{204}}Pb (if \code{x} has class
+#' \code{PbPb}), or \code{X} = \eqn{{}^{232}}Th/\eqn{{}^{204}}Pb and
+#' \code{Y} = \eqn{{}^{208}}Pb/\eqn{{}^{204}}Pb (if \code{x} has class
+#' \code{ThPb}), or \code{X} = \eqn{{}^{39}}Ar/\eqn{{}^{36}}Ar and
+#' \code{Y} = \eqn{{}^{40}}Ar/\eqn{{}^{36}}Ar (if \code{x} has class
+#' \code{ArAr}), or \code{X} = \eqn{{}^{40}}K/\eqn{{}^{44}}Ca and
+#' \code{Y} = \eqn{{}^{40}}Ca/\eqn{{}^{44}}Ca (if \code{x} has class
+#' \code{KCa}), or \code{X} = \eqn{{}^{87}}Rb/\eqn{{}^{86}}Sr and
+#' \code{Y} = \eqn{{}^{87}}Sr/\eqn{{}^{86}}Sr (if \code{x} has class
+#' \code{RbSr}), or \code{X} = \eqn{{}^{147}}Sm/\eqn{{}^{144}}Nd and
+#' \code{Y} = \eqn{{}^{143}}Nd/\eqn{{}^{144}}Nd (if \code{x} has class
+#' \code{SmNd}), or \code{X} = \eqn{{}^{187}}Re/\eqn{{}^{188}}Os and
+#' \code{Y} = \eqn{{}^{187}}Os/\eqn{{}^{188}}Os (if \code{x} has class
+#' \code{ReOs}), or \code{X} = \eqn{{}^{176}}Lu/\eqn{{}^{177}}Hf and
+#' \code{Y} = \eqn{{}^{176}}Hf/\eqn{{}^{177}}Hf (if \code{x} has class
+#' \code{LuHf}).
 #'
 #' @param exterr propagate external sources of uncertainty
 #' (J, decay constant)?
@@ -741,6 +773,23 @@ isochron.ArAr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
 }
 #' @rdname isochron
 #' @export
+isochron.ThPb <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
+                          show.numbers=FALSE,levels=NA,clabel="",
+                          ellipse.col=c("#00FF0080","#FF000080"),
+                          inverse=FALSE,ci.col='gray80',line.col='black',
+                          lwd=1,plot=TRUE,exterr=TRUE,model=1,
+                          show.ellipses=1*(model!=2),
+                          hide=NULL,omit=NULL,omit.col=NA,...){
+    isochron_PD(x,nuclide='Th232',xlim=xlim,ylim=ylim,alpha=alpha,
+                sigdig=sigdig,show.numbers=show.numbers,
+                levels=levels,clabel=clabel,ellipse.col=ellipse.col,
+                inverse=inverse,ci.col=ci.col,line.col=line.col,
+                lwd=lwd,plot=plot,exterr=exterr,model=model,
+                show.ellipses=show.ellipses,hide=hide,omit=omit,
+                omit.col=omit.col,...)
+}
+#' @rdname isochron
+#' @export
 isochron.KCa <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                          show.numbers=FALSE,levels=NA,clabel="",
                          ellipse.col=c("#00FF0080","#FF000080"),
@@ -748,7 +797,7 @@ isochron.KCa <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                          lwd=1,plot=TRUE,exterr=TRUE,model=1,
                          show.ellipses=1*(model!=2),
                          hide=NULL,omit=NULL,omit.col=NA,...){
-    isochron_PD(x,'K40',xlim=xlim,ylim=ylim,alpha=alpha,
+    isochron_PD(x,nuclide='K40',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
                 levels=levels,clabel=clabel,ellipse.col=ellipse.col,
                 inverse=inverse,ci.col=ci.col,line.col=line.col,
@@ -765,7 +814,7 @@ isochron.RbSr <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           lwd=1,plot=TRUE,exterr=TRUE,model=1,
                           show.ellipses=1*(model!=2),hide=NULL,
                           omit=NULL,omit.col=NA,...){
-    isochron_PD(x,'Rb87',xlim=xlim,ylim=ylim,alpha=alpha,
+    isochron_PD(x,nuclide='Rb87',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,levels=levels,
                 clabel=clabel,ellipse.col=ellipse.col,inverse=inverse,
                 ci.col=ci.col,line.col=line.col,lwd=lwd,plot=plot,
@@ -781,7 +830,7 @@ isochron.ReOs <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           lwd=1,plot=TRUE,exterr=TRUE,model=1,
                           show.ellipses=1*(model!=2),hide=NULL,
                           omit=NULL,omit.col=NA,...){
-    isochron_PD(x,'Re187',xlim=xlim,ylim=ylim,alpha=alpha,
+    isochron_PD(x,nuclide='Re187',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
                 levels=levels,clabel=clabel,ellipse.col=ellipse.col,
                 inverse=inverse,ci.col=ci.col,line.col=line.col,lwd=lwd,
@@ -797,7 +846,7 @@ isochron.SmNd <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           lwd=1,plot=TRUE,exterr=TRUE,model=1,
                           show.ellipses=1*(model!=2),hide=NULL,
                           omit=NULL,omit.col=NA,...){
-    isochron_PD(x,'Sm147',xlim=xlim,ylim=ylim,alpha=alpha,
+    isochron_PD(x,nuclide='Sm147',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
                 levels=levels,clabel=clabel,ellipse.col=ellipse.col,
                 inverse=inverse,ci.col=ci.col,line.col=line.col,
@@ -814,7 +863,7 @@ isochron.LuHf <- function(x,xlim=NA,ylim=NA,alpha=0.05,sigdig=2,
                           lwd=1,plot=TRUE,exterr=TRUE,model=1,
                           show.ellipses=1*(model!=2),hide=NULL,
                           omit=NULL,omit.col=NA,...){
-    isochron_PD(x,'Lu176',xlim=xlim,ylim=ylim,alpha=alpha,
+    isochron_PD(x,nuclide='Lu176',xlim=xlim,ylim=ylim,alpha=alpha,
                 sigdig=sigdig,show.numbers=show.numbers,
                 levels=levels,clabel=clabel,ellipse.col=ellipse.col,
                 inverse=inverse,ci.col=ci.col,line.col=line.col,
@@ -1062,7 +1111,15 @@ isochron_PD <- function(x,nuclide,xlim=NA,ylim=NA,alpha=0.05,
 
 get.isochron.labels <- function(nuclide,inverse=FALSE){
     out <- list()
-    if (identical(nuclide,'Sm147')){
+    if (identical(nuclide,'Th232')){
+        if (inverse){
+            out$x <- quote(''^232*'Th/'^208*'Pb')
+            out$y <- quote(''^204*'Pb/'^208*'Pb')
+        } else {
+            out$x <- quote(''^232*'Th/'^204*'Pb')
+            out$y <- quote(''^208*'Pb/'^204*'Pb')
+        }
+    } else if (identical(nuclide,'Sm147')){
         if (inverse){
             out$x <- quote(''^147*'Sm/'^143*'Nd')
             out$y <- quote(''^144*'Nd/'^143*'Nd')
