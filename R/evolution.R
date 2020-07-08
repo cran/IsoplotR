@@ -59,7 +59,7 @@
 #' @param levels a vector with additional values to be displayed as
 #'     different background colours within the error ellipses.
 #' @param clabel label of the colour legend.
-#' @param ellipse.col
+#' @param ellipse.fill
 #' Fill colour for the error ellipses. This can either be a single
 #' colour or multiple colours to form a colour ramp. Examples:
 #'
@@ -76,7 +76,11 @@
 #' a reversed palette: \code{rev(topo.colors(n=100,alpha=0.5))},
 #' etc.
 #'
-#' For empty ellipses, set \code{ellipse.col=NA}
+#' For empty ellipses, set \code{ellipse.fill=NA}
+#' 
+#' @param ellipse.stroke the stroke colour for the error
+#'     ellipses. Follows the same formatting guidelines as
+#'     \code{ellipse.fill}
 #' @param line.col colour of the age grid
 #' @param isochron fit a 3D isochron to the data?
 #' @param exterr propagate the decay constant uncertainty in the
@@ -112,7 +116,9 @@
 #'     from the plot.
 #' @param omit vector with indices of aliquots that should be plotted
 #'     but omitted from the isochron age calculation.
-#' @param omit.col colour that should be used for the omitted
+#' @param omit.fill fill colour that should be used for the omitted
+#'     aliquots.
+#' @param omit.stroke stroke colour that should be used for the omitted
 #'     aliquots.
 #' @param ... optional arguments to the generic \code{plot} function
 #' @seealso \code{\link{isochron}}
@@ -135,24 +141,28 @@
 #' @export
 evolution <- function(x,xlim=NA,ylim=NA,alpha=0.05,transform=FALSE,
                       detritus=0,show.numbers=FALSE,levels=NA,
-                      clabel="",ellipse.col=c("#00FF0080","#FF000080"),
-                      line.col='darksalmon',isochron=FALSE,model=1,
-                      exterr=TRUE,sigdig=2,hide=NULL,omit=NULL,
-                      omit.col=NA,...){
+                      clabel="",ellipse.fill=c("#00FF0080","#FF000080"),
+                      ellipse.stroke='black',line.col='darksalmon',
+                      isochron=FALSE,model=1,exterr=TRUE,sigdig=2,
+                      hide=NULL,omit=NULL,omit.fill=NA,
+                      omit.stroke='grey',...){
     if (x$format %in% c(1,2)){
         if (transform){
             U4U8vst(x,detritus=detritus,xlim=xlim,ylim=ylim,alpha=alpha,
                     show.numbers=show.numbers,levels=levels,
-                    clabel=clabel,ellipse.col=ellipse.col,
+                    clabel=clabel,ellipse.fill=ellipse.fill,
+                    ellipse.stroke=ellipse.stroke,
                     show.ellipses=(model!=2),hide=hide,omit=omit,
-                    omit.col=omit.col,...)
+                    omit.fill=omit.fill,omit.stroke=omit.stroke,...)
         } else {
             U4U8vsTh0U8(x,isochron=isochron,model=model,xlim=xlim,
                         ylim=ylim,alpha=alpha,detritus=detritus,
                         show.numbers=show.numbers,levels=levels,
-                        clabel=clabel,ellipse.col=ellipse.col,
+                        clabel=clabel,ellipse.fill=ellipse.fill,
+                        ellipse.stroke=ellipse.stroke,
                         line.col=line.col,show.ellipses=(model!=2),
-                        hide=hide,omit=omit,omit.col=omit.col,...)
+                        hide=hide,omit=omit,omit.fill=omit.fill,
+                        omit.stroke=omit.stroke,...)
         }
         if (isochron){
             fit <- isochron.ThU(x,type=3,plot=FALSE,exterr=exterr,
@@ -164,19 +174,21 @@ evolution <- function(x,xlim=NA,ylim=NA,alpha=0.05,transform=FALSE,
         Th02vsU8Th2(x,isochron=isochron,model=model,xlim=xlim,
                     ylim=ylim,alpha=alpha,show.numbers=show.numbers,
                     exterr=exterr,sigdig=sigdig,levels=levels,
-                    clabel=clabel,ellipse.col=ellipse.col,
+                    clabel=clabel,ellipse.fill=ellipse.fill,
+                    ellipse.stroke=ellipse.stroke,
                     line.col=line.col,hide=hide,omit=omit,
-                    omit.col=omit.col,...)
+                    omit.fill=omit.fill,omit.stroke=omit.stroke,...)
     }
 }
 
 U4U8vst <- function(x,detritus=0,xlim=NA,ylim=NA,alpha=0.05,
                     show.numbers=FALSE,levels=NA,clabel="",
-                    ellipse.col=c("#00FF0080","#FF000080"),
-                    show.ellipses=TRUE,hide=NULL,omit=NULL,omit.col=NA,...){
+                    ellipse.fill=c("#00FF0080","#FF000080"),
+                    ellipse.stroke='black',show.ellipses=TRUE,
+                    hide=NULL,omit=NULL,omit.fill=NA,
+                    omit.stroke='grey',...){
     ns <- length(x)
     plotit <- (1:ns)%ni%hide
-    calcit <- (1:ns)%ni%c(hide,omit)
     ta0 <- get.ThU.age.corals(x,exterr=FALSE,cor=FALSE,detritus=detritus)
     nsd <- 3
     if (any(is.na(xlim)))
@@ -193,20 +205,22 @@ U4U8vst <- function(x,detritus=0,xlim=NA,ylim=NA,alpha=0.05,
     d[,'rXY'] <- ta0[,'cov[t,48_0]']/(ta0[,'s[t]']*ta0[,'s[48_0]'])
     scatterplot(d,alpha=alpha,show.numbers=show.numbers,
                 show.ellipses=show.ellipses,levels=levels,
-                clabel=clabel,ellipse.col=ellipse.col,add=TRUE,
-                hide=hide,omit=omit,omit.col=omit.col,...)
+                clabel=clabel,ellipse.fill=ellipse.fill,
+                ellipse.stroke=ellipse.stroke,add=TRUE, hide=hide,
+                omit=omit,omit.fill=omit.fill,omit.stroke=omit.stroke,...)
 }
 
-U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detritus=0,
-                        xlim=NA,ylim=NA,alpha=0.05,
-                        show.numbers=FALSE,levels=NA,clabel="",
-                        ellipse.col=c("#00FF0080","#FF000080"),
-                        line.col='darksalmon',show.ellipses=TRUE,
-                        hide=NULL,omit=NULL,omit.col=NA,...){
+U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detritus=0, xlim=NA,
+                        ylim=NA,alpha=0.05, show.numbers=FALSE,
+                        levels=NA,clabel="",
+                        ellipse.fill=c("#00FF0080","#FF000080"),
+                        ellipse.stroke='black',line.col='darksalmon',
+                        show.ellipses=TRUE,hide=NULL,omit=NULL,
+                        omit.fill=NA,omit.stroke='grey',...){
     ns <- length(x)
     plotit <- (1:ns)%ni%hide
     calcit <- (1:ns)%ni%c(hide,omit)
-    y <- data2evolution(x,detritus=detritus)
+    y <- data2evolution(x,detritus=detritus,omit4c=unique(c(hide,omit)))
     d2plot <- subset(y,subset=plotit)
     lim <- evolution.lines(d2plot,xlim=xlim,ylim=ylim,...)
     if (isochron){
@@ -221,7 +235,7 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detritus=0,
         initial[4] <- sqrt(fit$cov['B','B'])
         initial[5] <- fit$cov['b','B']/(initial[2]*initial[4])
         scatterplot(initial,alpha=alpha,
-                    ellipse.col=grDevices::rgb(1,1,1,0.85),
+                    ellipse.fill=grDevices::rgb(1,1,1,0.85),
                     line.col='black',add=TRUE)
         e48 <- 1
         e08 <- b08 + fit$par['A']*(e48-b48)/fit$par['a']
@@ -231,21 +245,24 @@ U4U8vsTh0U8 <- function(x,isochron=FALSE,model=1,detritus=0,
                  'U234U238','sU234U238','rYZ'),drop=FALSE]
     scatterplot(pdat,alpha=alpha,show.numbers=show.numbers,
                 show.ellipses=show.ellipses,levels=levels,
-                clabel=clabel,ellipse.col=ellipse.col,add=TRUE,
-                hide=hide,omit=omit,omit.col=omit.col,...)
-    colourbar(z=levels[calcit],col=ellipse.col,clabel=clabel)
+                clabel=clabel,ellipse.fill=ellipse.fill,
+                ellipse.stroke=ellipse.stroke,add=TRUE,hide=hide,
+                omit=omit,omit.fill=omit.fill,omit.stroke=omit.stroke,...)
+    colourbar(z=levels[calcit],fill=ellipse.fill,
+              stroke=ellipse.stroke,clabel=clabel)
 }
 
 Th02vsU8Th2 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
                         alpha=0.05,show.numbers=FALSE,exterr=TRUE,
                         clabel="",levels=NA,
-                        ellipse.col=c("#00FF0080","#FF000080"),
-                        sigdig=2,line.col='darksalmon',
-                        hide=NULL,omit=NULL,omit.col=NA,...){
+                        ellipse.fill=c("#00FF0080","#FF000080"),
+                        ellipse.stroke='black',sigdig=2,
+                        line.col='darksalmon',hide=NULL,omit=NULL,
+                        omit.fill=NA,omit.stroke='grey',...){
     ns <- length(x)
     plotit <- (1:ns)%ni%hide
     calcit <- (1:ns)%ni%c(hide,omit)
-    d <- data2evolution(x)
+    d <- data2evolution(x,omit4c=unique(c(hide,omit)))
     d2plot <- subset(d,subset=plotit)
     scatterplot(d2plot,xlim=xlim,ylim=ylim,empty=TRUE)
     ticks <- c(0,1,10,20,50,100,200,300)
@@ -256,7 +273,8 @@ Th02vsU8Th2 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
     maxY <- graphics::par('usr')[4]
     if (isochron){
         fit <- isochron.ThU(x,type=1,plot=FALSE,exterr=FALSE,
-                            hide=hide,omit=omit,omit.col=omit.col)
+                            hide=hide,omit=omit,omit.fill=omit.fill,
+                            omit.stroke=omit.stroke)
         Th230Th232_0x <- fit$y0[1]
     } else {
         Th230Th232_0x <- 0
@@ -282,15 +300,17 @@ Th02vsU8Th2 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
     }
     if (isochron){ # plot the data and isochron line fit
         isochron.ThU(x,type=1,plot=TRUE,show.numbers=show.numbers,
-                     levels=levels,ellipse.col=ellipse.col,
+                     levels=levels,ellipse.fill=ellipse.fill,
+                     ellipse.stroke=ellipse.stroke,
                      line.col='black',exterr=exterr,sigdig=sigdig,
                      add=TRUE,model=model,hide=hide,
-                     omit=omit,omit.col=omit.col)
+                     omit=omit,omit.fill=omit.fill,omit.stroke=omit.stroke)
     } else { # plot just the data
         scatterplot(d,alpha=alpha,show.numbers=show.numbers,
-                    levels=levels,ellipse.col=ellipse.col,
+                    levels=levels,ellipse.fill=ellipse.fill,
+                    ellipse.stroke=ellipse.stroke,
                     add=TRUE,hide=hide,omit=omit,
-                    omit.col=omit.col)
+                    omit.fill=omit.fill,omit.stroke=omit.stroke)
         xlab <- expression(paste(""^"238","U/"^"232","Th"))
         ylab <- expression(paste(""^"230","Th/"^"232","Th"))
         graphics::title(xlab=xlab,ylab=ylab)
@@ -298,7 +318,8 @@ Th02vsU8Th2 <- function(x,isochron=FALSE,model=1,xlim=NA,ylim=NA,
                                 "232","Th)"[o]^x*" = 0]"))
         mymtext(tit,line=0,...)
     }
-    colourbar(z=levels[calcit],col=ellipse.col,clabel=clabel)
+    colourbar(z=levels[calcit],fill=ellipse.fill,
+              stroke=ellipse.stroke,clabel=clabel)
 }
 
 evolution.title <- function(fit,sigdig=2,...){
@@ -410,12 +431,12 @@ evolution.lines <- function(d,xlim=NA,ylim=NA,bty='n',
     rbind(xlim,ylim)
 }
 
-data2evolution <- function(x,detritus=0){
+data2evolution <- function(x,detritus=0,omit4c=NULL){
     ns <- length(x)
     out <- matrix(0,ns,5)
     if (x$format %in% c(1,2)){
         td <- data2tit(x,osmond=TRUE,generic=FALSE) # 2/8 - 4/8 - 0/8
-        out <- Th230correction(td,option=detritus,dat=x)
+        out <- Th230correction(td,option=detritus,dat=x,omit4c=omit4c)
     } else if (x$format %in% c(3,4)){
         out <- data2york(x,type=1) # 8/2 - 0/2
         covariance <- out[,'sX']*out[,'sY']*out[,'rXY']
@@ -429,10 +450,10 @@ data2evolution <- function(x,detritus=0){
 
 # x = table with 'Th230U238','errTh230U238', 'U234U238','errU234U238'
 #                (and 'Th232U238','errTh232U238' if option==2)
-Th230correction <- function(x,option=0,dat=NA){
+Th230correction <- function(x,option=0,dat=NA,omit4c=NULL){
     out <- x
     if (option==1){
-        out <- Th230correction.isochron(x,dat=dat)
+        out <- Th230correction.isochron(x,dat=dat,omit4c=omit4c)
     } else if (option==2){
         tt <- get.ThU.age.corals(dat,detritus=2)[,'t']
         out <- Th230correction.assumed.detritus(x,age=tt,Th02=dat$Th02)
@@ -441,9 +462,9 @@ Th230correction <- function(x,option=0,dat=NA){
     }
     out
 }
-Th230correction.isochron <- function(x,dat){
+Th230correction.isochron <- function(x,dat,omit4c=NULL){
     osmond <- data2tit.ThU(dat,osmond=TRUE)
-    fit <- titterington(osmond)
+    fit <- titterington(clear(osmond,omit4c))
     out <- x
     out[,'U234U238'] <- x[,'U234U238'] - fit$par['b']*osmond[,'X']
     out[,'Th230U238'] <- x[,'Th230U238'] - fit$par['B']*osmond[,'X']
@@ -508,5 +529,5 @@ Th230correction.measured.detritus <- function(x){
     out[,'U234U238'] <- a
     out[,'sU234U238'] <- sa
     out[,'rYZ'] <- covaA/(sA*sa)
-    out    
+    out
 }

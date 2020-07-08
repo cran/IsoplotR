@@ -115,17 +115,6 @@ ludwig.default <- function(x,exterr=FALSE,alpha=0.05,model=1,anchor=list(FALSE,N
     c(out,mswd)
 }
 
-wtest.UPb <- function(lta0b0w,x){
-    nn <- 50
-    lw <- seq(from=-10,to=2,length.out=nn)
-    LL <- rep(0,nn)
-    for (i in 1:nn){
-        lta0b0w[4] <- lw[i]
-        LL[i] <- LL.lud(lta0b0w=lta0b0w,x=x,LL=TRUE)
-    }
-    plot(lw,LL,type='l')
-}
-
 exponentiate_ludwig <- function(fit,format){
     out <- fit
     np <- length(fit$logpar)
@@ -135,7 +124,7 @@ exponentiate_ludwig <- function(fit,format){
     out$cov <- J %*% fit$logcov %*% t(J)
     if (format %in% c(1,2,3)) parnames <- c('t','76i','w')
     else if (format %in% c(4,5,6)) parnames <- c('t','64i','74i','w')
-    else if (format == 7) parnames <- c('t','68i','78i','w')
+    else if (format %in% c(7,8)) parnames <- c('t','68i','78i','w')
     else stop("Illegal input format.")
     names(out$par) <- parnames[1:np]
     rownames(out$cov) <- parnames[1:np]
@@ -196,7 +185,7 @@ get.lta0b0w <- function(x,exterr=FALSE,model=1,
         mse <- fit$value/(ne*ns-np)   # mean square error
         out$logpar <- fit$par
         out$logcov <- matrix(0,np,np) # initialise
-        out$logcov[!fixed,!fixed] <- solve(fit$hessian)*mse
+        out$logcov[!fixed,!fixed] <- solve(fit$hessian/2)*mse
     } else {
         fit <- optifix(parms=init,fn=LL.lud,gr=LL.lud.gr,
                        method="L-BFGS-B",x=x,exterr=exterr,fixed=fixed,
@@ -208,7 +197,7 @@ get.lta0b0w <- function(x,exterr=FALSE,model=1,
     }
     if (x$format %in% c(1,2,3)) parnames <- c('log(t)','log(76i)')
     else if (x$format %in% c(4,5,6)) parnames <- c('log(t)','log(64i)','log(74i)')
-    else if (x$format == 7) parnames <- c('log(t)','log(68i)','log(78i)')
+    else if (x$format %in% c(7,8)) parnames <- c('log(t)','log(68i)','log(78i)')
     else stop("Illegal input format.")
     if (model==3) parnames <- c(parnames,'log(w)')
     names(out$logpar) <- parnames
@@ -266,7 +255,7 @@ anchored.lta0b0.init <- function(x,anchor=list(FALSE,NA)){
             init['a0'] <- log(i64)
             init['b0'] <- log(i74)
             i76 <- i74/i64
-        } else if (x$format==7){
+        } else if (x$format%in%c(7,8)){
             i86 <- iratio('Pb208Pb206')[1]
             i87 <- iratio('Pb208Pb207')[1]
             init['a0'] <- -log(i86)
@@ -330,9 +319,9 @@ SS.model2 <- function(lta0b0,x){
         r86 <- age_to_U238Pb206_ratio(tt,st=0,d=x$d)[1]
         r57 <- age_to_U235Pb207_ratio(tt,st=0,d=x$d)[1]
         y6p <- (r86-x6)/(a0*r86)
-        SS6 <- sum((y6p-y6)^2)/stats::var(y6)
+        SS6 <- sum((y6p-y6)^2)
         y7p <- (r57-x7)/(b0*r57)
-        SS7 <- sum((y7p-y7)^2)/stats::var(y7)
+        SS7 <- sum((y7p-y7)^2)
         out <- SS6 + SS7
     }
     out
@@ -395,7 +384,7 @@ data2ludwig <- function(x,lta0b0w,exterr=FALSE,jacobian=FALSE,hessian=FALSE){
         L0 <- zeros
         NP <- 3 # lt, a0, b0
         NR <- 3 # X, Y, Z
-    } else if (x$format==7){
+    } else if (x$format%in%c(7,8)){
         b0 <- lta0b0w[3]
         Z <- zeros
         W <- zeros
@@ -487,7 +476,7 @@ data2ludwig <- function(x,lta0b0w,exterr=FALSE,jacobian=FALSE,hessian=FALSE){
         K <- as.vector(X - D$Pb207U235 - U*exp(b0)*c0)
         L <- as.vector(Y - D$Pb206U238 - exp(a0)*c0)
         KLM <- c(K,L,M)
-    } else if (x$format==7){
+    } else if (x$format%in%c(7,8)){
         Wd <- diag(W)
         K0 <- X - D$Pb207U235 - (Z-D$Pb208Th232)*U*W*exp(b0)
         L0 <- Y - D$Pb206U238 - (Z-D$Pb208Th232)*W*exp(a0)
@@ -546,7 +535,7 @@ data2ludwig <- function(x,lta0b0w,exterr=FALSE,jacobian=FALSE,hessian=FALSE){
             dLda0 <- -c0*exp(a0)
             dLdc0 <- -exp(a0)
             dMdc0 <- -1
-        } else if (x$format==7){
+        } else if (x$format%in%c(7,8)){
             dKdb0 <- -c0*U*W*exp(b0)
             dKdc0 <- -U*W*exp(b0)
             dLda0 <- -c0*W*exp(a0)
@@ -599,7 +588,7 @@ data2ludwig <- function(x,lta0b0w,exterr=FALSE,jacobian=FALSE,hessian=FALSE){
             d2Lda02 <- -c0*exp(a0)
             d2Lda0dc0 <- -exp(a0)
             d2Mdlt2 <- 0
-        } else if (x$format==7){
+        } else if (x$format%in%c(7,8)){
             d2Kdb02 <- -c0*U*W*exp(b0)
             d2Kdb0dc0 <- -U*W*exp(b0)
             d2Lda02 <- -c0*W*exp(a0)

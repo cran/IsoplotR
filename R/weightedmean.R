@@ -15,16 +15,27 @@
 #' determined on different aliquots of the same sample, and let
 #' \eqn{\{s[t_1], ..., s[t_n]\}} be their analytical
 #' uncertainties. \code{IsoplotR} then calculates the weighted mean of
-#' these data assuming a Normal distribution with two sources of
-#' variance:
+#' these data using one of two methods:
 #'
-#' \eqn{t_i \sim N(\mu, \sigma^2 = s[t_i]^2 + \omega^2 )}
+#' \enumerate{
+#'
+#' \item The ordinary error-weighted mean:
+#'
+#' \eqn{\mu = \sum(t_i/s[t_i]^2)/\sum(1/s[t_i]^2)}
+#'
+#' \item A random effects model with two sources of variance:
+#'
+#' \eqn{\log[t_i] \sim N(\log[\mu], \sigma^2 = (s[t_i]/t_i)^2 + \omega^2 )}
 #'
 #' where \eqn{\mu} is the mean, \eqn{\sigma^2} is the total variance
 #' and \eqn{\omega} is the 'overdispersion'. This equation can be
 #' solved for \eqn{\mu} and \eqn{\omega} by the method of maximum
-#' likelihood. IsoplotR uses a modified version of Chauvenet's
-#' criterion for outlier detection:
+#' likelihood.
+#' 
+#' }
+#'
+#' IsoplotR uses a modified version of Chauvenet's criterion for
+#' outlier detection:
 #'
 #' \enumerate{
 #'
@@ -33,8 +44,9 @@
 #' \eqn{s[t_i]}
 #'
 #' \item For each \eqn{t_i}, compute the probability \eqn{p_i} that
-#' that \eqn{|t-\mu|>|t_i-\mu|} for \eqn{t \sim
-#' N(0,\sqrt{s[t_i]^2+\omega^2) }}
+#' that \eqn{|t-\mu|>|t_i-\mu|} for \eqn{t \sim N(\mu, s[t_i]^2 MSWD)}
+#' (ordinary weighted mean) or \eqn{\log[t] \sim
+#' N(\log[\mu],s[t_i]^2+\omega^2)} (random effects model)
 #'
 #' \item Let \eqn{p_j \equiv \min(p_1, ..., p_n)}. If
 #' \eqn{p_j<0.05/n}, then reject the j\eqn{^{th}} date, reduce \eqn{n}
@@ -71,12 +83,12 @@
 #'
 #' \item{mean}{a three element vector with:
 #'
-#' \code{x}: the weighted mean
+#' \code{t}: the weighted mean
 #'
-#' \code{s[x]}: the standard error of the weighted mean
+#' \code{s[t]}: the standard error of the weighted mean
 #'
-#' \code{ci[x]}: the \eqn{100(1-\alpha)\%} confidence interval for
-#' \code{x}
+#' \code{ci[t]}: the \eqn{100(1-\alpha)\%} confidence interval for
+#' \code{t}
 #'
 #' }
 #'
@@ -199,23 +211,9 @@ weightedmean.default <- function(x,from=NA,to=NA,random.effects=TRUE,
 #'     \eqn{^{206}}Pb/\eqn{^{238}}U age and above which the
 #'     \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 #'     only used if \code{type=4}.
-#' @param cutoff.disc discordance cutoff filter. This is a three
-#'     element list.
-#'
-#' The first two items contain the minimum (negative) and maximum
-#' (positive) percentage discordance allowed between the
-#' \eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U age
-#' (if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
-#' \eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb age
-#' (if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).
-#'
-#' The third item is a boolean flag that controls whether the
-#' discordance filter should be applied before (\code{TRUE}) or after
-#' (\code{FALSE}) the common-Pb correction.
-#'
-#' Set \code{cutoff.disc=NA} to turn off this filter.
+#' @param cutoff.disc discordance cutoff filter. This is an object of
+#'     class \code{discfilter}
 #' @param exterr propagate decay constant uncertainties?
-#'
 #' @param common.Pb common lead correction:
 #'
 #' \code{0}: none
@@ -239,7 +237,6 @@ weightedmean.default <- function(x,from=NA,to=NA,random.effects=TRUE,
 #' \code{3}: use the Stacey-Kramers two-stage model to infer the
 #' initial Pb-composition (only applicable if \code{x} has class
 #' \code{UPb})
-#'
 #' @examples
 #' ages <- c(251.9,251.59,251.47,251.35,251.1,251.04,250.79,250.73,251.22,228.43)
 #' errs <- c(0.28,0.28,0.63,0.34,0.28,0.63,0.28,0.4,0.28,0.33)
@@ -250,14 +247,14 @@ weightedmean.default <- function(x,from=NA,to=NA,random.effects=TRUE,
 #' @rdname weightedmean
 #' @export
 weightedmean.UPb <- function(x,random.effects=TRUE,
-                             detect.outliers=TRUE,plot=TRUE,
-                             from=NA,to=NA,levels=NA,clabel="",
+                             detect.outliers=TRUE,plot=TRUE,from=NA,
+                             to=NA,levels=NA,clabel="",
                              rect.col=c("#00FF0080","#FF000080"),
-                             outlier.col="#00FFFF80",sigdig=2,
-                             type=4,cutoff.76=1100,alpha=0.05,
-                             cutoff.disc=list(-15,5,TRUE),
-                             exterr=TRUE,ranked=FALSE,common.Pb=0,
-                             hide=NULL,omit=NULL,omit.col=NA,...){
+                             outlier.col="#00FFFF80",sigdig=2,type=4,
+                             cutoff.76=1100,alpha=0.05,
+                             cutoff.disc=discfilter(),exterr=TRUE,
+                             ranked=FALSE,common.Pb=0,hide=NULL,
+                             omit=NULL,omit.col=NA,...){
     weightedmean_helper(x,random.effects=random.effects,
                         detect.outliers=detect.outliers,plot=plot,
                         from=from,to=to,levels=levels,clabel=clabel,
@@ -502,12 +499,12 @@ weightedmean.fissiontracks <- function(x,random.effects=TRUE,
             rhoD <- c(1,0)
             zeta <- c(1,0)
         }
-        out$mean['s[x]'] <- fit$mean['x']*
-            sqrt( (fit$mean['s[x]']/fit$mean['x'])^2 +
+        out$mean['s[x]'] <- fit$mean['t']*
+            sqrt( (fit$mean['s[t]']/fit$mean['t'])^2 +
                   (rhoD[2]/rhoD[1])^2 +
                   (zeta[2]/zeta[1])^2
                 )
-        out$mean['ci[x]'] <- nfact(alpha)*out$mean['s[x]']
+        out$mean['ci[t]'] <- nfact(alpha)*out$mean['s[t]']
     }
     if (plot){
         plot_weightedmean(tt[,1],tt[,2],fit=out,from=from,to=to,
@@ -524,13 +521,14 @@ weightedmean_helper <- function(x,random.effects=TRUE,
                                 from=NA,to=NA,levels=NA,clabel="",
                                 rect.col=c("#00FF0080","#FF000080"),
                                 outlier.col="#00FFFF80",type=4,
-                                cutoff.76=1100,cutoff.disc=list(-15,5,TRUE),
+                                cutoff.76=1100,cutoff.disc=discfilter(),
                                 sigdig=2,alpha=0.05,exterr=TRUE,
                                 ranked=FALSE,i2i=FALSE,common.Pb=1,
                                 units='',detritus=0,hide=NULL,
                                 omit=NULL,omit.col=NA,...){
     tt <- get.ages(x,type=type,cutoff.76=cutoff.76,cutoff.disc=cutoff.disc,
-                   i2i=i2i,common.Pb=common.Pb,detritus=detritus)
+                   i2i=i2i,omit4c=unique(c(hide,omit)),
+                   common.Pb=common.Pb,detritus=detritus)
     fit <- weightedmean.default(tt,random.effects=random.effects,
                                 detect.outliers=detect.outliers,
                                 alpha=alpha,plot=FALSE,hide=hide,
@@ -565,65 +563,73 @@ get.weightedmean <- function(X,sX,random.effects=TRUE,
     out$alpha <- alpha
     out$df <- length(x)-1 # degrees of freedom for the homogeneity test
     if (random.effects){ # random effects model:
-        out$mean <- rep(NA,3)
-        out$disp <- rep(NA,3)
-        names(out$mean) <- c('x','s[x]','ci[x]')
-        names(out$disp) <- c('w','ll','ul')    
-        fit <- continuous_mixture(x,sx)
-        out$mean['x'] <- fit$mu[1]
-        out$mean['s[x]'] <- fit$mu[2]
-        out$mean['ci[x]'] <- nfact(alpha)*out$mean['s[x]']
-        out$disp['w'] <- fit$sigma
-        out$disp[c('ll','ul')] <-
-            profile_LL_weightedmean_disp(fit,x,sx,alpha)
+        if (all(x>0)){
+            fit <- central(cbind(x,sx),alpha=alpha)
+            out$mean <- fit$age
+            out$disp <- fit$disp*out$mean['t']
+            out$mswd <- fit$mswd
+            out$p.value <- fit$p.value
+        } else {
+            out$mean <- rep(NA,3)
+            out$disp <- rep(NA,3)
+            names(out$mean) <- c('t','s[t]','ci[t]')
+            names(out$disp) <- c('s','ll','ul')
+            fit <- continuous_mixture(x,sx)
+            out$mean['t'] <- fit$mu[1]
+            out$mean['s[t]'] <- fit$mu[2]
+            out$mean['ci[t]'] <- nfact(alpha)*out$mean['s[t]']
+            out$disp['s'] <- fit$sigma
+            out$disp[c('ll','ul')] <-
+                profile_LL_weightedmean_disp(fit,x,sx,alpha)
+            SS <- sum(((x-out$mean['t'])/sx)^2)
+            out$mswd <- SS/out$df
+            out$p.value <- 1-stats::pchisq(SS,out$df)
+        }
     } else { # Ludwig's Isoplot approach:
         out$mean <- rep(NA,4)
-        names(out$mean) <- c('x','s[x]','ci[x]','disp[x]')
+        names(out$mean) <- c('t','s[t]','ci[t]','disp[t]')
         w <- 1/sx^2
-        out$mean['x'] <- sum(w*x)/sum(w)
-        out$mean['s[x]'] <- 1/sqrt(sum(w))
-        SS <- sum(((x-out$mean['x'])/sx)^2)
+        out$mean['t'] <- sum(w*x)/sum(w)
+        out$mean['s[t]'] <- 1/sqrt(sum(w))
+        SS <- sum(((x-out$mean['t'])/sx)^2)
         out$mswd <- SS/out$df
         out$p.value <- 1-stats::pchisq(SS,out$df)
-        out$mean['ci[x]'] <- tfact(alpha,out$df)*out$mean['s[x]']
-        out$mean['disp[x]'] <- sqrt(out$mswd)*out$mean['ci[x]']
+        out$mean['ci[t]'] <- tfact(alpha,out$df)*out$mean['s[t]']
+        out$mean['disp[t]'] <- sqrt(out$mswd)*out$mean['ci[t]']
         out$valid <- valid
     }
     plotpar <- list()
-    plotpar$mean <- list(x=c(0,ns+1),y=rep(out$mean['x'],2))
+    plotpar$mean <- list(x=c(0,ns+1),y=rep(out$mean['t'],2))
     plotpar$ci <- list(x=c(0,ns+1,ns+1,0),
-                       y=c(rep(out$mean['x']+out$mean['ci[x]'],2),
-                           rep(out$mean['x']-out$mean['ci[x]'],2)))
+                       y=c(rep(out$mean['t']+out$mean['ci[t]'],2),
+                           rep(out$mean['t']-out$mean['ci[t]'],2)))
     plotpar$ci.exterr <- NA # to be defined later
     if (random.effects){
-        plotpar$dash1 <- list(x=c(0,ns+1),y=rep(out$mean['x']+nfact(alpha)*out$disp['w'],2))
-        plotpar$dash2 <- list(x=c(0,ns+1),y=rep(out$mean['x']-nfact(alpha)*out$disp['w'],2))
+        plotpar$dash1 <- list(x=c(0,ns+1),y=rep(out$mean['t']+nfact(alpha)*out$disp['s'],2))
+        plotpar$dash2 <- list(x=c(0,ns+1),y=rep(out$mean['t']-nfact(alpha)*out$disp['s'],2))
     }
     out$plotpar <- plotpar
-    SS <- sum(((x-out$mean['x'])/sx)^2)
-    out$mswd <- SS/out$df
-    out$p.value <- 1-stats::pchisq(SS,out$df)
     out$valid <- valid
     out
 }
 
 wtdmean.title <- function(fit,sigdig=2,units='',...){
     if (fit$random.effects){
-        rounded.mean <- roundit(fit$mean['x'],
-                                fit$mean[c('s[x]','ci[x]')],
+        rounded.mean <- roundit(fit$mean['t'],
+                                fit$mean[c('s[t]','ci[t]')],
                                 sigdig=sigdig)
         line1 <- substitute('mean ='~a%+-%b~'|'~c~u~'(n='*n/N*')',
-                            list(a=rounded.mean['x'],
-                                 b=rounded.mean['s[x]'],
-                                 c=rounded.mean['ci[x]'],
+                            list(a=rounded.mean['t'],
+                                 b=rounded.mean['s[t]'],
+                                 c=rounded.mean['ci[t]'],
                                  u=units,
                                  n=sum(fit$valid),
                                  N=length(fit$valid)))
-        rounded.disp <- roundit(fit$disp['w'],
+        rounded.disp <- roundit(fit$disp['s'],
                                 fit$disp[c('ll','ul')],
                                 sigdig=sigdig)
         line3 <- substitute('dispersion ='~a+b/-c~u,
-                            list(a=rounded.disp['w'],
+                            list(a=rounded.disp['s'],
                                  b=rounded.disp['ul'],
                                  c=rounded.disp['ll'],
                                  u=units))
@@ -631,14 +637,14 @@ wtdmean.title <- function(fit,sigdig=2,units='',...){
         line1line <- 2
         line2line <- 1
     } else {
-        rounded.mean <- roundit(fit$mean['x'],
-                                fit$mean[c('s[x]','ci[x]','disp[x]')],
+        rounded.mean <- roundit(fit$mean['t'],
+                                fit$mean[c('s[t]','ci[t]','disp[t]')],
                                 sigdig=sigdig)
         line1 <- substitute('mean ='~a%+-%b~'|'~c~'|'~d~u~'(n='*n/N*')',
-                            list(a=rounded.mean['x'],
-                                 b=rounded.mean['s[x]'],
-                                 c=rounded.mean['ci[x]'],
-                                 d=rounded.mean['disp[x]'],
+                            list(a=rounded.mean['t'],
+                                 b=rounded.mean['s[t]'],
+                                 c=rounded.mean['ci[t]'],
+                                 d=rounded.mean['disp[t]'],
                                  u=units,
                                  n=sum(fit$valid),
                                  N=length(fit$valid)))
@@ -680,11 +686,11 @@ plot_weightedmean <- function(X,sX,fit,from=NA,to=NA,levels=NA,clabel="",
     }
     fact <- nfact(alpha)
     if (is.na(from))
-        minx <- min(c(x-fact*sx,x-fact*fit$disp['w']),na.rm=TRUE)
+        minx <- min(c(x-fact*sx,x-fact*fit$disp['s']),na.rm=TRUE)
     else
         minx <- from
     if (is.na(to))
-        maxx <- max(c(x+fact*sx,x+fact*fit$disp['w']),na.rm=TRUE)
+        maxx <- max(c(x+fact*sx,x+fact*fit$disp['s']),na.rm=TRUE)
     else
         maxx <- to
     graphics::plot(c(0,ns+1),c(minx,maxx),type='n',
@@ -721,37 +727,49 @@ plot_weightedmean <- function(X,sX,fit,from=NA,to=NA,levels=NA,clabel="",
 chauvenet <- function(X,sX,valid,random.effects=TRUE){
     if (sum(valid)<2) return(valid)
     fit <- get.weightedmean(X,sX,random.effects=random.effects,valid=valid)
-    mu <- fit$mean[1]
-    if (random.effects) sigma <- sqrt(fit$disp[1]^2 + sX^2)
-    else sigma <- sqrt(fit$mean[2]^2 + max(1,fit$mswd)*sX^2)
-    # max(1,mswd) is an ad hoc solution to avoid
-    # dealing with underdispersed datasets
-    prob <- 2*(1-stats::pnorm(abs(X-mu),sd=sigma))
-    prob[!valid] <- NA
-    imin <- which.min(prob)
-    minp <- prob[imin]
+    if (random.effects){
+        if (all(X>0,na.rm=TRUE)){
+            x <- log(X)
+            mu <- log(fit$mean[1])
+            sigma <- sqrt((fit$disp[1]/fit$mean[1])^2 + (sX/X)^2)
+        } else {
+            x <- X
+            mu <- fit$mean[1]
+            sigma <- sqrt(fit$disp[1]^2 + sX^2)
+        }
+    } else {
+        x <- X
+        mu <- fit$mean[1]
+        sigma <- sqrt(fit$mean[2]^2 + max(1,fit$mswd)*sX^2)
+        # max(1,mswd) is an ad hoc solution to avoid
+        # dealing with underdispersed datasets
+    }
+    misfit <- abs(x-mu)/sigma
+    prob <- 2*(1-stats::pnorm(misfit))
+    iworst <- which.max(misfit[valid])
+    minp <- prob[iworst]
     ns <- length(which(valid))
     if (ns*minp < 0.5) {
-        valid[imin] <- FALSE # remove outlier
+        valid[iworst] <- FALSE # remove outlier
     } 
     valid
 }
 
 add.exterr.to.wtdmean <- function(x,fit,cutoff.76=1100,type=4){
     out <- fit
-    out$mean[c('x','s[x]')] <-
-        add.exterr(x,tt=fit$mean['x'],st=fit$mean['s[x]'],
+    out$mean[c('t','s[t]')] <-
+        add.exterr(x,tt=fit$mean['t'],st=fit$mean['s[t]'],
                    cutoff.76=cutoff.76,type=type)
     if (fit$random.effects){
-        out$mean['ci[x]'] <- nfact(fit$alpha)*out$mean['s[x]']
+        out$mean['ci[t]'] <- nfact(fit$alpha)*out$mean['s[t]']
     } else {
-        out$mean['ci[x]'] <- tfact(fit$alpha,fit$df)*out$mean['s[x]']
-        out$mean['disp[x]'] <- sqrt(fit$mswd)*out$mean['ci[x]']
+        out$mean['ci[t]'] <- tfact(fit$alpha,fit$df)*out$mean['s[t]']
+        out$mean['disp[t]'] <- sqrt(fit$mswd)*out$mean['ci[t]']
     }
     ns <- length(x)
     ci.exterr <- list(x=c(0,ns+1,ns+1,0),
-                      y=c(rep(out$mean['x']+out$mean['ci[x]'],2),
-                          rep(out$mean['x']-out$mean['ci[x]'],2)))
+                      y=c(rep(out$mean['t']+out$mean['ci[t]'],2),
+                          rep(out$mean['t']-out$mean['ci[t]'],2)))
     out$plotpar$ci.exterr <- ci.exterr
     out
 }

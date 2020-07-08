@@ -19,95 +19,289 @@
 \usage{
 weightedmean(x, ...)
 
-\method{weightedmean}{default}(x, from = NA, to = NA,
-  random.effects = TRUE, detect.outliers = TRUE, plot = TRUE,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  ranked = FALSE, hide = NULL, omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{default}(
+  x,
+  from = NA,
+  to = NA,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  ranked = FALSE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{UPb}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, type = 4,
-  cutoff.76 = 1100, alpha = 0.05, cutoff.disc = list(-15, 5, TRUE),
-  exterr = TRUE, ranked = FALSE, common.Pb = 0, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{UPb}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  type = 4,
+  cutoff.76 = 1100,
+  alpha = 0.05,
+  cutoff.disc = discfilter(),
+  exterr = TRUE,
+  ranked = FALSE,
+  common.Pb = 0,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{PbPb}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, common.Pb = 2, ranked = FALSE, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{PbPb}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  common.Pb = 2,
+  ranked = FALSE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{ThU}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  ranked = FALSE, i2i = TRUE, detritus = 0, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{ThU}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  ranked = FALSE,
+  i2i = TRUE,
+  detritus = 0,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{ArAr}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, ranked = FALSE, i2i = FALSE, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{ArAr}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  ranked = FALSE,
+  i2i = FALSE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{KCa}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, ranked = FALSE, i2i = FALSE, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{KCa}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  ranked = FALSE,
+  i2i = FALSE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{ThPb}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, ranked = FALSE, i2i = TRUE, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{ThPb}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  ranked = FALSE,
+  i2i = TRUE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{ReOs}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, ranked = FALSE, i2i = TRUE, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{ReOs}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  ranked = FALSE,
+  i2i = TRUE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{SmNd}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, ranked = FALSE, i2i = TRUE, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{SmNd}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  ranked = FALSE,
+  i2i = TRUE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{RbSr}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, i2i = TRUE, ranked = FALSE, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{RbSr}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  i2i = TRUE,
+  ranked = FALSE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{LuHf}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, i2i = TRUE, ranked = FALSE, hide = NULL,
-  omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{LuHf}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  i2i = TRUE,
+  ranked = FALSE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{UThHe}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  ranked = FALSE, hide = NULL, omit = NULL, omit.col = NA, ...)
+\method{weightedmean}{UThHe}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  ranked = FALSE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{weightedmean}{fissiontracks}(x, random.effects = TRUE,
-  detect.outliers = TRUE, plot = TRUE, from = NA, to = NA,
-  levels = NA, clabel = "", rect.col = c("#00FF0080", "#FF000080"),
-  outlier.col = "#00FFFF80", sigdig = 2, alpha = 0.05,
-  exterr = TRUE, ranked = FALSE, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{weightedmean}{fissiontracks}(
+  x,
+  random.effects = TRUE,
+  detect.outliers = TRUE,
+  plot = TRUE,
+  from = NA,
+  to = NA,
+  levels = NA,
+  clabel = "",
+  rect.col = c("#00FF0080", "#FF000080"),
+  outlier.col = "#00FFFF80",
+  sigdig = 2,
+  alpha = 0.05,
+  exterr = TRUE,
+  ranked = FALSE,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 }
 \arguments{
 \item{x}{a two column matrix of values (first column) and their
@@ -196,21 +390,8 @@ aliquots.}
 \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 only used if \code{type=4}.}
 
-\item{cutoff.disc}{discordance cutoff filter. This is a three
-    element list.
-
-The first two items contain the minimum (negative) and maximum
-(positive) percentage discordance allowed between the
-\eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U age
-(if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
-\eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb age
-(if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).
-
-The third item is a boolean flag that controls whether the
-discordance filter should be applied before (\code{TRUE}) or after
-(\code{FALSE}) the common-Pb correction.
-
-Set \code{cutoff.disc=NA} to turn off this filter.}
+\item{cutoff.disc}{discordance cutoff filter. This is an object of
+class \code{discfilter}}
 
 \item{exterr}{propagate decay constant uncertainties?}
 
@@ -269,12 +450,12 @@ Returns a list with the following items:
 
 \item{mean}{a three element vector with:
 
-\code{x}: the weighted mean
+\code{t}: the weighted mean
 
-\code{s[x]}: the standard error of the weighted mean
+\code{s[t]}: the standard error of the weighted mean
 
-\code{ci[x]}: the \eqn{100(1-\alpha)\%} confidence interval for
-\code{x}
+\code{ci[t]}: the \eqn{100(1-\alpha)\%} confidence interval for
+\code{t}
 
 }
 
@@ -318,16 +499,27 @@ Let \eqn{\{t_1, ..., t_n\}} be a set of n age estimates
 determined on different aliquots of the same sample, and let
 \eqn{\{s[t_1], ..., s[t_n]\}} be their analytical
 uncertainties. \code{IsoplotR} then calculates the weighted mean of
-these data assuming a Normal distribution with two sources of
-variance:
+these data using one of two methods:
 
-\eqn{t_i \sim N(\mu, \sigma^2 = s[t_i]^2 + \omega^2 )}
+\enumerate{
+
+\item The ordinary error-weighted mean:
+
+\eqn{\mu = \sum(t_i/s[t_i]^2)/\sum(1/s[t_i]^2)}
+
+\item A random effects model with two sources of variance:
+
+\eqn{\log[t_i] \sim N(\log[\mu], \sigma^2 = (s[t_i]/t_i)^2 + \omega^2 )}
 
 where \eqn{\mu} is the mean, \eqn{\sigma^2} is the total variance
 and \eqn{\omega} is the 'overdispersion'. This equation can be
 solved for \eqn{\mu} and \eqn{\omega} by the method of maximum
-likelihood. IsoplotR uses a modified version of Chauvenet's
-criterion for outlier detection:
+likelihood.
+
+}
+
+IsoplotR uses a modified version of Chauvenet's criterion for
+outlier detection:
 
 \enumerate{
 
@@ -336,8 +528,9 @@ age determinations \eqn{t_i} using their analytical uncertainties
 \eqn{s[t_i]}
 
 \item For each \eqn{t_i}, compute the probability \eqn{p_i} that
-that \eqn{|t-\mu|>|t_i-\mu|} for \eqn{t \sim
-N(0,\sqrt{s[t_i]^2+\omega^2) }}
+that \eqn{|t-\mu|>|t_i-\mu|} for \eqn{t \sim N(\mu, s[t_i]^2 MSWD)}
+(ordinary weighted mean) or \eqn{\log[t] \sim
+N(\log[\mu],s[t_i]^2+\omega^2)} (random effects model)
 
 \item Let \eqn{p_j \equiv \min(p_1, ..., p_n)}. If
 \eqn{p_j<0.05/n}, then reject the j\eqn{^{th}} date, reduce \eqn{n}

@@ -19,93 +19,316 @@
 \usage{
 radialplot(x, ...)
 
-\method{radialplot}{default}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", sigdig = 2, show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", k = 0, markers = NULL, alpha = 0.05, units = "",
-  hide = NA, omit = NA, omit.col = NA, ...)
+\method{radialplot}{default}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  transformation = "log",
+  sigdig = 2,
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  k = 0,
+  markers = NULL,
+  alpha = 0.05,
+  units = "",
+  hide = NA,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{fissiontracks}(x, from = NA, to = NA, t0 = NA,
-  transformation = "arcsin", sigdig = 2, show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  alpha = 0.05, hide = NULL, omit = NULL, omit.col = NA, ...)
+\method{radialplot}{fissiontracks}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  transformation = "arcsin",
+  sigdig = 2,
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{UPb}(x, from = NA, to = NA, t0 = NA,
-  transformation = "log", type = 4, cutoff.76 = 1100,
-  cutoff.disc = list(-15, 5, TRUE), show.numbers = FALSE, pch = 21,
-  sigdig = 2, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  common.Pb = 0, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{UPb}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  transformation = "log",
+  type = 4,
+  cutoff.76 = 1100,
+  cutoff.disc = discfilter(),
+  show.numbers = FALSE,
+  pch = 21,
+  sigdig = 2,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  common.Pb = 0,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{PbPb}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  common.Pb = 2, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{PbPb}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  common.Pb = 2,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{ArAr}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  i2i = FALSE, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{ArAr}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  i2i = FALSE,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{KCa}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  i2i = FALSE, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{KCa}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  i2i = FALSE,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{ThPb}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{ThPb}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{UThHe}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, alpha = 0.05,
-  hide = NULL, omit = NULL, omit.col = NA, ...)
+\method{radialplot}{UThHe}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{ReOs}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{ReOs}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{SmNd}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{SmNd}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{RbSr}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{RbSr}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{LuHf}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, exterr = TRUE,
-  i2i = TRUE, alpha = 0.05, hide = NULL, omit = NULL,
-  omit.col = NA, ...)
+\method{radialplot}{LuHf}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  exterr = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 
-\method{radialplot}{ThU}(x, from = NA, to = NA, t0 = NA,
-  sigdig = 2, transformation = "log", show.numbers = FALSE,
-  pch = 21, levels = NA, clabel = "", bg = c("yellow", "red"),
-  col = "black", markers = NULL, k = 0, i2i = TRUE, alpha = 0.05,
-  detritus = 0, hide = NULL, omit = NULL, omit.col = NA, ...)
+\method{radialplot}{ThU}(
+  x,
+  from = NA,
+  to = NA,
+  t0 = NA,
+  sigdig = 2,
+  transformation = "log",
+  show.numbers = FALSE,
+  pch = 21,
+  levels = NA,
+  clabel = "",
+  bg = c("yellow", "red"),
+  col = "black",
+  markers = NULL,
+  k = 0,
+  i2i = TRUE,
+  alpha = 0.05,
+  detritus = 0,
+  hide = NULL,
+  omit = NULL,
+  omit.col = NA,
+  ...
+)
 }
 \arguments{
 \item{x}{Either an \code{[nx2]} matix of (transformed) values z
@@ -204,21 +427,8 @@ the error propagation for the central age and mixture models?}
 \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 only used if \code{type=4}.}
 
-\item{cutoff.disc}{discordance cutoff filter. This is a three
-    element list.
-
-The first two items contain the minimum (negative) and maximum
-(positive) percentage discordance allowed between the
-\eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U age
-(if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
-\eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb age
-(if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).
-
-The third item is a boolean flag that controls whether the
-discordance filter should be applied before (\code{TRUE}) or after
-(\code{FALSE}) the common-Pb correction.
-
-Set \code{cutoff.disc=NA} to turn off this filter.}
+\item{cutoff.disc}{discordance cutoff filter. This is an object of
+class \code{\link{discfilter}}.}
 
 \item{common.Pb}{common lead correction:
 
@@ -281,10 +491,10 @@ constructed as follows.  Consider a set of dates
 to be a transformation of \eqn{t_i} (e.g., \eqn{z_i = log[t_i]}),
 and let \eqn{s[z_i]} be its propagated analytical uncertainty
 (i.e., \eqn{s[z_i] = s[t_i]/t_i} in the case of a logarithmic
-transformation). Create a scatterplot of \eqn{(x_i,y_i)} values,
+transformation). Create a scatter plot of \eqn{(x_i,y_i)} values,
 where \eqn{x_i = 1/s[z_i]} and \eqn{y_i = (z_i-z_\circ)/s[z_i]},
 where \eqn{z_\circ} is some reference value such as the mean. The
-slope of a line connecting the origin of this scatterplot with any
+slope of a line connecting the origin of this scatter plot with any
 of the \eqn{(x_i,y_i)}s is proportional to \eqn{z_i} and, hence,
 the date \eqn{t_i}.  These dates can be more easily visualised by
 drawing a radial scale at some convenient distance from the origin

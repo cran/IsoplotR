@@ -19,45 +19,125 @@
 \usage{
 peakfit(x, ...)
 
-\method{peakfit}{default}(x, k = "auto", sigdig = 2, log = TRUE,
-  alpha = 0.05, ...)
+\method{peakfit}{default}(x, k = "auto", sigdig = 2, log = TRUE, alpha = 0.05, ...)
 
-\method{peakfit}{fissiontracks}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, alpha = 0.05, ...)
+\method{peakfit}{fissiontracks}(x, k = 1, exterr = TRUE, sigdig = 2, log = TRUE, alpha = 0.05, ...)
 
-\method{peakfit}{UPb}(x, k = 1, type = 4, cutoff.76 = 1100,
-  cutoff.disc = list(-15, 5, TRUE), common.Pb = 0, exterr = TRUE,
-  sigdig = 2, log = TRUE, alpha = 0.05, ...)
+\method{peakfit}{UPb}(
+  x,
+  k = 1,
+  type = 4,
+  cutoff.76 = 1100,
+  cutoff.disc = discfilter(),
+  common.Pb = 0,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{PbPb}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, common.Pb = 0, alpha = 0.05, ...)
+\method{peakfit}{PbPb}(
+  x,
+  k = 1,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  common.Pb = 0,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{ArAr}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, i2i = FALSE, alpha = 0.05, ...)
+\method{peakfit}{ArAr}(
+  x,
+  k = 1,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  i2i = FALSE,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{ThPb}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, i2i = FALSE, alpha = 0.05, ...)
+\method{peakfit}{ThPb}(
+  x,
+  k = 1,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  i2i = FALSE,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{KCa}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, i2i = FALSE, alpha = 0.05, ...)
+\method{peakfit}{KCa}(
+  x,
+  k = 1,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  i2i = FALSE,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{ReOs}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, i2i = TRUE, alpha = 0.05, ...)
+\method{peakfit}{ReOs}(
+  x,
+  k = 1,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{SmNd}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, i2i = TRUE, alpha = 0.05, ...)
+\method{peakfit}{SmNd}(
+  x,
+  k = 1,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{RbSr}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, i2i = TRUE, alpha = 0.05, ...)
+\method{peakfit}{RbSr}(
+  x,
+  k = 1,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{LuHf}(x, k = 1, exterr = TRUE, sigdig = 2,
-  log = TRUE, i2i = TRUE, alpha = 0.05, ...)
+\method{peakfit}{LuHf}(
+  x,
+  k = 1,
+  exterr = TRUE,
+  sigdig = 2,
+  log = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  ...
+)
 
-\method{peakfit}{ThU}(x, k = 1, exterr = FALSE, sigdig = 2,
-  log = TRUE, i2i = TRUE, alpha = 0.05, detritus = 0, ...)
+\method{peakfit}{ThU}(
+  x,
+  k = 1,
+  exterr = FALSE,
+  sigdig = 2,
+  log = TRUE,
+  i2i = TRUE,
+  alpha = 0.05,
+  detritus = 0,
+  ...
+)
 
-\method{peakfit}{UThHe}(x, k = 1, sigdig = 2, log = TRUE,
-  alpha = 0.05, ...)
+\method{peakfit}{UThHe}(x, k = 1, sigdig = 2, log = TRUE, alpha = 0.05, ...)
 }
 \arguments{
 \item{x}{either an \code{[nx2]} matrix with measurements and their
@@ -97,19 +177,8 @@ the component age errors?}
 \eqn{^{207}}Pb/\eqn{^{206}}Pb age is used. This parameter is
 only used if \code{type=4}.}
 
-\item{cutoff.disc}{discordance cutoff filter. This is a three
-    element list.
-
-The first two items contain the minimum (negative) and maximum
-(positive) percentage discordance allowed between the
-\eqn{^{207}}Pb/\eqn{^{235}}U and \eqn{^{206}}Pb/\eqn{^{238}}U age
-(if \eqn{^{206}}Pb/\eqn{^{238}}U < \code{cutoff.76}) or between the
-\eqn{^{206}}Pb/\eqn{^{238}}U and \eqn{^{207}}Pb/\eqn{^{206}}Pb age
-(if \eqn{^{206}}Pb/\eqn{^{238}}U > \code{cutoff.76}).
-
-The third item is a boolean flag that controls whether the
-discordance filter should be applied before (\code{TRUE}) or after
-(\code{FALSE}) the common-Pb correction.}
+\item{cutoff.disc}{discordance cutoff filter. This is an object of
+class \code{\link{discfilter}}.}
 
 \item{common.Pb}{common lead correction:
 

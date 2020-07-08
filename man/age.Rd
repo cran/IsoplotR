@@ -19,45 +19,58 @@
 \usage{
 age(x, ...)
 
-\method{age}{default}(x, method = "U238-Pb206", exterr = TRUE,
-  J = c(NA, NA), zeta = c(NA, NA), rhoD = c(NA, NA), d = diseq(),
-  ...)
+\method{age}{default}(
+  x,
+  method = "U238-Pb206",
+  exterr = TRUE,
+  J = c(NA, NA),
+  zeta = c(NA, NA),
+  rhoD = c(NA, NA),
+  d = diseq(),
+  ...
+)
 
-\method{age}{UPb}(x, type = 1, exterr = TRUE, i = NA, sigdig = NA,
-  common.Pb = 0, show.p = FALSE, ...)
+\method{age}{UPb}(
+  x,
+  type = 1,
+  exterr = TRUE,
+  i = NA,
+  sigdig = NA,
+  common.Pb = 0,
+  discordance = discfilter(),
+  ...
+)
 
-\method{age}{PbPb}(x, isochron = TRUE, common.Pb = 2, exterr = TRUE,
-  i = NA, sigdig = NA, ...)
+\method{age}{PbPb}(x, isochron = TRUE, common.Pb = 2, exterr = TRUE, i = NA, sigdig = NA, ...)
 
-\method{age}{ArAr}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, ...)
+\method{age}{ArAr}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE, i = NA, sigdig = NA, ...)
 
-\method{age}{KCa}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, ...)
+\method{age}{KCa}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE, i = NA, sigdig = NA, ...)
 
-\method{age}{UThHe}(x, isochron = FALSE, central = FALSE, i = NA,
-  sigdig = NA, ...)
+\method{age}{UThHe}(x, isochron = FALSE, central = FALSE, i = NA, sigdig = NA, ...)
 
-\method{age}{fissiontracks}(x, central = FALSE, i = NA, sigdig = NA,
-  exterr = TRUE, ...)
+\method{age}{fissiontracks}(x, central = FALSE, i = NA, sigdig = NA, exterr = TRUE, ...)
 
-\method{age}{ThU}(x, isochron = FALSE, i2i = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, detritus = 0, ...)
+\method{age}{ThU}(
+  x,
+  isochron = FALSE,
+  i2i = TRUE,
+  exterr = TRUE,
+  i = NA,
+  sigdig = NA,
+  detritus = 0,
+  ...
+)
 
-\method{age}{ThPb}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, ...)
+\method{age}{ThPb}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE, i = NA, sigdig = NA, ...)
 
-\method{age}{ReOs}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, ...)
+\method{age}{ReOs}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE, i = NA, sigdig = NA, ...)
 
-\method{age}{SmNd}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, ...)
+\method{age}{SmNd}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE, i = NA, sigdig = NA, ...)
 
-\method{age}{RbSr}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, ...)
+\method{age}{RbSr}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE, i = NA, sigdig = NA, ...)
 
-\method{age}{LuHf}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE,
-  i = NA, sigdig = NA, ...)
+\method{age}{LuHf}(x, isochron = TRUE, i2i = TRUE, exterr = TRUE, i = NA, sigdig = NA, ...)
 }
 \arguments{
 \item{x}{can be:
@@ -177,12 +190,29 @@ estimate (only used if \code{type=1}, \code{isochron=FALSE} and
 \code{3}: use the Stacey-Kramer two-stage model to infer the initial
 Pb-composition}
 
-\item{show.p}{Show the p-value for concordance for each aliquot to
-the output table. Note: it would be unwise to use the p-value
-value as a concordance filter. Doing so would `punish' high
-precision measurements, which are more likely to fail the
-Chi-square test than low precision measurements. The latter
-would therefore be `rewarded' by such a criterion.}
+\item{discordance}{discordance calculator. This is an object of
+    class \code{\link{discfilter}}, or a two element list
+    containing:
+
+\code{option}: one of
+
+\code{1} or \code{'t'} (absolute age filter);
+
+\code{2} or \code{'r'} (relative age filter);
+
+\code{3} or \code{'sk'} (Stacey-Kramers common Pb filter);
+
+\code{4} or \code{'a'} (perpendicular Aitchison distance);
+
+\code{5} or \code{'c'} (concordia distance);
+
+\code{6} or \code{'p'} (p-value of concordance); or
+
+\code{NA} (omit the discordance from the output)
+
+\code{before}: logical flag indicating whether the discordance
+should be calculated before (\code{TRUE}) or after (\code{FALSE})
+the common-Pb correction.}
 
 \item{isochron}{logical flag indicating whether each analysis
 should be considered separately (\code{isochron=FALSE}) or an

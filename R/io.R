@@ -8,7 +8,8 @@
 #'
 #' \itemize{
 #' \item{U-Pb: \code{UPb1.csv}, \code{UPb2.csv}, \code{UPb3.csv},
-#' \code{UPb4.csv}, \code{UPb5.csv}, \code{UPb6.csv}, \code{UPb7.csv}}
+#' \code{UPb4.csv}, \code{UPb5.csv}, \code{UPb6.csv},
+#' \code{UPb7.csv}, \code{UPb8.csv}}
 #' \item{Pb-Pb: \code{PbPb1.csv}, \code{PbPb2.csv}, \code{PbPb3.csv}}
 #' \item{Th-Pb: \code{ThPb1.csv}, \code{ThPb2.csv}, \code{ThPb3.csv}}
 #' \item{Ar-Ar: \code{ArAr1.csv}, \code{ArAr2.csv}, \code{ArAr3.csv}}
@@ -59,6 +60,10 @@
 #' \item{\code{07/35, err[07/35]}, \code{06/38, err[06/38]},
 #'       \code{04/38, err[04/38]}, \code{07/06, err[07/06]},
 #'       \code{04/07, err[04/07]}, \code{04/06, err[04/06]}}
+#' \item{\code{W=07/35, err[W]}, \code{X=06/38, err[X]},
+#'       \code{Y=08/32, err[Y]}, and \code{Z=32/38, err[Z]},
+#'       \code{rho[W,X], rho[W,Y]}, \code{rho[W,Z], rho[X,Y]},
+#'       \code{rho[X,Z], rho[Y,Z]}}
 #' \item{\code{W=38/06, err[W]}, \code{X=07/06, err[X]},
 #'       \code{Y=08/06, err[Y]}, and \code{Z=32/38, (err[Z]},
 #'       \code{rho[W,X], rho[W,Y]}, \code{rho[W,Z], rho[X,Y]},
@@ -405,6 +410,14 @@ as.UPb <- function(x,format=3,ierr=1,d=diseq()){
                     'Pb204Pb207','errPb204Pb207',
                     'Pb204Pb206','errPb204Pb206')
     } else if (format==7){
+        cnames <- c('Pb207U235','errPb207U235',
+                    'Pb206U238','errPb206U238',
+                    'Pb208Th232','errPb208Th232',
+                    'Th232U238','errTh232U238',
+                    'rhoXY','rhoXZ','rhoXW',
+                    'rhoYZ','rhoYW','rhoZW')
+        opt <- 8:14
+    } else if (format==8){
         cnames <- c('U238Pb206','errU238Pb206',
                     'Pb207Pb206','errPb207Pb206',
                     'Pb208Pb206','errPb208Pb206',
@@ -412,7 +425,8 @@ as.UPb <- function(x,format=3,ierr=1,d=diseq()){
                     'rhoXY','rhoXZ','rhoXW',
                     'rhoYZ','rhoYW','rhoZW')
         opt <- 8:14
-        #class(out) <- append('UThPb',class(out))
+    } else {
+        stop('Invalid input format')
     }
     X <- insert.data(x=X,cnames=cnames,opt=opt)
     out$x <- errconvert(X,gc='U-Pb',format=format,ierr=ierr)
@@ -858,7 +872,7 @@ getErrCols <- function(gc,format=NA,ierr=1){
     UPb12 = (gc=='U-Pb' && format%in%(1:2))
     UPb345 = (gc=='U-Pb' && format%in%(3:5))
     UPb6 = (gc=='U-Pb' && format==6)
-    UPb7 = (gc=='U-Pb' && format==7)
+    UPb78 = (gc=='U-Pb' && format%in%(7:8))
     PbPb12 = (gc=='Pb-Pb' && format%in%(1:2))
     PbPb3 = (gc=='Pb-Pb' && format==3)
     ArAr12 = (gc=='Ar-Ar' && format%in%(1:2))
@@ -878,7 +892,7 @@ getErrCols <- function(gc,format=NA,ierr=1){
         cols = c(2,4)
     } else if (UPb345 | PbPb3 | ArAr3 | KCa1 | PD1 | UThHe | ThU12){
         cols = c(2,4,6)
-    } else if (UPb7){
+    } else if (UPb78){
         cols = seq(from=2,to=8,by=2)
     } else if (UPb6){
         cols = seq(from=2,to=12,by=2)

@@ -9,17 +9,38 @@
 \usage{
 read.data(x, ...)
 
-\method{read.data}{default}(x, method = "U-Pb", format = 1, ierr = 1,
-  d = diseq(), Th02 = c(0, 0), Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0,
-  0, 0), ...)
+\method{read.data}{default}(
+  x,
+  method = "U-Pb",
+  format = 1,
+  ierr = 1,
+  d = diseq(),
+  Th02 = c(0, 0),
+  Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0),
+  ...
+)
 
-\method{read.data}{data.frame}(x, method = "U-Pb", format = 1,
-  ierr = 1, d = diseq(), Th02 = c(0, 0), Th02U48 = c(0, 0, 1e+06,
-  0, 0, 0, 0, 0, 0), ...)
+\method{read.data}{data.frame}(
+  x,
+  method = "U-Pb",
+  format = 1,
+  ierr = 1,
+  d = diseq(),
+  Th02 = c(0, 0),
+  Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0),
+  ...
+)
 
-\method{read.data}{matrix}(x, method = "U-Pb", format = 1, ierr = 1,
-  d = diseq(), Th02 = c(0, 0), Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0,
-  0, 0), ...)
+\method{read.data}{matrix}(
+  x,
+  method = "U-Pb",
+  format = 1,
+  ierr = 1,
+  d = diseq(),
+  Th02 = c(0, 0),
+  Th02U48 = c(0, 0, 1e+06, 0, 0, 0, 0, 0, 0),
+  ...
+)
 }
 \arguments{
 \item{x}{either a file name (\code{.csv} format) OR a matrix}
@@ -48,6 +69,10 @@ if \code{method='U-Pb'}, then \code{format} is one of either:
 \item{\code{07/35, err[07/35]}, \code{06/38, err[06/38]},
       \code{04/38, err[04/38]}, \code{07/06, err[07/06]},
       \code{04/07, err[04/07]}, \code{04/06, err[04/06]}}
+\item{\code{W=07/35, err[W]}, \code{X=06/38, err[X]},
+      \code{Y=08/32, err[Y]}, and \code{Z=32/38, err[Z]},
+      \code{rho[W,X], rho[W,Y]}, \code{rho[W,Z], rho[X,Y]},
+      \code{rho[X,Z], rho[Y,Z]}}
 \item{\code{W=38/06, err[W]}, \code{X=07/06, err[X]},
       \code{Y=08/06, err[Y]}, and \code{Z=32/38, (err[Z]},
       \code{rho[W,X], rho[W,Y]}, \code{rho[W,Z], rho[X,Y]},
@@ -267,7 +292,8 @@ IsoplotR provides the following example input files:
 
 \itemize{
 \item{U-Pb: \code{UPb1.csv}, \code{UPb2.csv}, \code{UPb3.csv},
-\code{UPb4.csv}, \code{UPb5.csv}, \code{UPb6.csv}, \code{UPb7.csv}}
+\code{UPb4.csv}, \code{UPb5.csv}, \code{UPb6.csv},
+\code{UPb7.csv}, \code{UPb8.csv}}
 \item{Pb-Pb: \code{PbPb1.csv}, \code{PbPb2.csv}, \code{PbPb3.csv}}
 \item{Th-Pb: \code{ThPb1.csv}, \code{ThPb2.csv}, \code{ThPb3.csv}}
 \item{Ar-Ar: \code{ArAr1.csv}, \code{ArAr2.csv}, \code{ArAr3.csv}}
