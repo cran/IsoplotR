@@ -1,4 +1,4 @@
-1cafd0089b78d424897ad5354f7a1513 *DESCRIPTION
+23ba40cae319f9b73387129b82fa5d67 *DESCRIPTION
 fb2088c4122a5be49ab62f2f0fdb1932 *NAMESPACE
 a9ca520ff6c02fabbf3490a9136e548a *R/ArAr.R
 096d192fcc1c3011881847b69ac0a235 *R/IsoplotR.R
@@ -23,7 +23,7 @@ c9c594f75a1039c6d71d19dfd0876d93 *R/UThPb.R
 f054d550257bcf7436fa4063e7035b3f *R/commonPb.R
 005e70fa9c888861f561b42df3616aba *R/concordia.R
 4628ee3edadfa7f560c378d9ac026810 *R/constants.R
-c5212203d66430879bac8e128439f290 *R/discfilter.R
+e4093ebaf66f0bf8b68dfa97540ee48c *R/discfilter.R
 5faa23c60954c5c8d5b150943479f17c *R/discordia.R
 4f5e29fb88c15cce9453d0dfe85c4cdc *R/diseq.R
 ff2d910d7638a0f9f459da899629589e *R/documentation.R
@@ -35,8 +35,8 @@ ff2d910d7638a0f9f459da899629589e *R/documentation.R
 ee9546cc683357f890c0855d31cd57b7 *R/io.R
 0a6f1c98b5089be908c7d775bcbabe55 *R/isochron.R
 84022d8c168a3129a7a17b8fb16d3102 *R/json.R
-a6eaa9b23949c1f74f16ab71948b5fa5 *R/kde.R
-c84e87bf389178da1eca157ad1fcabcd *R/ludwig.R
+60fd343afb60e8c0de98e8ac0f31f870 *R/kde.R
+cfc9c291dbb7113e3aff16a5961a87c8 *R/ludwig.R
 be05f6f0c3576859b493e7d42ba2f014 *R/mds.R
 f05a9809a9b0be6dd372cb0e75981290 *R/peakfit.R
 64e1d5c683e47d91b1a53c37fe95c02d *R/radialplot.R
@@ -47,7 +47,7 @@ f850edaad6e1e9a5a9076686b58d8741 *R/weightedmean.R
 88c815a58f89d9f76fbc41c1c2f0e666 *R/york.R
 cb6885240fca9c61b4e9b07ced8f187e *R/zzz.R
 31d2299a7d53bab2f00dd2c833c4b8ce *README.md
-91d65a325cd080bd0fb0713f854dbe47 *data/examples.rda
+03a73f27fc9174ef8487bda9ba175d00 *data/examples.rda
 b38a898fc665f1561317a7a976a036c2 *inst/ArAr1.csv
 1b6d0856aae7e7e240c4ba61eba6f982 *inst/ArAr2.csv
 7add1e4b75939562ad18d363487ea090 *inst/ArAr3.csv
@@ -116,7 +116,7 @@ a834c862cbc469ff9a9d9537203621dc *man/central.Rd
 f7d7c9c1d8a45e1400b34ec49d5f6140 *man/examples.Rd
 21583047b2cd5a8d9833b4b550c8234e *man/helioplot.Rd
 f0ed044f5d1b0745c9615fd5b8dd8e8c *man/isochron.Rd
-f46c0a95390f7d37be597b9b7b44c4cb *man/kde.Rd
+e2fefccc42f9b013802e963277318d24 *man/kde.Rd
 bbfbe61ab931d5e125efc189e3d842fa *man/ludwig.Rd
 3466198de0785ca62c8eaea209428873 *man/mclean.Rd
 b71544da0f834f5b9a137e8597214e2b *man/mds.Rd
