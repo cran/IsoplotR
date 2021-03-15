@@ -60,7 +60,7 @@ isochron(x, ...)
   exterr = FALSE,
   model = 1,
   show.ellipses = 1 * (model != 2),
-  anchor = list(FALSE, NA),
+  anchor = 0,
   hide = NULL,
   omit = NULL,
   omit.fill = NA,
@@ -407,8 +407,27 @@ aliquots.}
 \item{omit.stroke}{stroke colour that should be used for the
 omitted aliquots.}
 
-\item{type}{following the classification of
-Ludwig and Titterington (1994), one of either:
+\item{type}{if \code{x} has class \code{UPb} and \code{x$format=4}, \code{5} or 
+\code{6}:
+
+\code{1}: \eqn{^{204}}Pb/\eqn{^{206}}Pb vs. \eqn{^{238}}U/\eqn{^{206}}Pb
+
+\code{2}: \eqn{^{204}}Pb/\eqn{^{207}}Pb vs. \eqn{^{235}}U/\eqn{^{207}}Pb
+
+if \code{x} has class \code{UPb} and \code{x$format=7} or \code{8}:
+
+\code{1}: \eqn{^{208}}Pb\eqn{{}_\circ}/\eqn{^{206}}Pb vs. \eqn{^{238}}U/\eqn{^{206}}Pb
+
+\code{2}: \eqn{^{208}}Pb\eqn{{}_\circ}/\eqn{^{207}}Pb vs. \eqn{^{235}}U/\eqn{^{207}}Pb
+
+\code{3}: \eqn{^{206}}Pb\eqn{{}_\circ}/\eqn{^{208}}Pb
+vs. \eqn{^{232}}Th/\eqn{^{208}}Pb
+
+\code{4}: \eqn{^{207}}Pb\eqn{{}_\circ}/\eqn{^{208}}Pb
+vs. \eqn{^{232}}Th/\eqn{^{208}}Pb
+
+if \code{x} has class \code{ThU}, and following the classification
+of Ludwig and Titterington (1994), one of either:
 
 \code{1}: `Rosholt type-II' isochron, setting out
 \eqn{^{230}}Th/\eqn{^{232}}Th vs. \eqn{^{238}}U/\eqn{^{232}}Th
@@ -426,20 +445,15 @@ vs. \eqn{^{232}}Th/\eqn{^{238}}U}
 (J, decay constant)?}
 
 \item{anchor}{control parameters to fix the intercept age or common Pb
-composition of the isochron fit. This is a two-element list.
+composition of the isochron fit. This can be a scalar or a vector.
 
-The first element is a boolean flag indicating whether the
-isochron line should be anchored. If this is \code{FALSE}, then
-the second item is ignored and both the common Pb composition and
-age are estimated.
+If \code{anchor[1]=0}: do not anchor the isochron.
 
-If the first element is \code{TRUE} and the second element is
-\code{NA}, then the common Pb composition is fixed at the values
+If \code{anchor[1]=1}: fix the common Pb composition at the values
 stored in \code{settings('iratio',...)}.
 
-If the first element is \code{TRUE} and the second element is
-a number, then the isochron line is forced to intersect the
-concordia line at an age equal to that number.}
+If \code{anchor[1]=2}: force the isochron line to intersect the
+concordia line at an age equal to \code{anchor[2]}.}
 
 \item{inverse}{toggles between normal and inverse isochrons. If the
     isochron plots \code{Y} against \code{X}, and
@@ -667,14 +681,18 @@ intervals.}
 
 \item{y0}{a three or four-element vector containing:
 
-\code{y}: the initial \eqn{^{206}}Pb/\eqn{^{204}}U-ratio (if
+\code{y}: the initial \eqn{^{206}}Pb/\eqn{^{204}}Pb-ratio (if
 \code{type=1} and \code{x$format=4,5} or \code{6});
-\eqn{^{207}}Pb/\eqn{^{204}}U-ratio (if \code{type=2} and
+\eqn{^{207}}Pb/\eqn{^{204}}Pb-ratio (if \code{type=2} and
 \code{x$format=4,5} or \code{6});
-\eqn{^{208}}Pb/\eqn{^{206}}U-ratio (if \code{type=1} and
+\eqn{^{208}}Pb/\eqn{^{206}}Pb-ratio (if \code{type=1} and
+\code{x$format=7} or \code{8}); 
+\eqn{^{208}}Pb/\eqn{^{207}}Pb-ratio (if \code{type=2} and
+\code{x$format=7} or \code{8});
+\eqn{^{206}}Pb/\eqn{^{208}}Pb-ratio (if \code{type=3} and
 \code{x$format=7} or \code{8}); or
-\eqn{^{208}}Pb/\eqn{^{207}}U-ratio (if \code{type=2} and
-\code{x$format=7}).
+\eqn{^{207}}Pb/\eqn{^{208}}Pb-ratio (if \code{type=4} and
+\code{x$format=7} or \code{8}).
 
 \code{s[y]}: the propagated uncertainty of \code{y}
 
