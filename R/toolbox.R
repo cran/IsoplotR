@@ -1,88 +1,16 @@
-#' @export
-length.UPb  <- function(x){ nrow(x$x) }
-#' @export
-length.PbPb <- function(x){ nrow(x$x) }
-#' @export
-length.ArAr <- function(x){ nrow(x$x) }
-#' @export
-length.PD <- function(x){ nrow(x$x) }
-#' @export
-length.ThPb <- function(x){ nrow(x$x) }
-#' @export
-length.KCa <- function(x){ nrow(x$x) }
-#' @export
-length.ThU <- function(x){ nrow(x$x) }
-#' @export
-length.UThHe <- function(x){ nrow(x) }
-#' @export
-length.KDE <- function(x){ length(x$ages) }
-#' @export
-length.KDEs <- function(x){ length(x$kdes) }
-#' @export
-length.fissiontracks <- function(x){
-    if (x$format==1) return(nrow(x$x))
-    else return(length(x$Ns))
-}
-
-#' @export
-subset.UPb  <- function(x,...){
-    out <- x
-    out$x <- subset(x$x,...)
-    if ('x.raw' %in% names(x)){
-        out$x.raw <- subset(x$x.raw,...)
-    }
-    out
-}
-#' @export
-subset.PbPb <- function(x,...){ subset_helper(x,...) }
-#' @export
-subset.ArAr <- function(x,...){ subset_helper(x,...) }
-#' @export
-subset.ThPb <- function(x,...){ subset_helper(x,...) }
-#' @export
-subset.KCa <- function(x,...){ subset_helper(x,...) }
-#' @export
-subset.PD <- function(x,...){ subset_helper(x,...) }
-#' @export
-subset.ThU <- function(x,...){ subset_helper(x,...) }
-#' @export
-subset.detritals <- function(x,subset,...){
-    out <- x[subset]
-    class(out) <- class(x)
-    out
-}
-#' @export
-subset.UThHe <- function(x,...){
-    out <- subset.matrix(x,...)
-    class(out) <- class(x)
-    out
-}
-#' @export
-subset.fissiontracks <- function(x,...){
-    if (x$format==1){
-        out <- subset_helper(x,...)
-    } else {
-        out <- x
-        out$Ns <- subset(x$Ns,...)
-        out$A <- subset(x$A,...)
-        out$U <- subset(x$U,...)
-        out$sU <- subset(x$sU,...)
-    }
-    out
-}
-subset_helper <- function(x,...){
-    out <- x
-    out$x <- subset.matrix(x$x,...)
-    out
-}
-
-roundit <- function(age,err,sigdig=2){
+roundit <- function(age,err,sigdig=2,text=FALSE){
     if (missing(err)){
         if (is.na(sigdig)) out <- age
         else out <- signif(age,digits=sigdig)
+        nc <- 1
     } else {
-        if (length(age)==1) dat <- c(age,err)
-        else dat <- cbind(age,err)
+        if (length(age)==1){
+            dat <- c(age,err)
+            nc <- length(dat)
+        } else {
+            dat <- cbind(age,err)
+            nc <- ncol(dat)
+        }
         min.err <- min(abs(dat),na.rm=TRUE)
         if (is.na(sigdig)) {
             out <- dat
@@ -93,6 +21,10 @@ roundit <- function(age,err,sigdig=2){
             out <- format(dat,digits=sigdig,nsmall=nsmall,
                           trim=TRUE,scientific=FALSE)
         }
+    }
+    if (!text){
+        out <- matrix(as.numeric(out),ncol=nc)
+        if (nrow(out)==1) out <- as.vector(out)
     }
     out
 }
@@ -284,10 +216,6 @@ quotient <- function(X,sX,Y,sY,rXY){
     sYX <- errorprop1x2(J1=(-Y/X^2),J2=(1/X),
                         E11=(sX^2),E22=(sY^2),E12=(rXY*sX*sY))
     cbind(YX,sYX)
-}
-
-hasClass <- function(x,classname){
-    classname %in% class(x)
 }
 
 # negative multivariate log likelihood to be fed into R's optim function
@@ -485,7 +413,7 @@ optifix <- function(parms, fixed, fn, gr = NULL, ...,
 
 clear <- function(x,...){
     i <- unlist(list(...))
-    if (hasClass(x,'matrix')) sn <- 1:nrow(x)
+    if (is.matrix(x)) sn <- 1:nrow(x)
     else sn <- 1:length(x)
     if (length(i)>0) out <- subset(x,subset=sn%ni%i)
     else out <- x

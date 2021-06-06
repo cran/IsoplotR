@@ -74,7 +74,7 @@
 age <- function(x,...){ UseMethod("age",x) }
 #' @rdname age
 #' @export
-age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
+age.default <- function(x,method='U238-Pb206',exterr=FALSE,J=c(NA,NA),
                         zeta=c(NA,NA),rhoD=c(NA,NA),d=diseq(),...){
     if (length(x)==1) x <- c(x,0)
     if (identical(method,'U235-Pb207')){
@@ -236,16 +236,16 @@ age.default <- function(x,method='U238-Pb206',exterr=TRUE,J=c(NA,NA),
 #' @seealso \code{\link{concordia}}, \code{\link{isochron}},
 #'     \code{\link{central}}
 #' @examples
-#' data(examples)
-#' tUPb <- age(examples$UPb,type=1)
-#' tconc <- age(examples$UPb,type=2)
-#' tdisc <- age(examples$UPb,type=3)
-#' tArAr <- age(examples$ArAr)
-#' tiso <- age(examples$ArAr,isochron=TRUE,i2i=TRUE)
-#' tcentral <- age(examples$FT1,central=TRUE)
+#' attach(examples)
+#' tUPb <- age(UPb,type=1)
+#' tconc <- age(UPb,type=2)
+#' tdisc <- age(UPb,type=3)
+#' tArAr <- age(ArAr)
+#' tiso <- age(ArAr,isochron=TRUE,i2i=TRUE)
+#' tcentral <- age(FT1,central=TRUE)
 #' @rdname age
 #' @export
-age.UPb <- function(x,type=1,exterr=TRUE,i=NA,
+age.UPb <- function(x,type=1,exterr=FALSE,i=NA,
                     sigdig=NA,common.Pb=0,
                     discordance=discfilter(),...){
     if (type==1){
@@ -255,18 +255,26 @@ age.UPb <- function(x,type=1,exterr=TRUE,i=NA,
         X <- Pb0corr(x,option=common.Pb)
         out <- concordia.age(X,wetherill=TRUE,exterr=exterr)
     } else if (type %in% c(3,4,5)){
-        out <- concordia.intersection.ludwig(x,wetherill=FALSE,exterr=exterr,model=type-2)
+        out <- concordia.intersection.ludwig(x,wetherill=FALSE,
+                                             exterr=exterr,model=type-2)
     }
     out
 }
+#' @param projerr logical. If \code{TRUE}, propagates the uncertainty
+#'     of the non-radiogenic isotope correction (the `projection
+#'     error') into the age uncertainty. Note that the resulting
+#'     single grain age uncertainties may be strongly correlated with
+#'     each other, but these error correlations are not reported in
+#'     the output.
 #' @rdname age
 #' @export
-age.PbPb <- function(x,isochron=TRUE,common.Pb=2,
-                     exterr=TRUE,i=NA,sigdig=NA,...){
+age.PbPb <- function(x,isochron=TRUE,common.Pb=2,exterr=FALSE,
+                     i=NA,sigdig=NA,projerr=FALSE,...){
     if (isochron)
         out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
     else
-        out <- PbPb.age(x,exterr=exterr,i=i,sigdig=sigdig,common.Pb=common.Pb)
+        out <- PbPb.age(x,exterr=exterr,i=i,sigdig=sigdig,
+                        common.Pb=common.Pb,projerr=projerr)
     out
 }
 
@@ -291,16 +299,20 @@ age.PbPb <- function(x,isochron=TRUE,common.Pb=2,
 #'
 #' @rdname age
 #' @export
-age.ArAr <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
+age.ArAr <- function(x,isochron=FALSE,i2i=TRUE,exterr=FALSE,
+                     i=NA,sigdig=NA,projerr=FALSE,...){
     if (isochron) out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
-    else out <- ArAr.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
+    else out <- ArAr.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,projerr=projerr,...)
     out
 }
+
 #' @rdname age
 #' @export
-age.KCa <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
+age.KCa <- function(x,isochron=FALSE,i2i=TRUE,exterr=FALSE,
+                    i=NA,sigdig=NA,projerr=FALSE,...){
     if (isochron) out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
-    else out <- KCa.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
+    else out <- KCa.age(x,exterr=exterr,i=i,sigdig=sigdig,
+                        i2i=i2i,projerr=projerr,...)
     out
 }
 
@@ -345,46 +357,60 @@ age.fissiontracks <- function(x,central=FALSE,i=NA,sigdig=NA,exterr=TRUE,...){
 #' 
 #' @rdname age
 #' @export
-age.ThU <- function(x,isochron=FALSE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,detritus=0,...){
+age.ThU <- function(x,isochron=FALSE,i2i=TRUE,exterr=FALSE,
+                    i=NA,sigdig=NA,detritus=0,...){
     if (isochron) out <- isochron(x,plot=FALSE,exterr=exterr,sigdig=sigdig,...)
-    else out <- ThU.age(x,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,detritus=detritus,...)
+    else out <- ThU.age(x,exterr=exterr,i=i,sigdig=sigdig,
+                        i2i=i2i,detritus=detritus,...)
     out
 }
 #' @rdname age
 #' @export
-age.ThPb <-function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
-    age.PD(x,nuclide='Th232',isochron=isochron,i2i=i2i,exterr=exterr,i=i,sigdig=sigdig,...)
+age.ThPb <-function(x,isochron=TRUE,i2i=TRUE,exterr=FALSE,
+                    i=NA,sigdig=NA,projerr=FALSE,...){
+    age.PD(x,nuclide='Th232',isochron=isochron,i2i=i2i,
+           exterr=exterr,i=i,sigdig=sigdig,projerr=projerr,...)
 }
 #' @rdname age
 #' @export
-age.ReOs <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
-    age.PD(x,nuclide='Re187',isochron=isochron,i2i=i2i,exterr=exterr,i=i,sigdig=sigdig,...)
+age.ReOs <- function(x,isochron=TRUE,i2i=TRUE,exterr=FALSE,
+                     i=NA,sigdig=NA,projerr=FALSE,...){
+    age.PD(x,nuclide='Re187',isochron=isochron,i2i=i2i,
+           exterr=exterr,i=i,sigdig=sigdig,projerr=projerr,...)
 }
 #' @rdname age
 #' @export
-age.SmNd <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
-    age.PD(x,nuclide='Sm147',isochron=isochron,i2i=i2i,exterr=exterr,i=i,sigdig=sigdig,...)
+age.SmNd <- function(x,isochron=TRUE,i2i=TRUE,exterr=FALSE,
+                     i=NA,sigdig=NA,projerr=FALSE,...){
+    age.PD(x,nuclide='Sm147',isochron=isochron,i2i=i2i,
+           exterr=exterr,i=i,sigdig=sigdig,projerr=projerr,...)
 }
 #' @rdname age
 #' @export
-age.RbSr <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
-    age.PD(x,nuclide='Rb87',isochron=isochron,i2i=i2i,exterr=exterr,i=i,sigdig=sigdig,...)
+age.RbSr <- function(x,isochron=TRUE,i2i=TRUE,exterr=FALSE,
+                     i=NA,sigdig=NA,projerr=FALSE,...){
+    age.PD(x,nuclide='Rb87',isochron=isochron,i2i=i2i,
+           exterr=exterr,i=i,sigdig=sigdig,projerr=projerr,...)
 }
 #' @rdname age
 #' @export
-age.LuHf <- function(x,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
-    age.PD(x,nuclide='Lu176',isochron=isochron,i2i=i2i,exterr=exterr,i=i,sigdig=sigdig,...)
+age.LuHf <- function(x,isochron=TRUE,i2i=TRUE,exterr=FALSE,
+                     i=NA,sigdig=NA,projerr=FALSE,...){
+    age.PD(x,nuclide='Lu176',isochron=isochron,i2i=i2i,
+           exterr=exterr,i=i,sigdig=sigdig,projerr=projerr,...)
 }
-age.PD <- function(x,nuclide,isochron=TRUE,i2i=TRUE,exterr=TRUE,i=NA,sigdig=NA,...){
+age.PD <- function(x,nuclide,isochron=TRUE,i2i=TRUE,
+                   exterr=FALSE,i=NA,sigdig=NA,projerr=FALSE,...){
     if (isochron) out <- isochron(x,plot=FALSE,sigdig=sigdig)
-    else out <- PD.age(x,nuclide,exterr=exterr,i=i,sigdig=sigdig,i2i=i2i,...)
+    else out <- PD.age(x,nuclide,exterr=exterr,i=i,
+                       sigdig=sigdig,i2i=i2i,projerr=projerr,...)
     out
 }
 # tt and st are the age and error (scalars produced by peakfit or weightedmean)
 # calculated without taking into account the external errors
 add.exterr <- function(x,tt,st,cutoff.76=1100,type=4){
     out <- c(tt,st)
-    if (hasClass(x,'UPb')){
+    if (is.UPb(x)){
         if (type==1){
             R <- age_to_Pb207U235_ratio(tt,st,d=x$d)
             out <- get.Pb207U235.age(R[1],R[2],d=x$d,exterr=TRUE)
@@ -395,72 +421,167 @@ add.exterr <- function(x,tt,st,cutoff.76=1100,type=4){
             R <- age_to_Pb207Pb206_ratio(tt,st,d=x$d)
             out <- get.Pb207Pb206.age(R[1],R[2],d=x$d,exterr=TRUE)
         }
-    } else if (hasClass(x,'PbPb')){
+    } else if (is.PbPb(x)){
         R <- age_to_Pb207Pb206_ratio(tt,st)
         out <- get.Pb207Pb206.age(R[1],R[2],exterr=TRUE)
-    } else if (hasClass(x,'ArAr')){
+    } else if (is.ArAr(x)){
         R <- get.ArAr.ratio(tt,st,x$J[1],0,exterr=FALSE)
         out <- get.ArAr.age(R[1],R[2],x$J[1],x$J[2],exterr=TRUE)
-    } else if (hasClass(x,'KCa')){
+    } else if (is.KCa(x)){
         R <- get.KCa.ratio(tt,st,exterr=FALSE)
         out <- get.KCa.age(R[1],R[2],exterr=TRUE)
-    } else if (hasClass(x,'ReOs')){
+    } else if (is.ReOs(x)){
         R <- get.ReOs.ratio(tt,st,exterr=FALSE)
         out <- get.ReOs.age(R[1],R[2],exterr=TRUE)
-    } else if (hasClass(x,'SmNd')){
+    } else if (is.SmNd(x)){
         R <- get.SmNd.ratio(tt,st,exterr=FALSE)
         out <- get.SmNd.age(R[1],R[2],exterr=TRUE)
-    } else if (hasClass(x,'RbSr')){
+    } else if (is.RbSr(x)){
         R <- get.RbSr.ratio(tt,st,exterr=FALSE)
         out <- get.RbSr.age(R[1],R[2],exterr=TRUE)
-    } else if (hasClass(x,'LuHf')){
+    } else if (is.LuHf(x)){
         R <- get.LuHf.ratio(tt,st,exterr=FALSE)
         out <- get.LuHf.age(R[1],R[2],exterr=TRUE)
-    } else if (hasClass(x,'fissiontracks')){
+    } else if (is.fissiontracks(x)){
+        zeta <- c(1,0)
+        rhoD <- c(1,0)
+        Lf <- c(1,0)
         if (x$format==1) {
             rhoD <- x$rhoD
             zeta <- x$zeta
         } else if (x$format==2) {
-            rhoD <- c(1,0)
             zeta <- x$zeta
         } else {
-            rhoD <- c(1,0)
-            zeta <- c(1,0)
+            Lf <- lambda('fission')
         }
-        out[2] <- tt * sqrt( (st/tt)^2 + (rhoD[2]/rhoD[1])^2 + (zeta[2]/zeta[1])^2 )
+        out[2] <- tt * sqrt( (st/tt)^2 + (rhoD[2]/rhoD[1])^2 +
+                             (zeta[2]/zeta[1])^2 + (Lf[2]/Lf[1])^2 )
     }
     out
 }
 
 get.ages <- function(x,type=4,cutoff.76=1100,i2i=FALSE,omit4c=NULL,
                      cutoff.disc=discfilter(),common.Pb=0,detritus=0){
-    if (hasClass(x,'UPb')){
+    if (is.UPb(x)){
         out <- filter.UPb.ages(x,type=type,cutoff.76=cutoff.76,
                                cutoff.disc=cutoff.disc,omit4c=omit4c,
                                exterr=FALSE,common.Pb=common.Pb)
-    } else if (hasClass(x,'PbPb')){
+    } else if (is.PbPb(x)){
         out <- PbPb.age(x,exterr=FALSE,common.Pb=common.Pb,omit4c=omit4c)
-    } else if (hasClass(x,'ArAr')){
+    } else if (is.ArAr(x)){
         out <- ArAr.age(x,exterr=FALSE,i2i=i2i,omit4c=omit4c)
-    } else if (hasClass(x,'ThPb')){
+    } else if (is.ThPb(x)){
         out <- ThPb.age(x,exterr=FALSE,i2i=i2i,omit4c=omit4c)
-    } else if (hasClass(x,'KCa')){
+    } else if (is.KCa(x)){
         out <- KCa.age(x,exterr=FALSE,i2i=i2i,omit4c=omit4c)
-    } else if (hasClass(x,'UThHe')){
+    } else if (is.UThHe(x)){
         out <- UThHe.age(x)
-    } else if (hasClass(x,'ReOs')){
+    } else if (is.ReOs(x)){
         out <- ReOs.age(x,exterr=FALSE,i2i=i2i,omit4c=omit4c)
-    } else if (hasClass(x,'SmNd')){
+    } else if (is.SmNd(x)){
         out <- SmNd.age(x,exterr=FALSE,i2i=i2i,omit4c=omit4c)
-    } else if (hasClass(x,'RbSr')){
+    } else if (is.RbSr(x)){
         out <- RbSr.age(x,exterr=FALSE,i2i=i2i,omit4c=omit4c)
-    } else if (hasClass(x,'LuHf')){
+    } else if (is.LuHf(x)){
         out <- LuHf.age(x,exterr=FALSE,i2i=i2i,omit4c=omit4c)
-    } else if (hasClass(x,'fissiontracks')){
+    } else if (is.fissiontracks(x)){
         out <- fissiontrack.age(x,exterr=FALSE)
-    } else if (hasClass(x,'ThU')){
+    } else if (is.ThU(x)){
         out <- ThU.age(x,exterr=FALSE,i2i=i2i,
                        detritus=detritus,omit4c=omit4c)
+    }
+    out
+}
+
+#' @title Predict isotopic ratios from ages
+#' @description Groups a set of functions that take one (or more) ages
+#'     (and their uncertainties) as input and produces the U--Pb,
+#'     Th--Pb, Pb--Pb, Ar--Ar, K--Ca, Rb--Sr, Sm--Nd, Lu--Hf, Re--Os,
+#'     concordia or Stacey-Kramers ratios as output.
+#' @param tt a scalar or (except when \code{ratio} =
+#'     \code{'Wetherill'}, \code{'Tera-Wasserburg'} or
+#'     \code{'U-Th-Pb'}) vector of ages.
+#' @param st a scalar or (except when \code{ratio} =
+#'     \code{'Wetherill'}, \code{'Tera-Wasserburg'} or
+#'     \code{'U-Th-Pb'}) vector with the standard error(s) of
+#'     \code{tt}. Not used when \code{ratio} =
+#'     \code{'Stacey-Kramers'}.
+#' @param ratio one of \code{'Pb207U235'}, \code{'U238Pb206'},
+#'     \code{'Pb207Pb206'}, \code{'Pb208Th232'}, \code{'Wetherill'},
+#'     \code{'Tera-Wasserburg'}, \code{'U-Th-Pb'}, \code{'Ar40Ar39'},
+#'     \code{'Ca40K40'}, \code{'Hf176Lu176'}, \code{'Sr87Rb87'},
+#'     \code{'Os187Re187'}, \code{'Nd143Sm147'} or
+#'     \code{'Stacey-Kramers'}.
+#' @param exterr logical. If \code{TRUE}, propagates decay constant
+#'     uncertainties into \code{st}. Not used when \code{ratio} =
+#'     \code{'Stacey-Kramers'}.
+#' @param d an object of class \link{diseq}.
+#' @param J the J-factor of the Ar--Ar system (only used if
+#'     \code{ratio} is \code{'Ar40Ar39'}).
+#' @param sJ the standard error of \code{J} (only used if \code{ratio}
+#'     is \code{'Ar40Ar39'}).
+#' @return If \code{ratio} is \code{'Pb207U235'}, \code{'U238Pb206'},
+#'     \code{'Pb207Pb206'}, \code{'Pb208Th232'}, \code{'Ar40Ar39'},
+#'     \code{'Ca40K40'}, \code{'Hf176Lu176'}, \code{'Sr87Rb87'},
+#'     \code{'Os187Re187'} or \code{'Nd143Sm147'}: either a
+#'     two-element vector or a two-column matrix with the predicted
+#'     isotopic ratio(s) and its/their standard error(s).
+#'
+#' If \code{ratio} is \code{'Wetherill'}, \code{'Tera-Wasserburg'} or
+#'     \code{'U-Th-Pb'}: a two-element list containing
+#'
+#' \code{x}: the concordia ratios
+#'
+#' \code{cov}: the covariance matrix of the concordia ratios
+#'
+#' If \code{ratio} is \code{'Stacey-Kramers'}: a three-column matrix
+#' with predicted \eqn{^{206}}Pb/\eqn{^{204}}Pb,
+#' \eqn{^{207}}Pb/\eqn{^{204}}Pb and \eqn{^{208}}Pb/\eqn{^{204}}Pb
+#' ratios.
+#' 
+#' @examples
+#' ratios <- c('Pb207U235','U238Pb206','Pb207Pb206','Pb208Th232',
+#'             'Wetherill','Tera-Wasserburg','U-Th-Pb','Ar40Ar39',
+#'             'Ca40K40','Hf176Lu176','Sr87Rb87','Os187Re187',
+#'             'Nd143Sm147','Stacey-Kramers')
+#' for (ratio in ratios){
+#'      r <- age2ratio(tt=1000,st=10,ratio=ratio,J=1,sJ=0.1)
+#'      print(r)
+#' }
+#' @export
+age2ratio <- function(tt,st=0,ratio='Pb206U238',exterr=FALSE,d=diseq(),J,sJ){
+    if (ratio=='Pb206U238'){
+        out <- age_to_Pb206U238_ratio(tt,st,d=d,exterr=exterr)
+    } else if (ratio=='Pb207U235'){
+        out <- age_to_Pb207U235_ratio(tt,st,d=d,exterr=exterr)
+    } else if (ratio=='U238Pb206'){
+        out <- age_to_U238Pb206_ratio(tt,st,d=d,exterr=exterr)
+    } else if (ratio=='Pb207Pb206'){
+        out <- age_to_Pb207Pb206_ratio(tt,st,d=d,exterr=exterr)
+    } else if (ratio=='Pb208Th232'){
+        out <- age_to_Pb208Th232_ratio(tt,st,exterr=exterr)
+    } else if (ratio=='Wetherill'){
+        out <- age_to_wetherill_ratios(tt,st,d=d,exterr=exterr)
+    } else if (ratio=='Tera-Wasserburg'){
+        out <- age_to_terawasserburg_ratios(tt,st,d=d,exterr=exterr)
+    } else if (ratio=='U-Th-Pb'){
+        out <- age_to_cottle_ratios(tt,st,d=d,exterr=exterr)
+    } else if (ratio=='Ar40Ar39'){
+        out <- get.ArAr.ratio(tt,st,J=J,sJ=sJ,exterr=exterr)
+    } else if (ratio=='Ca40K40'){
+        out <- get.KCa.ratio(tt,st,exterr=exterr)
+    } else if (ratio=='Hf176Lu176'){
+        out <- get.LuHf.ratio(tt,st,exterr=exterr)
+    } else if (ratio=='Sr87Rb87'){
+        out <- get.RbSr.ratio(tt,st,exterr=exterr)
+    } else if (ratio=='Os187Re187'){
+        out <- get.ReOs.ratio(tt,st,exterr=exterr)
+    } else if (ratio=='Nd143Sm147'){
+        out <- get.SmNd.ratio(tt,st,exterr=exterr)
+    } else if (ratio=='Stacey-Kramers'){
+        out <- stacey.kramers(tt)
+    } else {
+        stop('Invalid ratio argument to age2ratio().')
     }
     out
 }

@@ -124,11 +124,11 @@
 #' @seealso \code{\link{isochron}}
 #'
 #' @examples
-#' data(examples)
-#' evolution(examples$ThU)
+#' attach(examples)
+#' evolution(ThU)
 #'
 #' dev.new()
-#' evolution(examples$ThU,transform=TRUE,
+#' evolution(ThU,transform=TRUE,
 #'           isochron=TRUE,model=1)
 #'
 #' @references Ludwig, K.R. and Titterington, D.M., 1994. Calculation
@@ -284,12 +284,12 @@ Th02vsU8Th2 <- function(x,isochron=FALSE,model=1,xlim=NULL,ylim=NULL,
     else
         graphics::text(X[2],X[2],'\U221E',pos=2,col=line.col)
     for (tick in ticks){ # plot isolines
-        Y <- get.Th230Th232(tick,Th230Th232_0x,X)
+        Y <- get.Th230Th232.ratio(tick,Th230Th232_0x,X)
         graphics::lines(X,Y,col=line.col,...)
         if (Y[2]<minY){
             # do nothing
         } else if (Y[2]>maxY){ # label below upper margin
-            xtext <- get.U238Th232(tick,Th230Th232_0x,maxY)
+            xtext <- get.U238Th232.ratio(tick,Th230Th232_0x,maxY)
             ytext <- maxY
             graphics::text(xtext,ytext,tick,pos=1,col=line.col)
         } else { # label to the left of the right margin
@@ -323,8 +323,8 @@ Th02vsU8Th2 <- function(x,isochron=FALSE,model=1,xlim=NULL,ylim=NULL,
 }
 
 evolution.title <- function(fit,sigdig=2,...){
-    rounded.age <- roundit(fit$age[1],fit$age[2:4],sigdig=sigdig)
-    rounded.a0 <- roundit(fit$y0[1],fit$y0[2:4],sigdig=sigdig)
+    rounded.age <- roundit(fit$age[1],fit$age[2:4],sigdig=sigdig,text=TRUE)
+    rounded.a0 <- roundit(fit$y0[1],fit$y0[2:4],sigdig=sigdig,text=TRUE)
     expr1 <- quote('isochron age =')
     list1 <- list(a=rounded.age[1],
                   b=rounded.age[2],
@@ -358,7 +358,7 @@ evolution.title <- function(fit,sigdig=2,...){
         mymtext(line1,line=1,...)
         mymtext(line2,line=0,...)
     } else if (fit$model==3) {
-        rounded.disp <- roundit(fit$w[1],fit$w[2:3],sigdig=sigdig)
+        rounded.disp <- roundit(fit$w[1],fit$w[2:3],sigdig=sigdig,text=TRUE)
         expr3 <- quote('('^232*'Th/'^238*'U)'-dispersion~'=')
         args3 <- quote(a+b-c)
         list3 <- list(a=rounded.disp[1],b=rounded.disp[3],c=rounded.disp[2])
@@ -401,8 +401,8 @@ evolution.lines <- function(d,xlim=NULL,ylim=NULL,bty='n',
         a0max <- 1.5
     }
     if (is.null(xlim)){
-        xlim <- range(pretty(c(min(get.Th230U238(tt,a0min)),
-                               max(get.Th230U238(tt,a0max)))))
+        xlim <- range(pretty(c(min(get.Th230U238.ratio(tt,a0min)),
+                               max(get.Th230U238.ratio(tt,a0max)))))
     }
     a0 <- pretty(c(a0min,a0max))
     if (is.null(ylim)){
@@ -417,14 +417,14 @@ evolution.lines <- function(d,xlim=NULL,ylim=NULL,bty='n',
     na0 <- length(a0)
     for (i in 1:na0){
         ttt <- seq(0,maxt,length.out=nn)
-        x <- get.Th230U238(ttt,a0[i])
-        y <- get.U234U238(ttt,a0[i])
+        x <- get.Th230U238.ratio(ttt,a0[i])
+        y <- get.U234U238.ratio(ttt,a0[i])
         graphics::lines(x,y,col=line.col)
     }
     for (i in 2:nn){
-        x <- get.Th230U238(tt[i],a0)
-        y <- get.U234U238(tt[i],a0)
-        x0 <- get.Th230U238(tt[i],1)
+        x <- get.Th230U238.ratio(tt[i],a0)
+        y <- get.U234U238.ratio(tt[i],a0)
+        x0 <- get.Th230U238.ratio(tt[i],1)
         graphics::lines(c(x0,x),c(1,y),col=line.col)
         graphics::text(x[na0],y[na0],tt[i],pos=4,col=line.col)
     }
@@ -438,12 +438,7 @@ data2evolution <- function(x,detritus=0,omit4c=NULL){
         td <- data2tit(x,osmond=TRUE,generic=FALSE) # 2/8 - 4/8 - 0/8
         out <- Th230correction(td,option=detritus,dat=x,omit4c=omit4c)
     } else if (x$format %in% c(3,4)){
-        out <- data2york(x,type=1) # 8/2 - 0/2
-        covariance <- out[,'sX']*out[,'sY']*out[,'rXY']
-        out[,5] <- covariance
-        colnames(out) <- c('U238Th232','errU238Th232',
-                           'Th230Th232','errTh230Th232',
-                           'cov')
+        out <- data2york(x,type=1,generic=FALSE) # 8/2 - 0/2
     }
     out
 }

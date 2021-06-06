@@ -2,13 +2,15 @@
 #' Calculate the weighted mean age
 #' 
 #' @description
-#' Models the data as a Normal distribution with two sources of
-#' variance.  Estimates the mean and `overdispersion' using the method
-#' of Maximum Likelihood. Computes the MSWD of a Normal fit without
-#' overdispersion. Implements a modified Chauvenet Criterion to detect
-#' and reject outliers. Only propagates the analytical uncertainty
-#' associated with decay constants and \eqn{\zeta} and J-factors after
-#' computing the weighted mean isotopic composition.
+#' Averages heteroscedastic data either using the ordinary weighted
+#' mean, or using a random effects model with two sources of variance.
+#' Computes the MSWD of a normal fit without
+#' overdispersion. Implements a modified Chauvenet criterion to detect
+#' and reject outliers. Only propagates the systematic uncertainty
+#' associated with decay constants and calibration factors after
+#' computing the weighted mean isotopic composition. Does not propagate
+#' the uncertainty of any initial daughter correction, because this is
+#' neither a purely random or purely systematic uncertainty.
 #' 
 #' @details
 #' Let \eqn{\{t_1, ..., t_n\}} be a set of n age estimates
@@ -53,14 +55,26 @@
 #' by one (i.e., \eqn{n \rightarrow n-1}) and repeat steps 1 through 3
 #' until the surviving dates pass the third step.  }
 #'
-#' If the analtyical uncertainties are small compared to the scatter
+#' If the analytical uncertainties are small compared to the scatter
 #' between the dates (i.e. if \eqn{\omega \gg s[t]} for all \eqn{i}),
 #' then this generalised algorithm reduces to the conventional
 #' Chauvenet criterion. If the analytical uncertainties are large and
 #' the data do not exhibit any overdispersion, then the heuristic
 #' outlier detection method is equivalent to Ludwig (2003)'s `2-sigma'
 #' method.
-#' 
+#'
+#' The uncertainty budget of the weighted mean does not include the
+#' uncertainty of the initial daughter correction (if any). This
+#' uncertainty is neither a purely systematic nor a purely random
+#' uncertainty and cannot easily be propagated with conventional
+#' geochronological data processing algorithms. This caveat is
+#' especially pertinent to chronometers whose initial daughter
+#' composition is determined by isochron regression. You may note that
+#' the uncertainties of the weighted mean are usually much smaller
+#' than those of the isochron. In this case the isochron errors are
+#' more meaningful, and the weighted mean plot should just be used to
+#' inspect the residuals of the data around the isochron.
+#'
 #' @param x a two column matrix of values (first column) and their
 #'     standard errors (second column) OR an object of class
 #'     \code{UPb}, \code{PbPb}, \code{ThPb}, \code{ArAr}, \code{KCa},
@@ -83,9 +97,14 @@
 #'
 #' \item{mean}{a three element vector with:
 #'
-#' \code{t}: the weighted mean
+#' \code{t}: the weighted mean. An asterisk is added to the plot title
+#' if the initial daughter correction is based on an isochron
+#' regression, to mark the circularity of using an isochron to compute
+#' a weighted mean.
 #'
-#' \code{s[t]}: the standard error of the weighted mean
+#' \code{s[t]}: the standard error of the weighted mean, excluding the
+#' uncertainty of the initial daughter correction.  This is because
+#' this uncertainty is neither purely random nor purely systematic.
 #'
 #' \code{ci[t]}: the \eqn{100(1-\alpha)\%} confidence interval for
 #' \code{t}
@@ -116,7 +135,14 @@
 #' ignoring systematic errors), \code{ci.exterr} (a grey rectangle
 #' with the 100[1-\eqn{\alpha}]\% confidence interval including
 #' systematic errors), \code{dash1} and \code{dash2} (lines marking
-#' the overdispersion if \code{random.effects=TRUE}).} }
+#' the 100[1-\eqn{\alpha}]\% confidence interval augmented by
+#' \eqn{\sqrt{mswd}} overdispersion if \code{random.effects=FALSE}),
+#' and marking the 100[1-\eqn{\alpha}]\% confidence limits of a normal
+#' distribution whose standard deviation equals the overdispersion
+#' parameter if \code{random.effects=TRUE}). }
+#'
+#' }
+#'
 #' @rdname weightedmean
 #' @export
 weightedmean <- function(x,...){
@@ -168,7 +194,7 @@ weightedmean <- function(x,...){
 #' @importFrom grDevices rgb
 #' @rdname weightedmean
 #' @export
-weightedmean.default <- function(x,from=NA,to=NA,random.effects=TRUE,
+weightedmean.default <- function(x,from=NA,to=NA,random.effects=FALSE,
                                  detect.outliers=TRUE,plot=TRUE,
                                  levels=NA,clabel="",
                                  rect.col=c("#00FF0080","#FF000080"),
@@ -232,21 +258,27 @@ weightedmean.default <- function(x,from=NA,to=NA,random.effects=TRUE,
 #' \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
 #' \code{UPb} and \code{x$format=7} or \code{8}).
 #'
-#' \code{2}: use the isochron intercept as the initial Pb-composition
+#' \code{2}: remove the common Pb by projecting the data along an
+#' inverse isochron. Note: choosing this option introduces a degree of
+#' circularity in the weighted age calculation. In this case the
+#' weighted mean plot just serves as a way to visualise the residuals
+#' of the data around the isochron, and one should be careful not to
+#' over-interpret the numerical output.
 #'
 #' \code{3}: use the Stacey-Kramers two-stage model to infer the
 #' initial Pb-composition (only applicable if \code{x} has class
 #' \code{UPb})
+#'
 #' @examples
 #' ages <- c(251.9,251.59,251.47,251.35,251.1,251.04,250.79,250.73,251.22,228.43)
 #' errs <- c(0.28,0.28,0.63,0.34,0.28,0.63,0.28,0.4,0.28,0.33)
 #' weightedmean(cbind(ages,errs))
 #'
-#' data(examples)
-#' weightedmean(examples$LudwigMean)
+#' attach(examples)
+#' weightedmean(LudwigMean)
 #' @rdname weightedmean
 #' @export
-weightedmean.UPb <- function(x,random.effects=TRUE,
+weightedmean.UPb <- function(x,random.effects=FALSE,
                              detect.outliers=TRUE,plot=TRUE,from=NA,
                              to=NA,levels=NA,clabel="",
                              rect.col=c("#00FF0080","#FF000080"),
@@ -267,7 +299,7 @@ weightedmean.UPb <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.PbPb <- function(x,random.effects=TRUE,
+weightedmean.PbPb <- function(x,random.effects=FALSE,
                               detect.outliers=TRUE,plot=TRUE, from=NA,
                               to=NA,levels=NA,clabel="",
                               rect.col=c("#00FF0080","#FF000080"),
@@ -283,15 +315,21 @@ weightedmean.PbPb <- function(x,random.effects=TRUE,
                         units='Ma',ranked=ranked,hide=hide,omit=omit,
                         omit.col=omit.col,common.Pb=common.Pb,...)
 }
-#' @param i2i `isochron to intercept': calculates the initial (aka
-#'     `inherited', `excess', or `common')
-#'     \eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
-#'     \eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
-#'     \eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os,
-#'     \eqn{^{230}}Th/\eqn{^{232}}Th, \eqn{^{176}}Hf/\eqn{^{177}}Hf or
-#'     \eqn{^{204}}Pb/\eqn{^{208}}Pb ratio from an isochron
-#'     fit. Setting \code{i2i} to \code{FALSE} uses the default values
-#'     stored in \code{settings('iratio',...)}.
+#' @param i2i `isochron to intercept': calculates the initial
+#' (aka `inherited', `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+#' \eqn{^{40}}Ca/\eqn{^{44}}Ca, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
+#' \eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
+#' \eqn{^{187}}Os/\eqn{^{188}}Os, \eqn{^{230}}Th/\eqn{^{232}}Th,
+#' \eqn{^{176}}Hf/\eqn{^{177}}Hf or \eqn{^{204}}Pb/\eqn{^{208}}Pb
+#' ratio from an isochron fit. Setting \code{i2i} to \code{FALSE} uses
+#' the default values stored in \code{settings('iratio',...)}.
+#'
+#' Note that choosing this option introduces a degree of circularity
+#' in the weighted age calculation. In this case the weighted mean
+#' plot just serves as a way to visualise the residuals of the data
+#' around the isochron, and one should be careful not to
+#' over-interpret the numerical output.
+#' 
 #' @param detritus detrital \eqn{^{230}}Th correction (only applicable
 #'     when \code{x$format=1} or \code{2}).
 #'
@@ -307,7 +345,7 @@ weightedmean.PbPb <- function(x,random.effects=TRUE,
 #' \eqn{^{234}}U/\eqn{^{238}}U-ratios in the detritus.
 #' @rdname weightedmean
 #' @export
-weightedmean.ThU <- function(x,random.effects=TRUE,
+weightedmean.ThU <- function(x,random.effects=FALSE,
                              detect.outliers=TRUE,plot=TRUE, from=NA,
                              to=NA,levels=NA,clabel="",
                              rect.col=c("#00FF0080","#FF000080"),
@@ -324,7 +362,7 @@ weightedmean.ThU <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.ArAr <- function(x,random.effects=TRUE,
+weightedmean.ArAr <- function(x,random.effects=FALSE,
                               detect.outliers=TRUE,plot=TRUE, from=NA,
                               to=NA,levels=NA,clabel="",
                               rect.col=c("#00FF0080","#FF000080"),
@@ -342,7 +380,7 @@ weightedmean.ArAr <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.KCa <- function(x,random.effects=TRUE,
+weightedmean.KCa <- function(x,random.effects=FALSE,
                              detect.outliers=TRUE,plot=TRUE, from=NA,
                              to=NA,levels=NA,clabel="",
                              rect.col=c("#00FF0080","#FF000080"),
@@ -360,7 +398,7 @@ weightedmean.KCa <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.ThPb <- function(x,random.effects=TRUE,
+weightedmean.ThPb <- function(x,random.effects=FALSE,
                               detect.outliers=TRUE,plot=TRUE, from=NA,
                               to=NA,levels=NA,clabel="",
                               rect.col=c("#00FF0080","#FF000080"),
@@ -378,7 +416,7 @@ weightedmean.ThPb <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.ReOs <- function(x,random.effects=TRUE,
+weightedmean.ReOs <- function(x,random.effects=FALSE,
                               detect.outliers=TRUE,plot=TRUE, from=NA,
                               to=NA,levels=NA,clabel="",
                               rect.col=c("#00FF0080","#FF000080"),
@@ -396,7 +434,7 @@ weightedmean.ReOs <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.SmNd <- function(x,random.effects=TRUE,
+weightedmean.SmNd <- function(x,random.effects=FALSE,
                               detect.outliers=TRUE,plot=TRUE,from=NA,
                               to=NA,levels=NA,clabel="",
                               rect.col=c("#00FF0080","#FF000080"),
@@ -414,7 +452,7 @@ weightedmean.SmNd <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.RbSr <- function(x,random.effects=TRUE,
+weightedmean.RbSr <- function(x,random.effects=FALSE,
                               detect.outliers=TRUE,plot=TRUE,from=NA,
                               to=NA,levels=NA,clabel="",
                               rect.col=c("#00FF0080","#FF000080"),
@@ -432,7 +470,7 @@ weightedmean.RbSr <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.LuHf <- function(x,random.effects=TRUE,
+weightedmean.LuHf <- function(x,random.effects=FALSE,
                               detect.outliers=TRUE,plot=TRUE,
                               from=NA,to=NA,levels=NA,clabel="",
                               rect.col=c("#00FF0080","#FF000080"),
@@ -450,7 +488,7 @@ weightedmean.LuHf <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.UThHe <- function(x,random.effects=TRUE,
+weightedmean.UThHe <- function(x,random.effects=FALSE,
                                detect.outliers=TRUE,plot=TRUE,
                                from=NA,to=NA,levels=NA,clabel="",
                                rect.col=c("#00FF0080","#FF000080"),
@@ -467,7 +505,7 @@ weightedmean.UThHe <- function(x,random.effects=TRUE,
 }
 #' @rdname weightedmean
 #' @export
-weightedmean.fissiontracks <- function(x,random.effects=TRUE,
+weightedmean.fissiontracks <- function(x,random.effects=FALSE,
                                        detect.outliers=TRUE,plot=TRUE,
                                        from=NA,to=NA,levels=NA,clabel="",
                                        rect.col=c("#00FF0080","#FF000080"),
@@ -484,7 +522,7 @@ weightedmean.fissiontracks <- function(x,random.effects=TRUE,
                         units='Ma',ranked=ranked,hide=hide,
                         omit=omit,omit.col=omit.col,...)
 }
-weightedmean_helper <- function(x,random.effects=TRUE,
+weightedmean_helper <- function(x,random.effects=FALSE,
                                 detect.outliers=TRUE,plot=TRUE,
                                 from=NA,to=NA,levels=NA,clabel="",
                                 rect.col=c("#00FF0080","#FF000080"),
@@ -509,13 +547,14 @@ weightedmean_helper <- function(x,random.effects=TRUE,
                           levels=levels,clabel=clabel,
                           rect.col=rect.col,outlier.col=outlier.col,
                           sigdig=sigdig,alpha=alpha,units=units,
-                          ranked=ranked,hide=hide,omit=omit,
-                          omit.col=omit.col,...)
+                          ranked=ranked,hide=hide,
+                          omit=omit,omit.col=omit.col,
+                          caveat=(i2i|common.Pb==2|detritus==1),...)
     }
     invisible(out)
 }
 
-get.weightedmean <- function(X,sX,random.effects=TRUE,
+get.weightedmean <- function(X,sX,random.effects=FALSE,
                              valid=TRUE,alpha=0.05){
     ns <- length(X)
     x <- X[valid]
@@ -573,20 +612,24 @@ get.weightedmean <- function(X,sX,random.effects=TRUE,
                            rep(out$mean['t']-out$mean['ci[t]'],2)))
     plotpar$ci.exterr <- NA # to be defined later
     if (random.effects){
-        plotpar$dash1 <- list(x=c(0,ns+1),y=rep(out$mean['t']+nfact(alpha)*out$disp['s'],2))
-        plotpar$dash2 <- list(x=c(0,ns+1),y=rep(out$mean['t']-nfact(alpha)*out$disp['s'],2))
+        cit <- nfact(alpha)*out$disp['s']
+    } else {
+        cit <- out$mean['disp[t]']
     }
+    plotpar$dash1 <- list(x=c(0,ns+1),y=rep(out$mean['t']+cit,2))
+    plotpar$dash2 <- list(x=c(0,ns+1),y=rep(out$mean['t']-cit,2))
     out$plotpar <- plotpar
     out$valid <- valid
     out
 }
 
-wtdmean.title <- function(fit,sigdig=2,units='',...){
-    rounded.mean <- roundit(fit$mean['t'],
-                            fit$mean[c('s[t]','ci[t]')],
-                            sigdig=sigdig)
-    line1 <- substitute('mean ='~a%+-%b~'|'~c~u~'(n='*n/N*')',
-                        list(a=rounded.mean['t'],
+wtdmean.title <- function(fit,sigdig=2,units='',caveat=FALSE,...){
+    rounded.mean <- roundit(fit$mean['t'],fit$mean[c('s[t]','ci[t]')],
+                            sigdig=sigdig,text=TRUE)
+    ast <- ifelse(caveat,'*','')
+    line1 <- substitute('mean'*ast~'='~a%+-%b~'|'~c~u~'(n='*n/N*')',
+                        list(ast=ast,
+                             a=rounded.mean['t'],
                              b=rounded.mean['s[t]'],
                              c=rounded.mean['ci[t]'],
                              u=units,
@@ -595,7 +638,7 @@ wtdmean.title <- function(fit,sigdig=2,units='',...){
     if (fit$random.effects){
         rounded.disp <- roundit(fit$disp['s'],
                                 fit$disp[c('ll','ul')],
-                                sigdig=sigdig)
+                                sigdig=sigdig,text=TRUE)
         line3 <- substitute('dispersion ='~a+b/-c~u,
                             list(a=rounded.disp['s'],
                                  b=rounded.disp['ul'],
@@ -608,9 +651,10 @@ wtdmean.title <- function(fit,sigdig=2,units='',...){
         if (inflate(c(fit,model=1))){
             rounded.mean <- roundit(fit$mean['t'],
                                     fit$mean[c('s[t]','ci[t]','disp[t]')],
-                                    sigdig=sigdig)
-            line1 <- substitute('mean ='~a%+-%b~'|'~c~'|'~d~u~'(n='*n/N*')',
-                                list(a=rounded.mean['t'],
+                                    sigdig=sigdig,text=TRUE)
+            line1 <- substitute('mean'*ast~'='~a%+-%b~'|'~c~'|'~d~u~'(n='*n/N*')',
+                                list(ast=ast,
+                                     a=rounded.mean['t'],
                                      b=rounded.mean['s[t]'],
                                      c=rounded.mean['ci[t]'],
                                      d=rounded.mean['disp[t]'],
@@ -622,9 +666,9 @@ wtdmean.title <- function(fit,sigdig=2,units='',...){
         line2line <- 0
     }
     line2 <- substitute('MSWD ='~a*', p('*chi^2*') ='~b,
-                        list(a=roundit(fit$mswd,fit$mswd,sigdig=sigdig),
+                        list(a=roundit(fit$mswd,fit$mswd,sigdig=sigdig,text=TRUE),
                              b=roundit(fit$p.value,fit$p.value,
-                                       sigdig=sigdig)))
+                                       sigdig=sigdig,text=TRUE)))
     mymtext(line1,line=line1line,...)
     mymtext(line2,line=line2line,...)
 }
@@ -633,7 +677,8 @@ plot_weightedmean <- function(X,sX,fit,from=NA,to=NA,levels=NA,clabel="",
                               rect.col=c("#00FF0080","#FF000080"),
                               outlier.col="#00FFFF80",sigdig=2,
                               alpha=0.05,units='',ranked=FALSE,
-                              hide=NULL,omit=NULL,omit.col=NA,...){
+                              hide=NULL,omit=NULL,omit.col=NA,
+                              caveat=FALSE,...){
     NS <- length(X)
     plotit <- (1:NS)%ni%hide
     calcit <- (1:NS)%ni%c(hide,omit)
@@ -669,7 +714,7 @@ plot_weightedmean <- function(X,sX,fit,from=NA,to=NA,levels=NA,clabel="",
         graphics::polygon(fit$plotpar$ci.exterr,col='gray90',border=NA)
     graphics::polygon(fit$plotpar$ci,col='gray75',border=NA)
     graphics::lines(fit$plotpar$mean)
-    if (fit$random.effects){
+    if (fit$random.effects | (fit$p.value<alpha)){
         graphics::lines(fit$plotpar$dash1,lty=3)
         graphics::lines(fit$plotpar$dash2,lty=3)
     }
@@ -686,15 +731,15 @@ plot_weightedmean <- function(X,sX,fit,from=NA,to=NA,levels=NA,clabel="",
         graphics::rect(xleft=i-0.4,ybottom=x[i]-fact*sx[i],
                        xright=i+0.4,ytop=x[i]+fact*sx[i],col=col)
     }
-    colourbar(z=levels[valid],col=rect.col,clabel=clabel)
-    graphics::title(wtdmean.title(fit,sigdig=sigdig,units=units))
+    colourbar(z=levels[valid],fill=rect.col,clabel=clabel)
+    graphics::title(wtdmean.title(fit,sigdig=sigdig,units=units,caveat=caveat))
 }
 
 # prune the data if necessary
 # X and sX are some measurements and their standard errors
 # valid is a vector of logical flags indicating whether the corresponding
 # measurements have already been rejected or not
-chauvenet <- function(X,sX,valid,random.effects=TRUE){
+chauvenet <- function(X,sX,valid,random.effects=FALSE){
     if (sum(valid)<2) return(valid)
     fit <- get.weightedmean(X,sX,random.effects=random.effects,valid=valid)
     if (random.effects){
@@ -711,16 +756,15 @@ chauvenet <- function(X,sX,valid,random.effects=TRUE){
         x <- X
         mu <- fit$mean[1]
         sigma <- sqrt(fit$mean[2]^2 + max(1,fit$mswd)*sX^2)
-        # max(1,mswd) is an ad hoc solution to avoid
-        # dealing with underdispersed datasets
     }
     misfit <- abs(x-mu)/sigma
-    prob <- 2*(1-stats::pnorm(misfit))
+    prob <- 2*(1-stats::pnorm(misfit[valid]))
     iworst <- which.max(misfit[valid])
+    ivalid <- which(valid)
     minp <- prob[iworst]
     ns <- length(which(valid))
     if (ns*minp < 0.5) {
-        valid[iworst] <- FALSE # remove outlier
+        valid[ivalid[iworst]] <- FALSE # remove outlier
     } 
     valid
 }

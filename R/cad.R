@@ -44,12 +44,12 @@ cad <- function(x,...){ UseMethod("cad",x) }
 #'     palettes (e.g., \code{'heat.colors'}, \code{'terrain.colors'},
 #'     \code{'topo.colors'}, \code{'cm.colors'}) (if \code{x} has
 #'     class \code{detritals}) OR the name or code for a colour to
-#'     give to single sample datasets (otherwise).
+#'     give to single sample datasets.
 #' @param ... optional arguments to the generic \code{plot} function
 #' 
 #' @examples
-#' data(examples)
-#' cad(examples$DZ,verticals=FALSE,pch=20)
+#' attach(examples)
+#' cad(DZ,verticals=FALSE,pch=20)
 #' @rdname cad
 #' @export
 cad.default <- function(x,pch=NA,verticals=TRUE,xlab='age [Ma]',

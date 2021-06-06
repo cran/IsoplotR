@@ -103,7 +103,7 @@ The U-Pb method conventionally assumes initial secular
 }
 \details{
 There are three ways to correct for the initial disequilibrium
-between the activity of \eqn{{}^{238}}U, \eqn{{}^{234}}Th,
+between the activity of \eqn{{}^{238}}U, \eqn{{}^{234}}U,
 \eqn{{}^{230}}Th, and \eqn{{}^{226}}Ra; or between \eqn{{}^{235}}U
 and \eqn{{}^{231}}Pa:
 
@@ -126,7 +126,7 @@ d <- diseq(U48=list(x=0,option=1),ThU=list(x=2,option=1),
            RaU=list(x=2,option=1),PaU=list(x=2,option=1))
 fn <- system.file("diseq.csv",package="IsoplotR")
 UPb <- read.data(fn,method='U-Pb',format=2,d=d)
-concordia(UPb,type=2,show.age=1)
+concordia(UPb,type=2,xlim=c(0,5000),ylim=c(0.047,0.057))
 }
 \seealso{
 \code{\link{mclean}}, \code{\link{concordia}},

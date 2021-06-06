@@ -389,11 +389,11 @@ intercept and slope.}
 
 \item{show.ellipses}{show the data as:
 
-\code{1}: points
+\code{0}: points
 
-\code{2}: error ellipses
+\code{1}: error ellipses
 
-\code{3}: error crosses}
+\code{2}: error crosses}
 
 \item{hide}{vector with indices of aliquots that should be removed
 from the plot.}
@@ -561,6 +561,10 @@ geological scatter that underlies the measurements, and the lower
 and upper half-widths of its \eqn{100(1-\alpha)\%} confidence
 interval (only returned if \code{model=3}).}
 
+\item{ski}{(only reported if \code{x} has class \code{PbPb} and
+\code{growth} is \code{TRUE}) the intercept(s) of the isochron with
+the Stacey-Kramers mantle evolution curve.}
+
 }
 
 OR, if \code{x} has class \code{ThU}:
@@ -725,9 +729,10 @@ if \code{model=1}).}
 }
 }
 \description{
-Plots cogenetic Ar-Ar, K-Ca, Pb-Pb, Th-Pb, Rb-Sr, Sm-Nd, Re-Os,
-Lu-Hf, U-Th-He or Th-U data as X-Y scatterplots, fits an isochron
-curve through them using the \code{york} function, and computes the
+Plots cogenetic U-Pb, Ar-Ar, K-Ca, Pb-Pb, Th-Pb, Rb-Sr, Sm-Nd,
+Re-Os, Lu-Hf, U-Th-He or Th-U data as X-Y scatterplots, fits an
+isochron curve through them using the \code{york},
+\code{titterington} or \code{ludwig} function, and computes the
 corresponding isochron age, including decay constant uncertainties.
 }
 \details{
@@ -797,13 +802,13 @@ adding an overdispersion \emph{term} that lowers the MSWD to unity.
 }
 }
 \examples{
-data(examples)
-isochron(examples$RbSr)
+attach(examples)
+isochron(RbSr)
 
-fit <- isochron(examples$ArAr,inverse=FALSE,plot=FALSE)
+fit <- isochron(ArAr,inverse=FALSE,plot=FALSE)
 
 dev.new()
-isochron(examples$ThU,type=4)
+isochron(ThU,type=4)
 
 }
 \references{

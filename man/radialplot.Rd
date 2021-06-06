@@ -23,7 +23,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   transformation = "log",
   sigdig = 2,
   show.numbers = FALSE,
@@ -46,7 +46,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   transformation = "arcsin",
   sigdig = 2,
   show.numbers = FALSE,
@@ -69,7 +69,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   transformation = "log",
   type = 4,
   cutoff.76 = 1100,
@@ -96,7 +96,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -120,7 +120,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -144,7 +144,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -168,7 +168,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -192,7 +192,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -214,7 +214,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -238,7 +238,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -262,7 +262,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -286,7 +286,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -310,7 +310,7 @@ radialplot(x, ...)
   x,
   from = NA,
   to = NA,
-  t0 = NA,
+  z0 = NA,
   sigdig = 2,
   transformation = "log",
   show.numbers = FALSE,
@@ -321,7 +321,7 @@ radialplot(x, ...)
   col = "black",
   markers = NULL,
   k = 0,
-  i2i = TRUE,
+  i2i = FALSE,
   alpha = 0.05,
   detritus = 0,
   hide = NULL,
@@ -347,11 +347,11 @@ function}
 
 \item{to}{maximum age limit of the radial scale}
 
-\item{t0}{central value}
+\item{z0}{central value}
 
 \item{transformation}{one of either \code{log}, \code{linear},
 \code{sqrt} or \code{arcsin} (if \code{x} has class
-\code{fissiontracks} and \code{fissiontracks$type} \eqn{\neq
+\code{fissiontracks} and \code{fissiontracks$format} \eqn{\neq
 1}).}
 
 \item{sigdig}{the number of significant digits of the numerical
@@ -448,20 +448,30 @@ class \code{\link{discfilter}}.}
 \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
 \code{UPb} and \code{x$format=7} or \code{8}).
 
-\code{2}: use the isochron intercept as the initial Pb-composition
+\code{2}: remove the common Pb by projecting the data along an
+inverse isochron. Note: choosing this option introduces a degree of
+circularity in the central age calculation. In this case the radial
+plot just serves as a way to visualise the residuals of the data
+around the isochron, and one should be careful not to
+over-interpret the numerical output.
 
 \code{3}: use the Stacey-Kramers two-stage model to infer the
 initial Pb-composition}
 
-\item{i2i}{`isochron to intercept': calculates the initial (aka
-`inherited', `excess', or `common')
-\eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
-\eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
-\eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os,
-\eqn{^{230}}Th/\eqn{^{232}}Th, \eqn{^{176}}Hf/\eqn{^{177}}Hf or
-\eqn{^{204}}Pb/\eqn{^{208}}Pb ratio from an isochron
-fit. Setting \code{i2i} to \code{FALSE} uses the default values
-stored in \code{settings('iratio',...)}.}
+\item{i2i}{`isochron to intercept': calculates the initial
+(aka `inherited', `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+\eqn{^{40}}Ca/\eqn{^{44}}Ca, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
+\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
+\eqn{^{187}}Os/\eqn{^{188}}Os, \eqn{^{230}}Th/\eqn{^{232}}Th,
+\eqn{^{176}}Hf/\eqn{^{177}}Hf or \eqn{^{204}}Pb/\eqn{^{208}}Pb
+ratio from an isochron fit. Setting \code{i2i} to \code{FALSE} uses
+the default values stored in \code{settings('iratio',...)}.
+
+Note that choosing this option introduces a degree of circularity
+in the central age calculation. In this case the radial plot plot
+just serves as a way to visualise the residuals of the data around
+the isochron, and one should be careful not to over-interpret the
+numerical output.}
 
 \item{detritus}{detrital \eqn{^{230}}Th correction (only applicable
     when \code{x$format == 1} or \code{2}).
@@ -477,10 +487,22 @@ stored in \code{settings('iratio',...)}.}
 \eqn{^{230}}Th/\eqn{^{238}}U, \eqn{^{232}}Th/\eqn{^{238}}U and
 \eqn{^{234}}U/\eqn{^{238}}U-ratios in the detritus.}
 }
+\value{
+does not produce any numerical output, but does report the
+    central age and the results of any mixture modelling in the
+    title. An asterisk is added to the plot title if the initial
+    daughter correction is based on an isochron regression, to
+    highlight the circularity of using an isochron to compute a
+    central age, and to indicate that the reported uncertainties do
+    not include the uncertainty of the initial daughter correction.
+    This is because this uncertainty is neither purely random nor
+    purely systematic.
+}
 \description{
 Implementation of a graphical device developed by Rex Galbraith to
 display several estimates of the same quantity that have different
-standard errors.
+standard errors. Serves as a vehicle to display finite and continuous
+mixture models.
 }
 \details{
 The radial plot (Galbraith, 1988, 1990) is a graphical device that
@@ -496,23 +518,25 @@ where \eqn{x_i = 1/s[z_i]} and \eqn{y_i = (z_i-z_\circ)/s[z_i]},
 where \eqn{z_\circ} is some reference value such as the mean. The
 slope of a line connecting the origin of this scatter plot with any
 of the \eqn{(x_i,y_i)}s is proportional to \eqn{z_i} and, hence,
-the date \eqn{t_i}.  These dates can be more easily visualised by
-drawing a radial scale at some convenient distance from the origin
-and annotating it with labelled ticks at the appropriate
-angles. While the angular position of each data point represents
-the date, its horizontal distance from the origin is proportional
-to the precision. Imprecise measurements plot on the left hand side
-of the radial plot, whereas precise age determinations are found
-further towards the right. Thus, radial plots allow the observer to
-assess both the magnitude and the precision of quantitative data in
-one glance.
+the date \eqn{t_i}.
+
+These dates can be more easily visualised by drawing a radial scale
+at some convenient distance from the origin and annotating it with
+labelled ticks at the appropriate angles. While the angular
+position of each data point represents the date, its horizontal
+distance from the origin is proportional to the
+precision. Imprecise measurements plot on the left hand side of the
+radial plot, whereas precise age determinations are found further
+towards the right. Thus, radial plots allow the observer to assess
+both the magnitude and the precision of quantitative data in one
+glance.
 }
 \examples{
-data(examples)
-radialplot(examples$FT1)
+attach(examples)
+radialplot(FT1)
 
 dev.new()
-radialplot(examples$LudwigMixture,k='min')
+radialplot(LudwigMixture,k='min')
 }
 \references{
 Galbraith, R.F., 1988. Graphical display of estimates

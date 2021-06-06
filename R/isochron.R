@@ -2,9 +2,10 @@
 #' Calculate and plot isochrons
 #'
 #' @description
-#' Plots cogenetic Ar-Ar, K-Ca, Pb-Pb, Th-Pb, Rb-Sr, Sm-Nd, Re-Os,
-#' Lu-Hf, U-Th-He or Th-U data as X-Y scatterplots, fits an isochron
-#' curve through them using the \code{york} function, and computes the
+#' Plots cogenetic U-Pb, Ar-Ar, K-Ca, Pb-Pb, Th-Pb, Rb-Sr, Sm-Nd,
+#' Re-Os, Lu-Hf, U-Th-He or Th-U data as X-Y scatterplots, fits an
+#' isochron curve through them using the \code{york},
+#' \code{titterington} or \code{ludwig} function, and computes the
 #' corresponding isochron age, including decay constant uncertainties.
 #'
 #' @details
@@ -148,11 +149,11 @@
 #'
 #' @param show.ellipses show the data as:
 #'
-#' \code{1}: points
+#' \code{0}: points
 #'
-#' \code{2}: error ellipses
+#' \code{1}: error ellipses
 #'
-#' \code{3}: error crosses
+#' \code{2}: error crosses
 #'
 #' @param xlab text label for the horizontal plot axis
 #' 
@@ -234,6 +235,10 @@
 #' geological scatter that underlies the measurements, and the lower
 #' and upper half-widths of its \eqn{100(1-\alpha)\%} confidence
 #' interval (only returned if \code{model=3}).}
+#'
+#' \item{ski}{(only reported if \code{x} has class \code{PbPb} and
+#' \code{growth} is \code{TRUE}) the intercept(s) of the isochron with
+#' the Stacey-Kramers mantle evolution curve.}
 #'
 #' }
 #'
@@ -399,13 +404,13 @@
 #' }
 #'
 #' @examples
-#' data(examples)
-#' isochron(examples$RbSr)
+#' attach(examples)
+#' isochron(RbSr)
 #'
-#' fit <- isochron(examples$ArAr,inverse=FALSE,plot=FALSE)
+#' fit <- isochron(ArAr,inverse=FALSE,plot=FALSE)
 #'
 #' dev.new()
-#' isochron(examples$ThU,type=4)
+#' isochron(ThU,type=4)
 #'
 #' @seealso
 #' \code{\link{york}},
@@ -450,8 +455,9 @@ isochron.default <- function(x,alpha=0.05,sigdig=2,show.numbers=FALSE,
                              ellipse.fill=c("#00FF0080","#FF000080"),
                              ellipse.stroke='black',ci.col='gray80',
                              line.col='black',lwd=1,plot=TRUE,
-                             title=TRUE,model=1,show.ellipses=1*(model!=2),hide=NULL,
-                             omit=NULL,omit.fill=NA,omit.stroke='grey',...){
+                             title=TRUE,model=1,show.ellipses=1*(model!=2),
+                             hide=NULL,omit=NULL,omit.fill=NA,
+                             omit.stroke='grey',...){
     d2calc <- clear(x,hide,omit)
     fit <- regression(data2york(d2calc),model=model)
     fit <- regression_init(fit,alpha=alpha)
@@ -494,7 +500,6 @@ isochron.UPb <- function(x,alpha=0.05,sigdig=2, show.numbers=FALSE,
                          hide=NULL, omit=NULL,omit.fill=NA,
                          omit.stroke='grey',...){
     ns <- length(x)
-    plotit <- (1:ns)%ni%hide
     calcit <- (1:ns)%ni%c(hide,omit)
     x2calc <- subset(x,subset=calcit)
     lud <- ludwig(x2calc,exterr=exterr,model=model,anchor=anchor)
@@ -715,12 +720,12 @@ isochron.PbPb <- function(x,alpha=0.05,sigdig=2, show.numbers=FALSE,
             tmin <- max(min(tx),min(ty))
             tmax <- min(max(tx),max(ty))
             plot_PbPb_evolution(from=tmin,to=tmax,inverse=inverse)
-            ski <- SK.intersection(out,inverse=inverse)
+            out$ski <- SK.intersection(out,inverse=inverse)
         } else {
-            ski <- NULL
+            out$ski <- NULL
         }
-        graphics::title(isochrontitle(out,sigdig=sigdig,type='Pb-Pb',ski=ski),
-                        xlab=x.lab,ylab=y.lab)
+        tit <- isochrontitle(out,sigdig=sigdig,type='Pb-Pb',ski=out$ski)
+        graphics::title(tit,xlab=x.lab,ylab=y.lab)
     }
     invisible(out)
 }
@@ -1130,7 +1135,7 @@ isochron_ThU_2D <- function(x,type=2,model=1,exterr=TRUE,
                                   exterr=exterr)['s[t]']
         out$y0['disp[y]'] <-
             out$fact*get.Th230Th232_0x(out$age['t'],Th230Th232[1],
-                                        sqrt(out$mswd)*Th230Th232[2])[2]
+                                       sqrt(out$mswd)*Th230Th232[2])[2]
     }
     out$xlab <- x.lab
     out$ylab <- y.lab
@@ -1323,8 +1328,8 @@ isochrontitle <- function(fit,sigdig=2,type=NA,units="Ma",ski=NULL,...){
         args2 <- quote(a%+-%b~'|'~c~u)
     }
     if (is.na(type)){
-        intercept <- roundit(fit$a[1],fit$a[2:4],sigdig=sigdig)
-        slope <- roundit(fit$b[1],fit$b[2:4],sigdig=sigdig)
+        intercept <- roundit(fit$a[1],fit$a[2:4],sigdig=sigdig,text=TRUE)
+        slope <- roundit(fit$b[1],fit$b[2:4],sigdig=sigdig,text=TRUE)
         expr1 <- 'slope ='
         expr2 <- 'intercept ='
         list1 <- list(a=slope[1],
@@ -1341,8 +1346,8 @@ isochrontitle <- function(fit,sigdig=2,type=NA,units="Ma",ski=NULL,...){
             list2$d <- intercept[4]
         }
     } else {
-        rounded.age <- roundit(fit$age[1],fit$age[2:4],sigdig=sigdig)
-        rounded.intercept <- roundit(fit$y0[1],fit$y0[2:4],sigdig=sigdig)
+        rounded.age <- roundit(fit$age[1],fit$age[2:4],sigdig=sigdig,text=TRUE)
+        rounded.intercept <- roundit(fit$y0[1],fit$y0[2:4],sigdig=sigdig,text=TRUE)
         expr1 <- 'age ='
         list1 <- list(a=rounded.age[1],
                       b=rounded.age[2],
@@ -1370,13 +1375,13 @@ isochrontitle <- function(fit,sigdig=2,type=NA,units="Ma",ski=NULL,...){
                                             b=signif(fit$p.value,sigdig)))
     } else if (fit$model==3){
         if (!is.na(type) & type=='U-Pb'){
-            rounded.disp <- roundit(fit$w[1],fit$w[2:3],sigdig=sigdig)
+            rounded.disp <- roundit(fit$w[1],fit$w[2:3],sigdig=sigdig,text=TRUE)
             linecontent[[3]] <- substitute('overdispersion ='~a+b/-c~'Ma',
                                            list(a=rounded.disp[1],
                                                 b=rounded.disp[3],
                                                 c=rounded.disp[2]))
         } else {
-            rounded.disp <- roundit(fit$w[1],fit$w[2:3],sigdig=sigdig)
+            rounded.disp <- roundit(fit$w[1],fit$w[2:3],sigdig=sigdig,text=TRUE)
             list3 <- list(a=rounded.disp[1],c=rounded.disp[2],b=rounded.disp[3])
             args3 <- quote(a+b/-c)
             expr3 <- fit$displabel
@@ -1387,9 +1392,10 @@ isochrontitle <- function(fit,sigdig=2,type=NA,units="Ma",ski=NULL,...){
     nl <- length(linecontent)
     if (!is.null(ski)){
         growthline <- paste0('intercepts growth curve at ',
-                             roundit(ski[1],sigdig=sigdig))
+                             roundit(ski[1],sigdig=sigdig,text=TRUE))
         if (length(ski)>1){
-            growthline <- paste0(growthline,' and ',roundit(ski[2],sigdig=sigdig))
+            growthline <- paste0(growthline,' and ',
+                                 roundit(ski[2],sigdig=sigdig,text=TRUE))
         }
         growthline <- paste0(growthline,' Ma')
         nl <- nl + 1

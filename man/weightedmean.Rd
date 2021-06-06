@@ -23,7 +23,7 @@ weightedmean(x, ...)
   x,
   from = NA,
   to = NA,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   levels = NA,
@@ -41,7 +41,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{UPb}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -66,7 +66,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{PbPb}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -88,7 +88,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{ThU}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -110,7 +110,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{ArAr}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -132,7 +132,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{KCa}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -154,7 +154,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{ThPb}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -176,7 +176,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{ReOs}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -198,7 +198,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{SmNd}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -220,7 +220,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{RbSr}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -242,7 +242,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{LuHf}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -264,7 +264,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{UThHe}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -284,7 +284,7 @@ weightedmean(x, ...)
 
 \method{weightedmean}{fissiontracks}(
   x,
-  random.effects = TRUE,
+  random.effects = FALSE,
   detect.outliers = TRUE,
   plot = TRUE,
   from = NA,
@@ -413,21 +413,31 @@ class \code{discfilter}}
 \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
 \code{UPb} and \code{x$format=7} or \code{8}).
 
-\code{2}: use the isochron intercept as the initial Pb-composition
+\code{2}: remove the common Pb by projecting the data along an
+inverse isochron. Note: choosing this option introduces a degree of
+circularity in the weighted age calculation. In this case the
+weighted mean plot just serves as a way to visualise the residuals
+of the data around the isochron, and one should be careful not to
+over-interpret the numerical output.
 
 \code{3}: use the Stacey-Kramers two-stage model to infer the
 initial Pb-composition (only applicable if \code{x} has class
 \code{UPb})}
 
-\item{i2i}{`isochron to intercept': calculates the initial (aka
-`inherited', `excess', or `common')
-\eqn{^{40}}Ar/\eqn{^{36}}Ar, \eqn{^{40}}Ca/\eqn{^{44}}Ca,
-\eqn{^{207}}Pb/\eqn{^{204}}Pb, \eqn{^{87}}Sr/\eqn{^{86}}Sr,
-\eqn{^{143}}Nd/\eqn{^{144}}Nd, \eqn{^{187}}Os/\eqn{^{188}}Os,
-\eqn{^{230}}Th/\eqn{^{232}}Th, \eqn{^{176}}Hf/\eqn{^{177}}Hf or
-\eqn{^{204}}Pb/\eqn{^{208}}Pb ratio from an isochron
-fit. Setting \code{i2i} to \code{FALSE} uses the default values
-stored in \code{settings('iratio',...)}.}
+\item{i2i}{`isochron to intercept': calculates the initial
+(aka `inherited', `excess', or `common') \eqn{^{40}}Ar/\eqn{^{36}}Ar,
+\eqn{^{40}}Ca/\eqn{^{44}}Ca, \eqn{^{207}}Pb/\eqn{^{204}}Pb,
+\eqn{^{87}}Sr/\eqn{^{86}}Sr, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
+\eqn{^{187}}Os/\eqn{^{188}}Os, \eqn{^{230}}Th/\eqn{^{232}}Th,
+\eqn{^{176}}Hf/\eqn{^{177}}Hf or \eqn{^{204}}Pb/\eqn{^{208}}Pb
+ratio from an isochron fit. Setting \code{i2i} to \code{FALSE} uses
+the default values stored in \code{settings('iratio',...)}.
+
+Note that choosing this option introduces a degree of circularity
+in the weighted age calculation. In this case the weighted mean
+plot just serves as a way to visualise the residuals of the data
+around the isochron, and one should be careful not to
+over-interpret the numerical output.}
 
 \item{detritus}{detrital \eqn{^{230}}Th correction (only applicable
     when \code{x$format=1} or \code{2}).
@@ -450,9 +460,14 @@ Returns a list with the following items:
 
 \item{mean}{a three element vector with:
 
-\code{t}: the weighted mean
+\code{t}: the weighted mean. An asterisk is added to the plot title
+if the initial daughter correction is based on an isochron
+regression, to mark the circularity of using an isochron to compute
+a weighted mean.
 
-\code{s[t]}: the standard error of the weighted mean
+\code{s[t]}: the standard error of the weighted mean, excluding the
+uncertainty of the initial daughter correction.  This is because
+this uncertainty is neither purely random nor purely systematic.
 
 \code{ci[t]}: the \eqn{100(1-\alpha)\%} confidence interval for
 \code{t}
@@ -483,16 +498,24 @@ rectangle with the 100[1-\eqn{\alpha}]\% confidence interval
 ignoring systematic errors), \code{ci.exterr} (a grey rectangle
 with the 100[1-\eqn{\alpha}]\% confidence interval including
 systematic errors), \code{dash1} and \code{dash2} (lines marking
-the overdispersion if \code{random.effects=TRUE}).} }
+the 100[1-\eqn{\alpha}]\% confidence interval augmented by
+\eqn{\sqrt{mswd}} overdispersion if \code{random.effects=FALSE}),
+and marking the 100[1-\eqn{\alpha}]\% confidence limits of a normal
+distribution whose standard deviation equals the overdispersion
+parameter if \code{random.effects=TRUE}). }
+
+}
 }
 \description{
-Models the data as a Normal distribution with two sources of
-variance.  Estimates the mean and `overdispersion' using the method
-of Maximum Likelihood. Computes the MSWD of a Normal fit without
-overdispersion. Implements a modified Chauvenet Criterion to detect
-and reject outliers. Only propagates the analytical uncertainty
-associated with decay constants and \eqn{\zeta} and J-factors after
-computing the weighted mean isotopic composition.
+Averages heteroscedastic data either using the ordinary weighted
+mean, or using a random effects model with two sources of variance.
+Computes the MSWD of a normal fit without
+overdispersion. Implements a modified Chauvenet criterion to detect
+and reject outliers. Only propagates the systematic uncertainty
+associated with decay constants and calibration factors after
+computing the weighted mean isotopic composition. Does not propagate
+the uncertainty of any initial daughter correction, because this is
+neither a purely random or purely systematic uncertainty.
 }
 \details{
 Let \eqn{\{t_1, ..., t_n\}} be a set of n age estimates
@@ -537,21 +560,33 @@ N(\log[\mu],s[t_i]^2+\omega^2)} (random effects model)
 by one (i.e., \eqn{n \rightarrow n-1}) and repeat steps 1 through 3
 until the surviving dates pass the third step.  }
 
-If the analtyical uncertainties are small compared to the scatter
+If the analytical uncertainties are small compared to the scatter
 between the dates (i.e. if \eqn{\omega \gg s[t]} for all \eqn{i}),
 then this generalised algorithm reduces to the conventional
 Chauvenet criterion. If the analytical uncertainties are large and
 the data do not exhibit any overdispersion, then the heuristic
 outlier detection method is equivalent to Ludwig (2003)'s `2-sigma'
 method.
+
+The uncertainty budget of the weighted mean does not include the
+uncertainty of the initial daughter correction (if any). This
+uncertainty is neither a purely systematic nor a purely random
+uncertainty and cannot easily be propagated with conventional
+geochronological data processing algorithms. This caveat is
+especially pertinent to chronometers whose initial daughter
+composition is determined by isochron regression. You may note that
+the uncertainties of the weighted mean are usually much smaller
+than those of the isochron. In this case the isochron errors are
+more meaningful, and the weighted mean plot should just be used to
+inspect the residuals of the data around the isochron.
 }
 \examples{
 ages <- c(251.9,251.59,251.47,251.35,251.1,251.04,250.79,250.73,251.22,228.43)
 errs <- c(0.28,0.28,0.63,0.34,0.28,0.63,0.28,0.4,0.28,0.33)
 weightedmean(cbind(ages,errs))
 
-data(examples)
-weightedmean(examples$LudwigMean)
+attach(examples)
+weightedmean(LudwigMean)
 }
 \seealso{
 \code{\link{central}}

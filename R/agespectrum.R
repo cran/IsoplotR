@@ -138,7 +138,7 @@ agespectrum <- function(x,...){ UseMethod("agespectrum",x) }
 #' @rdname agespectrum
 #' @export
 agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
-                                random.effects=TRUE,levels=NA,clabel="",
+                                random.effects=FALSE,levels=NA,clabel="",
                                 plateau.col=c("#00FF0080","#FF000080"),
                                 non.plateau.col="#00FFFF80",
                                 sigdig=2,line.col='red',lwd=2,
@@ -155,7 +155,7 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
         graphics::title(plateau.title(pc$plat,sigdig=sigdig,Ar=FALSE))
     }
     plot.spectrum(XY=XY,col=pc$col)
-    colourbar(z=levels,col=plateau.col,clabel=clabel)
+    colourbar(z=levels,fill=plateau.col,clabel=clabel)
     if (plateau) return(invisible(pc$plat))
 }
 
@@ -166,16 +166,16 @@ agespectrum.default <- function(x,alpha=0.05,plateau=TRUE,
 #' @param exterr propagate the external (decay constant and
 #'     calibration factor) uncertainties?
 #' @examples
-#' data(examples)
+#' attach(examples)
 #' par(mfrow=c(2,1))
-#' agespectrum(examples$ArAr)
+#' agespectrum(ArAr)
 #' # removing the first 6 steps yields the longest plateau
 #' # that passes the chi-square test for homogeneity
-#' agespectrum(examples$ArAr,omit=1:6)
+#' agespectrum(ArAr,omit=1:6)
 #' @rdname agespectrum
 #' @export
 agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
-                             random.effects=TRUE,levels=NA,clabel="",
+                             random.effects=FALSE,levels=NA,clabel="",
                              plateau.col=c("#00FF0080","#FF000080"),
                              non.plateau.col="#00FFFF80",sigdig=2,
                              exterr=TRUE,line.col='red',lwd=2,
@@ -199,7 +199,7 @@ agespectrum.ArAr <- function(x,alpha=0.05,plateau=TRUE,
         graphics::title(plateau.title(pc$plat,sigdig=sigdig,Ar=TRUE,units='Ma'))
     }
     plot.spectrum(XY=XY,col=pc$col)
-    colourbar(z=levels,col=plateau.col,clabel=clabel)
+    colourbar(z=levels,fill=plateau.col,clabel=clabel)
     if (plateau) return(invisible(pc$plat))
 }
 
@@ -222,7 +222,7 @@ plot.spectrum.axes <- function(x,alpha=0.05,xlab='cumulative fraction',
 get.plateau.colours <- function(x,levels=NA,plateau=TRUE,hide=NULL,omit=NULL,
                                 plateau.col=c("#00FF0080","#FF000080"),
                                 non.plateau.col="#00FFFF80",
-                                random.effects=TRUE,alpha=0.05){
+                                random.effects=FALSE,alpha=0.05){
     ns <- nrow(x)
     calcit <- (1:ns)%ni%c(hide,omit)
     if (plateau){
@@ -230,8 +230,8 @@ get.plateau.colours <- function(x,levels=NA,plateau=TRUE,hide=NULL,omit=NULL,
         plat$valid <- NULL
         colour <- rep(non.plateau.col,ns)
         np <- length(plat$i)
-        levels <- levels[plat$i]
-        cols <- set.ellipse.colours(ns=np,levels=levels,hide=hide,col=plateau.col)
+        cols <- set.ellipse.colours(ns=np,levels=levels[plat$i],
+                                    hide=hide,col=plateau.col)
         colour[plat$i] <- cols
         plat$n <- ns
     } else {
@@ -262,7 +262,7 @@ plot.plateau <- function(fit,line.col='red',lwd=2){
 plateau.title <- function(fit,sigdig=2,Ar=TRUE,units='',...){
     rounded.mean <- roundit(fit$mean['t'],
                             fit$mean[c('s[t]','ci[t]')],
-                            sigdig=sigdig)
+                            sigdig=sigdig,text=TRUE)
     line1 <- substitute('mean ='~a%+-%b~'|'~c~u~'(n='*n/N*')',
                         list(a=rounded.mean[1],
                              b=rounded.mean[2],
@@ -271,9 +271,9 @@ plateau.title <- function(fit,sigdig=2,Ar=TRUE,units='',...){
                              n=length(fit$i),
                              N=fit$n))
     line2 <- substitute('MSWD ='~a*', p('*chi^2*') ='~b,
-                        list(a=roundit(fit$mswd,fit$mswd,sigdig=sigdig),
+                        list(a=roundit(fit$mswd,fit$mswd,sigdig=sigdig,text=TRUE),
                              b=roundit(fit$p.value,fit$p.value,
-                                       sigdig=sigdig)))
+                                       sigdig=sigdig,text=TRUE)))
     a <- signif(100*fit$fract,sigdig)
     if (Ar) line3 <- bquote(paste("includes ",.(a),"% of the ",""^"39","Ar"))
     else line3 <- bquote(paste("includes ",.(a),"% of the spectrum"))
@@ -283,7 +283,7 @@ plateau.title <- function(fit,sigdig=2,Ar=TRUE,units='',...){
 }
 # x is a three column vector with Ar39
 # cumulative fractions, ages and uncertainties
-get.plateau <- function(x,alpha=0.05,random.effects=TRUE,calcit=rep(TRUE,nrow(x))){
+get.plateau <- function(x,alpha=0.05,random.effects=FALSE,calcit=rep(TRUE,nrow(x))){
     X <- x[,1]/sum(x[,1],na.rm=TRUE)
     YsY <- subset(x,select=c(2,3))
     ns <- length(X)
@@ -299,7 +299,8 @@ get.plateau <- function(x,alpha=0.05,random.effects=TRUE,calcit=rep(TRUE,nrow(x)
             sY <- YsY[i:j,2]
             valid <- chauvenet(Y,sY,valid=calcit[i:j],random.effects=random.effects)
             if (all(valid) & (fract > out$fract)){
-                out <- weightedmean(YsY[i:j,,drop=FALSE],random.effects=random.effects,
+                out <- weightedmean(YsY[i:j,,drop=FALSE],
+                                    random.effects=random.effects,
                                     plot=FALSE,detect.outliers=FALSE,
                                     alpha=alpha)
                 out$i <- i:j

@@ -6,7 +6,7 @@ concordia.intersection.ludwig <- function(x,wetherill=TRUE,exterr=FALSE,
     out <- fit
     out$fact <- tfact(alpha,fit$df)
     out$format <- x$format
-    if (wetherill){
+    if (wetherill & !measured.disequilibrium(x$d)){
         wfit <- twfit2wfit(fit,x)
         out$par <- wfit$par
         out$cov <- wfit$cov
@@ -189,40 +189,55 @@ discordia.line <- function(fit,wetherill,d=diseq()){
     J <- matrix(0,1,2)
     usr <- graphics::par('usr')
     if (wetherill){
-        tl <- fit$par[1]
-        tu <- fit$par[2]
-        X <- age_to_Pb207U235_ratio(fit$par,d=d)[,'75']
-        Y <- age_to_Pb206U238_ratio(fit$par,d=d)[,'68']
-        x <- seq(from=max(0,usr[1],X[1]),to=min(usr[2],X[2]),length.out=50)
-        du <- mclean(tt=tu,d=d)
-        dl <- mclean(tt=tl,d=d)
-        aa <- du$Pb206U238 - dl$Pb206U238
-        bb <- x - dl$Pb207U235
-        cc <- du$Pb207U235 - dl$Pb207U235
-        dd <- dl$Pb206U238
-        y <- aa*bb/cc + dd
-        dadtl <- -dl$dPb206U238dt
-        dbdtl <- -dl$dPb207U235dt
-        dcdtl <- -dl$dPb207U235dt
-        dddtl <- dl$dPb206U238dt
-        dadtu <- du$dPb206U238dt
-        dbdtu <- 0
-        dcdtu <- du$dPb207U235dt
-        dddtu <- 0
-        J1 <- dadtl*bb/cc + dbdtl*aa/cc - dcdtl*aa*bb/cc^2 + dddtl # dydtl
-        J2 <- dadtu*bb/cc + dbdtu*aa/cc - dcdtu*aa*bb/cc^2 + dddtu # dydtu
-        E11 <- fit$cov[1,1]
-        E12 <- fit$cov[1,2]
-        E22 <- fit$cov[2,2]
-        sy <- errorprop1x2(J1,J2,fit$cov[1,1],fit$cov[2,2],fit$cov[1,2])
-        ul <- y + fit$fact*sy
-        ll <- y - fit$fact*sy
-        t75 <- get.Pb207U235.age(x,d=d)[,'t75']
-        yconc <- age_to_Pb206U238_ratio(t75,d=d)[,'68']
-        overshot <- ul>yconc
-        ul[overshot] <- yconc[overshot]
-        cix <- c(x,rev(x))
-        ciy <- c(ll,rev(ul))
+        if (measured.disequilibrium(d)){
+            U85 <- iratio('U238U235')[1]
+            fit2d <- tw3d2d(fit)
+            xy1 <- age_to_wetherill_ratios(fit$par[1],d=d)
+            x1 <- xy1$x[1]
+            x2 <- usr[2]
+            y1 <- xy1$x[2]
+            dydx <- 1/(U85*fit$par[2])
+            y2 <- y1 + (x2-x1)*dydx
+            X <- c(x1,x2)
+            Y <- c(y1,y2)
+            cix <- NA # computing confidence envelopes is very tricky
+            ciy <- NA # for this rarely used function -> don't bother
+        } else {
+            tl <- fit$par[1]
+            tu <- fit$par[2]
+            X <- age_to_Pb207U235_ratio(fit$par,d=d)[,'75']
+            Y <- age_to_Pb206U238_ratio(fit$par,d=d)[,'68']
+            x <- seq(from=max(0,usr[1],X[1]),to=min(usr[2],X[2]),length.out=50)
+            du <- mclean(tt=tu,d=d)
+            dl <- mclean(tt=tl,d=d)
+            aa <- du$Pb206U238 - dl$Pb206U238
+            bb <- x - dl$Pb207U235
+            cc <- du$Pb207U235 - dl$Pb207U235
+            dd <- dl$Pb206U238
+            y <- aa*bb/cc + dd
+            dadtl <- -dl$dPb206U238dt
+            dbdtl <- -dl$dPb207U235dt
+            dcdtl <- -dl$dPb207U235dt
+            dddtl <- dl$dPb206U238dt
+            dadtu <- du$dPb206U238dt
+            dbdtu <- 0
+            dcdtu <- du$dPb207U235dt
+            dddtu <- 0
+            J1 <- dadtl*bb/cc + dbdtl*aa/cc - dcdtl*aa*bb/cc^2 + dddtl # dydtl
+            J2 <- dadtu*bb/cc + dbdtu*aa/cc - dcdtu*aa*bb/cc^2 + dddtu # dydtu
+            E11 <- fit$cov[1,1]
+            E12 <- fit$cov[1,2]
+            E22 <- fit$cov[2,2]
+            sy <- errorprop1x2(J1,J2,fit$cov[1,1],fit$cov[2,2],fit$cov[1,2])
+            ul <- y + fit$fact*sy
+            ll <- y - fit$fact*sy
+            t75 <- get.Pb207U235.age(x,d=d)[,'t75']
+            yconc <- age_to_Pb206U238_ratio(t75,d=d)[,'68']
+            overshot <- ul>yconc
+            ul[overshot] <- yconc[overshot]
+            cix <- c(x,rev(x))
+            ciy <- c(ll,rev(ul))
+        }
     } else {
         fit2d <- tw3d2d(fit)
         X[1] <- age_to_U238Pb206_ratio(fit2d$par['t'],d=d)[,'86']
@@ -261,7 +276,7 @@ discordia.line <- function(fit,wetherill,d=diseq()){
             ul[overshot] <- yconc[overshot]
             overshot <- ll>yconc
             ll[overshot] <- yconc[overshot]
-        }        
+        }
         cix <- c(x,rev(x))
         ciy <- c(ll,rev(ul))
     }
@@ -273,7 +288,7 @@ tw3d2d <- function(fit){
     out <- list(par=fit$par,cov=fit$cov,fact=fit$fact)
     if (fit$format > 3){
         labels <- c('t','76i')
-        out$par <- c(fit$par['t'],fit$par[3]/fit$par[2]) # par[2] = Pb206i, par[3] = Pb207i
+        out$par <- c(fit$par['t'],fit$par[3]/fit$par[2]) # par = c(Pb206i,Pb207i)
         J <- matrix(0,2,3)
         J[1,1] <- 1
         J[2,2] <- -fit$par[3]/fit$par[2]^2
@@ -287,7 +302,7 @@ tw3d2d <- function(fit){
 
 # this would be much easier in unicode but that doesn't render in PDF:
 discordia.title <- function(fit,wetherill,sigdig=2,...){
-    lower.age <- roundit(fit$par[1],fit$err[,1],sigdig=sigdig)
+    lower.age <- roundit(fit$par[1],fit$err[,1],sigdig=sigdig,text=TRUE)
     if (inflate(fit)){
         args1 <- quote(a%+-%b~'|'~c~'|'~d~u~'(n='*n*')')
         args2 <- quote(a%+-%b~'|'~c~'|'~d~u)
@@ -298,7 +313,7 @@ discordia.title <- function(fit,wetherill,sigdig=2,...){
     list1 <- list(a=lower.age[1],b=lower.age[2],
                   c=lower.age[3],u='Ma',n=fit$n)
     if (wetherill){
-        upper.age <- roundit(fit$par[2],fit$err[,2],sigdig=sigdig)
+        upper.age <- roundit(fit$par[2],fit$err[,2],sigdig=sigdig,text=TRUE)
         expr1 <- quote('lower intercept =')
         expr2 <- quote('upper intercept =')
         list2 <- list(a=upper.age[1],b=upper.age[2],c=upper.age[3],u='Ma')
@@ -307,7 +322,7 @@ discordia.title <- function(fit,wetherill,sigdig=2,...){
             list2$d <- upper.age[4]
         }
     } else if (fit$format%in%c(1,2,3)){
-        i76 <- roundit(fit$par['76i'],fit$err[,'76i'],sigdig=sigdig)
+        i76 <- roundit(fit$par['76i'],fit$err[,'76i'],sigdig=sigdig,text=TRUE)
         expr1 <- quote('age =')
         expr2 <- quote('('^207*'Pb/'^206*'Pb)'[o]*'=')
         list2 <- list(a=i76[1],b=i76[2],c=i76[3],u='')
@@ -316,8 +331,8 @@ discordia.title <- function(fit,wetherill,sigdig=2,...){
             list2$d <- i76[4]
         }
     } else if (fit$format%in%c(4,5,6)){
-        i64 <- roundit(fit$par['64i'],fit$err[,'64i'],sigdig=sigdig)
-        i74 <- roundit(fit$par['74i'],fit$err[,'74i'],sigdig=sigdig)
+        i64 <- roundit(fit$par['64i'],fit$err[,'64i'],sigdig=sigdig,text=TRUE)
+        i74 <- roundit(fit$par['74i'],fit$err[,'74i'],sigdig=sigdig,text=TRUE)
         expr1 <- quote('age =')
         expr2 <- quote('('^206*'Pb/'^204*'Pb)'[o]*'=')
         expr3 <- quote('('^207*'Pb/'^204*'Pb)'[o]*'=')
@@ -335,8 +350,8 @@ discordia.title <- function(fit,wetherill,sigdig=2,...){
         i87 <- 1/fit$par['78i']
         i86err <- i86*fit$err[,'68i']/fit$par['68i']
         i87err <- i87*fit$err[,'78i']/fit$par['78i']
-        ri86 <- roundit(i86,i86err,sigdig=sigdig)
-        ri87 <- roundit(i87,i87err,sigdig=sigdig)
+        ri86 <- roundit(i86,i86err,sigdig=sigdig,text=TRUE)
+        ri87 <- roundit(i87,i87err,sigdig=sigdig,text=TRUE)
         expr1 <- quote('age =')
         expr2 <- quote('('^208*'Pb/'^206*'Pb)'[o]*'=')
         expr3 <- quote('('^208*'Pb/'^207*'Pb)'[o]*'=')
@@ -360,9 +375,10 @@ discordia.title <- function(fit,wetherill,sigdig=2,...){
                                  b=signif(fit$p.value,sigdig)))
     } else if (fit$model==3){
         ci <- ci_log2lin_lud(fit=fit,fact=fit$fact)
-        rounded.disp <- roundit(ci[1],ci[2:3],sigdig=sigdig)
+        rounded.disp <- roundit(ci[1],ci[2:3],sigdig=sigdig,text=TRUE)
         line4 <- substitute('overdispersion ='~a+b/-c~'Ma',
-                            list(a=rounded.disp[1],b=rounded.disp[3],c=rounded.disp[2]))
+                            list(a=rounded.disp[1],b=rounded.disp[3],
+                                 c=rounded.disp[2]))
     }
     extrarow <- fit$format>3 & !wetherill
     if (fit$model==1 & extrarow){

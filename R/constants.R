@@ -102,6 +102,8 @@ mindens <- function(mineral,x=NULL){
 #' existing value.
 #' 
 #' @param fname the path of a \code{.json} file
+#'
+#' @param reset logical. If \code{TRUE}, restores the default values
 #' 
 #' @return if \code{setting=NA} and \code{fname=NA}, returns a
 #'     \code{.json} string
@@ -136,21 +138,19 @@ mindens <- function(mineral,x=NULL){
 #' Blachot, J. and Wapstra, A.H., 2003. The NUBASE evaluation of
 #' nuclear and decay properties. Nuclear Physics A, 729(1), pp.3-128.
 #'
-#' \item Sm: Lugmair, G. W., and
-#' K. Marti. "Lunar initial \eqn{^{143}}Nd/\eqn{^{144}}Nd: differential
-#' evolution of the lunar crust and mantle."
-#' Earth and Planetary Science Letters 39.3 (1978): 349-357.
+#' \item Sm: Villa, I.M., Holden, N.E., Possolo, A., Ickert, R.B.,
+#' Hibbert, D.B. and Renne, P.R., 2020. IUPAC-IUGS recommendation on
+#' the half-lives of \eqn{^{147}}Sm and \eqn{^{146}}Sm. Geochimica et
+#' Cosmochimica Acta, 285, pp.70-77.
 #'
 #' \item Nd: Zhao, Motian, et
 #' al. "Absolute measurements of neodymium isotopic abundances and atomic
 #' weight by MC-ICPMS." International Journal of Mass Spectrometry 245.1
 #' (2005): 36-40.
 #'
-#' \item Re: Selby, D., Creaser, R.A., Stein, H.J., Markey, R.J. and Hannah,
-#' J.L., 2007.  Assessment of the 187Re decay constant by cross
-#' calibration of Re-Os molybdenite and U-Pb zircon chronometers in
-#' magmatic ore systems. Geochimica et Cosmochimica Acta, 71(8),
-#' pp.1999-2013.
+#' \item Re: Smoliar, Michael I., Richard J. Walker, and John
+#' W. Morgan. "Re-Os ages of group IIA, IIIA, IVA, and IVB iron meteorites."
+#' Science 271.5252 (1996): 1099-1102.
 #'
 #' \item Ar: Renne, Paul R., et
 #' al. "Response to the comment by WH Schwarz et al. on "Joint
@@ -164,10 +164,9 @@ mindens <- function(mineral,x=NULL){
 #' "IUPAC-IUGS recommendation on the half life of \eqn{^{87}}Rb".
 #' Geochimica et Cosmochimica Acta, 164, pp.382-385.
 #'
-#' \item Lu: Soederlund, Ulf, et
-#' al. "The \eqn{^{176}}Lu decay constant determined by Lu-Hf and
-#' U-Pb isotope systematics of Precambrian mafic intrusions."
-#' Earth and Planetary Science Letters 219.3 (2004): 311-324.
+#' \item Lu: Soederlund, Ulf, et al. "The \eqn{^{176}}Lu decay constant
+#' determined by Lu-Hf and U-Pb isotope systematics of Precambrian mafic
+#' intrusions." Earth and Planetary Science Letters 219.3 (2004): 311-324.
 #' }
 #'
 #' \item Isotopic ratios:
@@ -243,29 +242,33 @@ mindens <- function(mineral,x=NULL){
 #' settings('iratio','U238U235',138.88,0)
 #' print(settings('iratio','U238U235'))
 #' @export
-settings <- function(setting=NA,...,fname=NA){
-    args <- list(...)
-    nargs <- length(args)
-    if (!is.na(fname)){
-        prefs <- fromJSON(file=fname)
-        .IsoplotR$lambda <- prefs$lambda
-        .IsoplotR$iratio <- prefs$iratio
-        .IsoplotR$imass <- prefs$imass
-        .IsoplotR$etchfact <- prefs$etchfact
-        .IsoplotR$tracklength <- prefs$tracklength
-        .IsoplotR$mindens <- prefs$mindens
-    } else if (!is.na(setting) & (nargs>0)){
-        if (nargs==1){
-            Rcommand <- paste0(setting,"('",args[[1]],"')")
-            return(eval(parse(text=Rcommand)))
-        } else if (nargs==2) {
-            Rcommand <- paste0(setting,"('",args[[1]],"',",args[[2]],")")
-        } else if (nargs==3) {
-            Rcommand <- paste0(setting,"('",args[[1]],"',",args[[2]],",",args[[3]],")")
-        }
-        eval(parse(text=Rcommand))
+settings <- function(setting=NA,...,fname=NA,reset=FALSE){
+    if (reset){
+        settings(fname=system.file("constants.json",package="IsoplotR"))
     } else {
-        preferences <- as.list(.IsoplotR)
-        return(toJSON(preferences))
+        args <- list(...)
+        nargs <- length(args)
+        if (!is.na(fname)){
+            prefs <- fromJSON(file=fname)
+            .IsoplotR$lambda <- prefs$lambda
+            .IsoplotR$iratio <- prefs$iratio
+            .IsoplotR$imass <- prefs$imass
+            .IsoplotR$etchfact <- prefs$etchfact
+            .IsoplotR$tracklength <- prefs$tracklength
+            .IsoplotR$mindens <- prefs$mindens
+        } else if (!is.na(setting) & (nargs>0)){
+            if (nargs==1){
+                Rcommand <- paste0(setting,"('",args[[1]],"')")
+                return(eval(parse(text=Rcommand)))
+            } else if (nargs==2) {
+                Rcommand <- paste0(setting,"('",args[[1]],"',",args[[2]],")")
+            } else if (nargs==3) {
+                Rcommand <- paste0(setting,"('",args[[1]],"',",args[[2]],",",args[[3]],")")
+            }
+            eval(parse(text=Rcommand))
+        } else {
+            preferences <- as.list(.IsoplotR)
+            return(toJSON(preferences))
+        }
     }
 }

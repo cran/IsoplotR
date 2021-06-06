@@ -4,7 +4,11 @@
 #' @description
 #' Computes the geometric mean composition of a continuous mixture of
 #' fission track or U-Th-He data and returns the corresponding age and
-#' fitting parameters.
+#' fitting parameters. Only propagates the systematic uncertainty
+#' associated with decay constants and calibration factors after
+#' computing the weighted mean isotopic composition. Does not propagate
+#' the uncertainty of any initial daughter correction, because this is
+#' neither a purely random or purely systematic uncertainty.
 #'
 #' @details
 #' The central age assumes that the observed age distribution is the
@@ -23,6 +27,11 @@
 #' usually small unless the data are imprecise and/or strongly
 #' overdispersed.
 #'
+#' The uncertainty budget of the central age does not include the
+#' uncertainty of the initial daughter correction (if any), for the
+#' same reasons as discussed under the \code{\link{weightedmean}}
+#' function.
+#' 
 #' @param x an object of class \code{UThHe} or \code{fissiontracks},
 #'     OR a 2-column matrix with (strictly positive) values and
 #'     uncertainties
@@ -100,8 +109,8 @@
 #'     \code{\link{helioplot}}
 #' 
 #' @examples
-#' data(examples)
-#' print(central(examples$UThHe)$age)
+#' attach(examples)
+#' print(central(UThHe)$age)
 #'
 #' @references Galbraith, R.F. and Laslett, G.M., 1993. Statistical
 #'     models for mixed fission track ages. Nuclear Tracks and
@@ -179,15 +188,11 @@ central.UThHe <- function(x,alpha=0.05,model=1,...){
     out
 }
 
-#' @param mineral setting this parameter to either \code{apatite} or
-#'     \code{zircon} changes the default efficiency factor, initial
-#'     fission track length and density to preset values (only affects
-#'     results if \code{x$format=2})
 #' @param exterr include the zeta or decay constant uncertainty into
 #'     the error propagation for the central age?
 #' @rdname central
 #' @export
-central.fissiontracks <- function(x,mineral=NA,alpha=0.05,exterr=FALSE,...){
+central.fissiontracks <- function(x,alpha=0.05,exterr=FALSE,...){
     out <- list()
     if (x$format<2){
         L8 <- lambda('U238')[1]
@@ -222,10 +227,10 @@ central.fissiontracks <- function(x,mineral=NA,alpha=0.05,exterr=FALSE,...){
         names(out$age) <- c('t','s[t]','ci[t]')
         names(out$disp) <- c('s','ll','ul')
     } else if (x$format>1){
-        tst <- age(x,exterr=FALSE,mineral=mineral)
+        tst <- age(x,exterr=FALSE)
         out <- central.default(tst,alpha=alpha)
     }
-    if (exterr & x$format<3){
+    if (exterr){
         out$age[1:2] <- add.exterr(x,tt=out$age[1],st=out$age[2])
         out$age[3] <- out$age[2]*nfact(alpha)
     }

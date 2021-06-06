@@ -75,10 +75,10 @@
 #'
 #' }
 #' @examples
-#' data(examples)
-#' peakfit(examples$FT1,k=2)
+#' attach(examples)
+#' peakfit(FT1,k=2)
 #'
-#' peakfit(examples$LudwigMixture,k='min')
+#' peakfit(LudwigMixture,k='min')
 #' @references
 #' Galbraith, R.F. and Laslett, G.M., 1993. Statistical models for
 #' mixed fission track ages. Nuclear Tracks and Radiation
@@ -345,11 +345,13 @@ peaks2legend <- function(fit,sigdig=2,k=NULL){
     if (identical(k,'min')) return(min_age_to_legend(fit,sigdig=sigdig))
     out <- NULL
     for (i in 1:ncol(fit$peaks)){
-        rounded.age <- roundit(fit$peaks[1,i],fit$peaks[2:3,i],sigdig=sigdig)
+        rounded.age <- roundit(fit$peaks[1,i],fit$peaks[2:3,i],
+                               sigdig=sigdig,text=TRUE)
         line <- paste0('Peak ',i,': ',rounded.age[1],' \u00B1 ',
                        rounded.age[2],' | ',rounded.age[3])
         if (k>1){
-            rounded.prop <- roundit(100*fit$props[1,i],100*fit$props[2,i],sigdig=sigdig)
+            rounded.prop <- roundit(100*fit$props[1,i],100*fit$props[2,i],
+                                    sigdig=sigdig,text=TRUE)
             line <- paste0(line,' (',rounded.prop[1],'%)')
         }
         out <- c(out,line)
@@ -357,7 +359,8 @@ peaks2legend <- function(fit,sigdig=2,k=NULL){
     out
 }
 min_age_to_legend <- function(fit,sigdig=2){
-    rounded.age <- roundit(fit$peaks[1],fit$peaks[2:3],sigdig=sigdig)
+    rounded.age <- roundit(fit$peaks[1],fit$peaks[2:3],
+                           sigdig=sigdig,text=TRUE)
     paste0('Minimum: ',rounded.age[1],'\u00B1',rounded.age[2],' | ',rounded.age[3])
 }
 
@@ -376,7 +379,7 @@ normal.mixtures <- function(x,k,alpha=0.05,...){
     L <- -Inf
     for (j in 1:100){
         lpfiu <- matrix(0,n,k) # log(pii x fiu) taking logs enhances stability 
-        for (i in 1:k){        # compared to Galbraiths orignal formulation
+        for (i in 1:k){        # compared to Galbraith's original formulation
             lpfiu[,i] <- log(pii[i]) + stats::dnorm(yu,betai[i]*xu,1,log=TRUE)
         }
         piu <- matrix(0,n,k)
@@ -409,7 +412,7 @@ normal.mixtures <- function(x,k,alpha=0.05,...){
     out$L <- L
     out
 }
-# uses sum-of-logs identity from Wikipedia
+# uses log-of-sums identity from Wikipedia
 get.L.normal.mixture <- function(lpfiu){
     if (ncol(lpfiu)<2){
         fu <- lpfiu
@@ -418,7 +421,7 @@ get.L.normal.mixture <- function(lpfiu){
         a0 <- subset(sorted.lpfiu,select=1)
         ai <- subset(sorted.lpfiu,select=-1)
         aia0 <- apply(ai,2,'-',a0)
-        fu <- a0 + log(1 + sum(exp(aia0)))
+        fu <- a0 + log(1 + rowSums(exp(aia0)))
     }
     sum(fu)
 }
@@ -528,34 +531,42 @@ BIC_fit <- function(x,max.k,...){
 }
 
 min_age_model <- function(zs,alpha=0.05,np=4){
-    imin <- which.min(zs[,1])
-    mz <- zs[imin,1]
+    # maps the parameters from -Inf/+Inf to model space
+    mappar <- function(par,Mz){
+        np <- length(par)
+        gam <- par[1]
+        prop <- exp(par[2])/(1+exp(par[2]))
+        sig <- exp(par[3])
+        if (np<4) mu <- gam
+        else mu <- gam + (Mz-gam)*exp(par[4])/(1+exp(par[4]))
+        c(gam,prop,sig,mu)
+    }
+    # computes the log-likelihood function using the transformed parameters
+    LL <- function(par,zs,Mz){
+        get.minage.L(pars=mappar(par,Mz),zs=zs)
+    }
+    mz <- min(zs[,1])
     Mz <- max(zs[,1])
     cfit <- continuous_mixture(zs[,1],zs[,2])
-    ms <- cfit$sigma/5
-    Ms <- diff(range(zs[,1]))
-    LL <- function(par,zs,Mz){
-        gam <- par[1]
-        prop <- par[2]
-        sig <- par[3]
-        if (length(par)<4) mu <- gam
-        else mu <- gam + (Mz-gam)*par[4]
-        get.minage.L(pars=c(gam,prop,sig,mu),zs=zs)
-    }
-    dz <- min(10*zs[imin,2],Mz-mz)
-    fit <- stats::optim(rep(0,np),LL,method='L-BFGS-B',zs=zs,Mz=Mz,
-                        lower=c(mz,0.01,ms,0),upper=c(mz+dz,0.99,Ms,1))
-    jpar <- fit$par # Jeffreys parameters!
-    H <- stats::optimHess(jpar,LL,zs=zs,Mz=Mz)
-    jE <- solve(H)
-    par <- jpar
+    init <- rep(0,np)
+    init[1] <- mz
+    init[2] <- 0
+    init[3] <- log(cfit$sigma)
+    fit <- stats::optim(init,LL,method='L-BFGS-B',zs=zs,Mz=Mz,
+                        lower=init+c(0,-10,-2,-10)[1:np],
+                        upper=init+c(Mz-mz,10,+2,10)[1:np])
+    H <- stats::optimHess(fit$par,LL,zs=zs,Mz=Mz)
+    lE <- solve(H)
+    par <- mappar(fit$par,Mz)
+    # propagate the uncertainties from -Inf/+Inf to model space
     J <- diag(np)
+    J[2,2] <- exp(fit$par[2])/(1+exp(fit$par[2]))^2
+    J[3,3] <- exp(fit$par[3])
     if (np==4){
-        par[4] <- jpar[1] + (Mz-jpar[1])*jpar[4]
-        J[4,1] <- 1-jpar[4]
-        J[4,4] <- Mz-jpar[1]
+        J[4,1] <- 1-exp(fit$par[4])/(1+exp(fit$par[4]))
+        J[4,4] <- (Mz-par[1])*exp(fit$par[4])/(1+exp(fit$par[4]))^2
     }
-    E <- J %*% jE %*% t(J)
+    E <- J %*% lE %*% t(J)
     if (E[1,1]<0 & np==4){
         out <- min_age_model(zs=zs,alpha=alpha,np=3)
     } else {

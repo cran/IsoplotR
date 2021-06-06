@@ -13,7 +13,7 @@ central(x, ...)
 
 \method{central}{UThHe}(x, alpha = 0.05, model = 1, ...)
 
-\method{central}{fissiontracks}(x, mineral = NA, alpha = 0.05, exterr = FALSE, ...)
+\method{central}{fissiontracks}(x, alpha = 0.05, exterr = FALSE, ...)
 }
 \arguments{
 \item{x}{an object of class \code{UThHe} or \code{fissiontracks},
@@ -39,11 +39,6 @@ uncertainties.
 \code{3}: attribute any excess dispersion to the presence of
 geological uncertainty, which manifests itself as an added
 (co)variance term.}
-
-\item{mineral}{setting this parameter to either \code{apatite} or
-\code{zircon} changes the default efficiency factor, initial
-fission track length and density to preset values (only affects
-results if \code{x$format=2})}
 
 \item{exterr}{include the zeta or decay constant uncertainty into
 the error propagation for the central age?}
@@ -119,7 +114,11 @@ degrees of freedom}
 \description{
 Computes the geometric mean composition of a continuous mixture of
 fission track or U-Th-He data and returns the corresponding age and
-fitting parameters.
+fitting parameters. Only propagates the systematic uncertainty
+associated with decay constants and calibration factors after
+computing the weighted mean isotopic composition. Does not propagate
+the uncertainty of any initial daughter correction, because this is
+neither a purely random or purely systematic uncertainty.
 }
 \details{
 The central age assumes that the observed age distribution is the
@@ -137,10 +136,15 @@ and the true ages are assumed to follow lognormal distributions.
 The difference between the central age and the weighted mean age is
 usually small unless the data are imprecise and/or strongly
 overdispersed.
+
+The uncertainty budget of the central age does not include the
+uncertainty of the initial daughter correction (if any), for the
+same reasons as discussed under the \code{\link{weightedmean}}
+function.
 }
 \examples{
-data(examples)
-print(central(examples$UThHe)$age)
+attach(examples)
+print(central(UThHe)$age)
 
 }
 \references{

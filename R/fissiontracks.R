@@ -1,17 +1,16 @@
-fissiontrack.age <- function(x,i=NA,sigdig=NA,exterr=TRUE,mineral=NA){
+fissiontrack.age <- function(x,i=NA,sigdig=NA,exterr=TRUE){
     if (x$format < 2){
         out <- EDM.age(x,i,sigdig=sigdig,exterr=exterr)
     } else if (x$format > 1){
-        if (x$format == 3) {
-            if (is.na(mineral)) mineral <- 'apatite'
-            x$zeta <- get.absolute.zeta(mineral);
+        if (x$format == 3){
+            x$zeta <- get.absolute.zeta(x$mineral,exterr=exterr);
         }
         out <- ICP.age(x,i,sigdig=sigdig,exterr=exterr)
     }
     out
 }
 
-get.absolute.zeta <- function(mineral){
+get.absolute.zeta <- function(mineral,exterr=FALSE){
     R <- iratio('U238U235')[1]
     MM <- imass('U')[1]
     qap <- etchfact(mineral)
@@ -20,7 +19,13 @@ get.absolute.zeta <- function(mineral){
     dens <- mindens(mineral)
     Na <- 6.02214e23
     zeta <- 4*(1+R)*MM*1e18/(Na*Lf*qap*L*dens*R)
-    c(zeta,0)
+    if (exterr){
+        Lf <- lambda('fission')
+        szeta <- zeta*Lf[2]/Lf[1]
+    } else {
+        szeta <- 0
+    }
+    c(zeta,szeta)
 }
 
 #' @title Calculate the zeta calibration coefficient for fission track dating
@@ -101,9 +106,9 @@ get.absolute.zeta <- function(mineral){
 #'     \code{x$zeta} value
 #' @seealso \code{\link{age}}
 #' @examples
-#' data(examples)
-#' print(examples$FT1$zeta)
-#' FT <- set.zeta(examples$FT1,tst=c(250,5))
+#' attach(examples)
+#' print(FT1$zeta)
+#' FT <- set.zeta(FT1,tst=c(250,5))
 #' print(FT$zeta)
 #'
 #' @references
@@ -144,10 +149,10 @@ set.zeta <- function(x,tst,exterr=TRUE,update=TRUE,sigdig=2){
     zsz <- roundit(zeta,zetaErr,sigdig=sigdig)
     if (update){
         out <- x
-        out$zeta <- zsz
+        out$zeta <- as.vector(zsz)
     } else {
-        out <- matrix(zsz,1,2)
-        colnames(out) <- c('zeta','s[zeta]')
+        out <- as.vector(zsz)
+        names(out) <- c('zeta','s[zeta]')
     }
     out
 }

@@ -186,8 +186,7 @@
 #'
 #' \describe{
 #' \item{\code{radial} or \code{average}:}{\code{X, err[X]}}
-#' \item{\code{regression}:}{\code{X, err[X], Y, err[Y], rho} \cr
-#'       OR \code{X/Z, err[X/Z], Y/Z, err[Y/Z], X/Y, err[X/Y]}}
+#' \item{\code{regression}:}{\code{X, err[X], Y, err[Y], rho}}
 #' \item{\code{spectrum}:}{\code{f, X, err[X]}} 
 #' }
 #' 
@@ -205,9 +204,9 @@
 #' @param d an object of class \code{\link{diseq}}.
 #' 
 #' @param Th02 2-element vector with the assumed initial
-#'     \eqn{^{230}}Th/\eqn{^{232}}Th-ratio of the detritus and its
-#'     standard error. Only used if \code{isochron=FALSE} and
-#'     \code{detritus=2}
+#'     \eqn{^{230}}Th/\eqn{^{232}}Th-ratio of the detritus (for
+#'     formats 1 and 2) or rock (for formats 3 and 4) and its standard
+#'     error.
 #' 
 #' @param Th02U48 9-element vector with the measured composition of
 #'     the detritus, containing \code{X=0/8}, \code{sX}, \code{Y=2/8},
@@ -218,65 +217,10 @@
 #' 
 #' @seealso \code{\link{examples}}, \code{\link{settings}}
 #' 
-#' @return
-#' \itemize{
-#' 
-#' \item If \code{method="U-Pb"}: an object of class \code{UPb}, i.e. a list
-#' inheriting the input arguments \code{x}, \code{format} and \code{d}.
-#'
-#' \item If \code{method="ArAr"}: and object of class \code{ArAr}, i.e. a
-#' three item list containing the following items:
-#'
-#' \code{x}: a matrix containing the isotopic measurements
-#'
-#' \code{J}: a two-element vector with the J-factor and its
-#' uncertainty, extracted from the input file.
-#' 
-#' \code{format}: same as the input argument
-#' 
-#' \item If \code{method="Pb-Pb"}, \code{method="Th-Pb"},
-#' \code{"K-Ca"}, \code{"Rb-Sr"}, \code{"Sm-Nd"}, \code{"Lu-Hf"}, or
-#' \code{"Re-Os"}: objects of classes \code{PbPb}, \code{KCa},
-#' \code{RbSr}, \code{SmNd}, \code{LuHf}, or \code{ReOs},
-#' respectively; i.e. a list inheriting the input arguments \code{x}
-#' and \code{format}.
-#'
-#' \item If \code{method="UThHe"}: an object of class \code{UThHe},
-#' i.e. a matrix with the contents of \code{x}.
-#'
-#' \item If \code{method="fissiontracks"}: an object of class
-#' \code{fissiontracks}, i.e. a list containing the following items:
-#'
-#' \code{format}: same as the input argument
-#'
-#' \code{x}: a matrix of spontaneous and induced fission track counts
-#' (only returned if \code{format=1})
-#'
-#' \code{rhoD}: the track density of the dosimeter glass, extracted
-#' from the input data (only returned if \code{format=1})
-#'
-#' \code{zeta}: the zeta calibration constant extracted from the input
-#' data (only returned if \code{format<3})
-#'
-#' \code{Ns} a list containing the spontaneous fission track counts
-#' (only returned if \code{format>1})
-#'
-#' \code{U}: a list of lists containing the U-concentration or
-#' U/Ca-ratio measurements for each of the analysed grains (only
-#' returned if \code{format>1})
-#'
-#' \code{sU}: a list of lists containing the standard errors of the
-#' U-concentration or U/Ca-ratio measurements for each of the analysed
-#' grains (only returned if \code{format>1})
-#'
-#' \code{spotSize}: the laser ablation spot size (only returned if
-#' \code{format>1})
-#'
-#' \item If \code{method="detritals"}: an object of class
-#' \code{detritals}, i.e. a list of named vectors, one for each
-#' detrital sample.
-#'
-#' }
+#' @return An object of class \code{UPb}, \code{PbPb}, \code{ThPb},
+#'     \code{KCa}, \code{RbSr}, \code{SmNd}, \code{LuHf}, \code{ReOs},
+#'     \code{UThHe}, \code{fissiontracks}, \code{detritals} or
+#'     \code{PD}. See \code{\link{classes}} for further details.
 #' 
 #' @examples
 #'
@@ -438,19 +382,20 @@ as.UPb <- function(x,format=3,ierr=1,d=diseq()){
 # and can be inferred from the redundancy of the ratios
 optionalredundancy2cor <- function(X,nc){
     out <- X
-    if (nc > 7){
-        rhoXY <- X[,7]
-        rhoYZ <- X[,8]
-        i <- which(is.na(rhoXY))
-        j <- which(is.na(rhoYZ))
-    } else if (nc == 7){
+    nr <- nrow(X)
+    if (nc > 6){
         rhoXY <- X[,7]
         i <- which(is.na(rhoXY))
-        j <- 1:nrow(X)
-        out <- cbind(X,0)
+        if (nc > 7){
+            rhoYZ <- X[,8]
+            j <- which(is.na(rhoYZ))
+        } else {
+            j <- 1:nr
+            out <- cbind(X,0)
+        }
     } else {
-        i <- 1:nrow(X)
-        j <- 1:nrow(X)
+        i <- 1:nr
+        j <- 1:nr
         out <- cbind(X,0,0)
     }
     out[i,7] <- get.cor.75.68(X[i,1],X[i,2],X[i,3],X[i,4],X[i,5],X[i,6])
@@ -762,20 +707,16 @@ as.fissiontracks <- function(x,format=1,ierr=1){
     out <- list()
     class(out) <- "fissiontracks"
     out$format <- format
+    si <- 6 # start index
     if (format==1){
         out$zeta <- errAdjust(as.numeric(x[2,1:2]),ierr=ierr)
         out$rhoD <- errAdjust(as.numeric(x[4,1:2]),ierr=ierr)
-        X <- shiny2matrix(x,6,nr,nc)
+        X <- shiny2matrix(x,si,nr,nc)
         out$x <- insert.data(x=X,cnames=c('Ns','Ni'))
     } else {
-        if (format==2){
-            out$zeta <- errAdjust(as.numeric(x[2,1:2]),ierr=ierr)
-            out$spotSize <- as.numeric(x[4,1])
-            si <- 6 # start index
-        } else {
-            out$spotSize <- as.numeric(x[2,1])
-            si <- 4
-        }
+        if (format==2) out$zeta <- errAdjust(as.numeric(x[2,1:2]),ierr=ierr)
+        else out$mineral <- x[2,1]
+        out$spotSize <- as.numeric(x[4,1])
         ns <- nr-si+1
         Ns <- as.numeric(x[si:nr,1])
         A <- as.numeric(x[si:nr,2])
