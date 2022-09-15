@@ -190,8 +190,8 @@
 #' \item{\code{spectrum}:}{\code{f, X, err[X]}} 
 #' }
 #' 
-#' @param ierr indicates whether the analytical uncertainties are
-#'     reported as: 
+#' @param ierr indicates whether the analytical uncertainties of the
+#'     input are provided as:
 #' 
 #' \code{1}: 1\eqn{\sigma} absolute uncertainties.
 #' 
@@ -717,7 +717,7 @@ as.UThHe <- function(x,ierr=1){
     nr <- nrow(x)
     if (is.numeric(x)) X <- x
     else X <- shiny2matrix(x,2,nr,nc)
-    X[X<=0] <- NA
+    X[X<0] <- NA
     X <- errconvert(X,gc='U-Th-He',ierr=ierr)
     if (nc>5) cnames <- c('He','errHe','U','errU','Th','errTh')
     if (nc>7) cnames <- c(cnames,'Sm','errSm')
