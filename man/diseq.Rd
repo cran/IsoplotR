@@ -87,7 +87,10 @@ a list with the following items:
 \item{L}{a named vector of all the relevant decay constants}
 
 \item{n0}{the initial atomic abundances of all the parent and
-daughter isotopes (used by \code{\link{mclean}})}
+daughter isotopes (used by \code{\link{mclean}}). Note that the
+\eqn{{}^{238}}U and \eqn{{}^{235}}U decay chains have been
+disconnected, so the \eqn{{}^{238}}U/\eqn{{}^{235}}U ratio of
+\code{n0} is meaningless.}
 
 }
 }
@@ -126,7 +129,7 @@ d <- diseq(U48=list(x=0,option=1),ThU=list(x=2,option=1),
            RaU=list(x=2,option=1),PaU=list(x=2,option=1))
 fn <- system.file("diseq.csv",package="IsoplotR")
 UPb <- read.data(fn,method='U-Pb',format=2,d=d)
-concordia(UPb,type=2,xlim=c(0,5000),ylim=c(0.047,0.057))
+concordia(UPb,type=2,xlim=c(0,700),ylim=c(0.05,0.5))
 }
 \seealso{
 \code{\link{mclean}}, \code{\link{concordia}},
