@@ -78,7 +78,7 @@ inflate <- function(fit){
 #' @export
 ci <- function(x,sx,oerr=3,df=NULL,absolute=FALSE){
     fact <- rep(ntfact(alpha()),length(sx))
-    if (!is.null(df)){
+    if (!is.null(df) && df>0){
         fact[-1] <- stats::qt(1-alpha()/2,df=df)
     }
     if (oerr>3 & absolute) oerr <- oerr-3
@@ -153,8 +153,13 @@ mswdtit <- function(mswd,p,sigdig=2){
 }
 disptit <- function(w,sw,sigdig=2,oerr=3,units='',prefix='dispersion ='){
     if (w>0){
-        werr <- ci(w,sw,oerr=oerr)
-        rounded <- roundit(w,werr,sigdig=sigdig,oerr=oerr,text=TRUE)
+        if (identical(units,'%')) {
+            werr <- ci(100*w,100*sw,oerr=oerr,absolute=TRUE)
+            rounded <- roundit(100*w,werr,sigdig=sigdig,text=TRUE)
+        } else {
+            werr <- ci(w,sw,oerr=oerr)
+            rounded <- roundit(w,werr,sigdig=sigdig,oerr=oerr,text=TRUE)
+        }
     } else {
         w <- 0
         werr <- NA
@@ -163,32 +168,71 @@ disptit <- function(w,sw,sigdig=2,oerr=3,units='',prefix='dispersion ='){
     lst <- list(p=prefix,a=rounded[1],b=rounded[2],u=units)
     if (oerr>3){
         out <- substitute(p~a*u%+-%b*'%',lst)
-    } else if (is.na(werr) | sw/w<0.5){
-        out <- substitute(p~a%+-%b*u,lst)
     } else {
-        lst$b <- signif(exp(log(w)+werr/w)-w,sigdig)
-        lst$c <- signif(w-exp(log(w)-werr/w),sigdig)
-        out <- substitute(p~a+b-c*u,lst)
+        out <- substitute(p~a%+-%b*u,lst)
     }
     out
 }
-peaktit <- function(x,sx,p,sigdig=2,oerr=3,unit='Ma',prefix=NULL){
+peaktit <- function(x,sx,p=NULL,sigdig=2,oerr=3,unit='Ma',prefix=NULL){
     xerr <- ci(x,sx,oerr=oerr)
     rounded.x <- roundit(x,xerr,sigdig=sigdig,oerr=oerr,text=TRUE)
-    rounded.p <- signif(100*p,sigdig)
-    lst <- list(p=prefix,a=rounded.x[1],b=rounded.x[2],c=rounded.p[1],u=unit)
-    if (oerr>3){
-        out <- substitute(p~a~u%+-%b*'% (prop='*c*'%)',lst)
+    if (is.null(p)){
+        lst <- list(p=prefix,a=rounded.x[1],b=rounded.x[2],u=unit)
+        if (oerr>3){
+            out <- substitute(p~a~u%+-%b,lst)
+        } else {
+            out <- substitute(p~a%+-%b~u,lst)
+        }
     } else {
-        out <- substitute(p~a%+-%b~u~'(prop='*c*'%)',lst)
+        rounded.p <- signif(100*p,sigdig)
+        lst <- list(p=prefix,a=rounded.x[1],b=rounded.x[2],c=rounded.p[1],u=unit)
+        if (oerr>3){
+            out <- substitute(p~a~u%+-%b*'% (prop='*c*'%)',lst)
+        } else {
+            out <- substitute(p~a%+-%b~u~'(prop='*c*'%)',lst)
+        }
+    }
+    out
+}
+bayestit <- function(x,XL,n=NULL,ntit=paste0('(n=',n,')'),
+                     sigdig=2,oerr=3,units=' Ma',prefix='age ='){
+    if (oerr%in%c(1,4)){
+        lq <- -1
+        uq <- 1
+    } else if (oerr%in%c(2,5)){
+        lq <- -2
+        uq <- 2
+    } else if (oerr%in%c(3,6)){
+        lq <- stats::qnorm(alpha())
+        uq <- stats::qnorm(1-alpha())
+    }
+    cdf <- cumsum(XL[,'L'])/sum(XL[,'L'])
+    increasing <- which(diff(cdf)>1e-20)
+    ll <- stats::spline(x=cdf[increasing],y=XL[increasing,'x'],
+                        xout=stats::pnorm(lq),method='hyman')
+    ul <- stats::spline(x=cdf[increasing],y=XL[increasing,'x'],
+                        xout=stats::pnorm(uq),method='hyman')
+    le <- (x-ll$y)
+    ue <- (ul$y-x)
+    if (oerr>3) {
+        le <- 100*le/x
+        ue <- 100*ue/x
+    }
+    rounded <- roundit(x,c(ue,le),sigdig=sigdig,oerr=oerr,text=TRUE)
+    lst <- list(p=prefix,a=rounded[1],b=rounded[2],c=rounded[3],u=units,n=ntit)
+    if (oerr>3){
+        out <- substitute(p~a*u+b/-c*'%'~n,lst)
+    } else {
+        out <- substitute(p~a+b/-c*u~n,lst)
     }
     out
 }
 
 get.ntit <- function(x,...){ UseMethod("get.ntit",x) }
-get.ntit.default <- function(x,...){
+get.ntit.default <- function(x,m=min(x,na.rm=TRUE),M=max(x,na.rm=TRUE),...){
     ns <- length(x)
-    nisnan <- length(which(is.na(x)))
+    bad <- which(is.na(x) | x<m | x>M)
+    nisnan <- length(bad)
     out <- '(n='
     if (nisnan>0) out <- paste0(out,ns-nisnan,'/')
     paste0(out,ns,')')

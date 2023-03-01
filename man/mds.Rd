@@ -19,11 +19,13 @@ mds(x, ...)
   bg = "white",
   xlab = NA,
   ylab = NA,
+  asp = 1,
   ...
 )
 
 \method{mds}{detritals}(
   x,
+  method = "KS",
   classical = FALSE,
   plot = TRUE,
   shepard = FALSE,
@@ -34,6 +36,7 @@ mds(x, ...)
   xlab = NA,
   ylab = NA,
   hide = NULL,
+  asp = 1,
   ...
 )
 }
@@ -57,9 +60,9 @@ used if \code{plot=TRUE}.}
 \item{nnlines}{if \code{TRUE}, draws nearest neighbour lines}
 
 \item{pos}{a position specifier for the labels (if
-\code{par('pch')!=NA}). Values of 1, 2, 3 and 4 indicate positions
-below, to the left of, above and to the right of the MDS
-coordinates, respectively.}
+\code{par('pch')!=NA}). Values of 1, 2, 3 and 4 indicate
+positions below, to the left of, above and to the right of the
+MDS coordinates, respectively.}
 
 \item{col}{plot colour (may be a vector)}
 
@@ -68,6 +71,12 @@ coordinates, respectively.}
 \item{xlab}{a string with the label of the x axis}
 
 \item{ylab}{a string with the label of the y axis}
+
+\item{asp}{aspect ratio of the MDS configuration. See
+\code{plot.window} for further details.}
+
+\item{method}{either \code{'KS'} (for the Kolmogorov-Smirnov
+distance) or \code{'W2'} (for the Wasserstein-2 distance).}
 
 \item{hide}{vector with indices of aliquots that should be removed
 from the plot.}

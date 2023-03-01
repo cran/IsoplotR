@@ -47,6 +47,8 @@
 #'
 #' @param x a dissimilarity matrix OR an object of class
 #'     \code{detrital}
+#' @param method either \code{'KS'} (for the Kolmogorov-Smirnov
+#'     distance) or \code{'W2'} (for the Wasserstein-2 distance).
 #' @param classical logical flag indicating whether classical
 #'     (\code{TRUE}) or nonmetric (\code{FALSE}) MDS should be used
 #' @param plot show the MDS configuration (if \code{shepard=FALSE}) or
@@ -57,15 +59,17 @@
 #'     used if \code{plot=TRUE}.
 #' @param nnlines if \code{TRUE}, draws nearest neighbour lines
 #' @param pos a position specifier for the labels (if
-#'     \code{par('pch')!=NA}). Values of 1, 2, 3 and 4 indicate positions
-#'     below, to the left of, above and to the right of the MDS
-#'     coordinates, respectively.
+#'     \code{par('pch')!=NA}). Values of 1, 2, 3 and 4 indicate
+#'     positions below, to the left of, above and to the right of the
+#'     MDS coordinates, respectively.
 #' @param col plot colour (may be a vector)
 #' @param bg background colour (may be a vector)
 #' @param xlab a string with the label of the x axis
 #' @param ylab a string with the label of the y axis
 #' @param hide vector with indices of aliquots that should be removed
 #'     from the plot.
+#' @param asp aspect ratio of the MDS configuration. See
+#'     \code{plot.window} for further details.
 #' @param ... optional arguments to the generic \code{plot} function
 #' @seealso \code{\link{cad}}, \code{\link{kde}}
 #' @return Returns an object of class \code{MDS}, i.e. a list
@@ -106,7 +110,7 @@ mds <- function(x,...){ UseMethod("mds",x) }
 #' @export
 mds.default <- function(x,classical=FALSE,plot=TRUE,shepard=FALSE,
                         nnlines=FALSE,pos=NULL,col='black',
-                        bg='white',xlab=NA,ylab=NA,...){
+                        bg='white',xlab=NA,ylab=NA,asp=1,...){
     out <- list()
     if (classical) out$points <- stats::cmdscale(x)
     else out <- MASS::isoMDS(d=x)
@@ -115,52 +119,118 @@ mds.default <- function(x,classical=FALSE,plot=TRUE,shepard=FALSE,
     class(out) <- "MDS"
     if (plot) plot.MDS(out,nnlines=nnlines,pos=pos,
                        shepard=shepard,col=col,bg=bg,
-                       xlab=xlab,ylab=ylab,...)
+                       xlab=xlab,ylab=ylab,asp=asp,...)
     invisible(out)
 }
 #' @rdname mds
 #' @export
-mds.detritals <- function(x,classical=FALSE,plot=TRUE,shepard=FALSE,
-                          nnlines=FALSE,pos=NULL,col='black',
-                          bg='white',xlab=NA,ylab=NA,hide=NULL,...){
+mds.detritals <- function(x,method="KS",classical=FALSE,plot=TRUE,
+                          shepard=FALSE,nnlines=FALSE,pos=NULL,col='black',
+                          bg='white',xlab=NA,ylab=NA,hide=NULL,asp=1,...){
     if (is.character(hide)) hide <- which(names(x)%in%hide)
     x2plot <- clear(x,hide)
-    d <- diss(x2plot)
+    d <- diss(x2plot,method=method)
     out <- mds.default(d,classical=classical,plot=plot,
                        shepard=shepard,nnlines=nnlines,pos=pos,
-                       col=col,bg=bg,xlab=xlab,ylab=ylab,...)
+                       col=col,bg=bg,xlab=xlab,ylab=ylab,asp=asp,...)
     invisible(out)
 }
 
-# x is an object of class detrital
-diss <- function(x) {
+#' @title Dissimilarity between detrital age distributions
+#' @description Calculates the pairwise dissimilarity between detrital
+#'     age distributions, using either the Wasserstein-2 or
+#'     Kolmogorov-Smirnov distance.
+#' @details The Kolmogorov-Smirnov statistic is the maximum vertical
+#'     difference between two empirical cumulative distribution
+#'     functions. The Wasserstein distance is a function of the area
+#'     between them. Both dissimilarity measures are useful for
+#'     multidimensional scaling.
+#' @param x an object of class \code{detrital} OR a vector of numbers
+#' @param y a vector of numbers
+#' @param method either \code{'KS'} (for Kolmogorov-Smirnov distance),
+#'     or \code{'W2'} (for Wasserstein-2 distance).
+#' @author Written by Pieter Vermeesch, using modified code from
+#'     Mathieu Vrac's \code{CDFt} package (\code{KolmogorovSmirnov}
+#'     function), and Dominic Schuhmacher's \code{transport} package
+#'     (\code{transport1d} function).
+#' @seealso \code{\link{mds}}
+#' @param ... extra arguments (not used)
+#' @return an object of class \code{dist}.
+#' @examples
+#' d <- diss(examples$DZ,method='KS')
+#' mds(d)
+#' @rdname diss
+#' @export
+diss <- function(x,...){ UseMethod("diss",x) }
+#' @rdname diss
+#' @export
+diss.default <- function(x,y,method='KS',...){
+    if (identical(method,'W2')){
+        out <- Wasserstein.diss(x,y)
+    } else {
+        out <- KS.diss(x,y)
+    }
+    out
+}
+#' @rdname diss
+#' @export
+diss.detritals <- function(x,method='W2',...) {
+    print(method)
     n <- length(x)
     d <- mat.or.vec(n,n)
     rownames(d) <- names(x)
     colnames(d) <- names(x)
     for (i in 1:n){
         for (j in 1:n){
-            d[i,j] <- KS.diss(x[[i]],x[[j]])
+            d[i,j] <- diss(x[[i]],x[[j]],method=method,...)
     }   }
     stats::as.dist(d)
 }
-
 KS.diss <- function(x,y) {
-    xx = sort(x)
-    cdftmp = stats::ecdf(xx)
-    cdf1 = cdftmp(xx)
-    xy = sort(y)
-    cdftmp = stats::ecdf(xy)
-    cdfEstim = cdftmp(xy)
-    cdfRef = stats::approx(xx,cdf1,xy,yleft=0,yright=1,ties="mean")
-    dif = cdfRef$y - cdfEstim
-    dif = abs(dif)
-    out = max(dif)
-    return(out)
+    xx <- sort(x)
+    cdftmp <- stats::ecdf(xx)
+    cdf1 <- cdftmp(xx)
+    xy <- sort(y)
+    cdftmp <- stats::ecdf(xy)
+    cdfEstim <- cdftmp(xy)
+    cdfRef <- stats::approx(xx,cdf1,xy,yleft=0,yright=1,ties="mean")
+    dif <- abs(cdfRef$y - cdfEstim)
+    max(dif)
+}
+# modified after the wasserstein1d function of the transport package
+Wasserstein.diss <- function(x,y,p=2) {
+    m <- length(x)
+    n <- length(y)
+    stopifnot(m>0 && n>0)
+    if (m == n) {
+        out <- mean(abs(sort(y)-sort(x))^p)^(1/p)
+    } else {
+        wx <- rep(1,m)
+        wy <- rep(1,n)
+        ordx <- order(x)
+        ordy <- order(y)
+        x <- x[ordx]
+        y <- y[ordy]
+        wx <- wx[ordx]
+        wy <- wy[ordy]
+        ux <- (wx/sum(wx))[-m]
+        uy <- (wy/sum(wy))[-n]
+        cux <- c(cumsum(ux))
+        cuy <- c(cumsum(uy))
+        xrep <- graphics::hist(cuy,breaks=c(-Inf,cux,Inf),plot=FALSE)$counts+1
+        yrep <- graphics::hist(cux,breaks=c(-Inf,cuy,Inf),plot=FALSE)$counts+1
+        xx <- rep(x,times=xrep)
+        yy <- rep(y,times=yrep)
+        uu <- sort(c(cux,cuy))
+        uu0 <- c(0,uu)
+        uu1 <- c(uu,1)
+        out <- sum((uu1-uu0)*abs(yy-xx)^p)^(1/p)
+    }
+    out
 }
 
 plot.MDS <- function(x,nnlines=FALSE,pos=NULL,shepard=FALSE,
-                     col='black',bg='white',xlab=NA,ylab=NA,pch,...){
+                     col='black',bg='white',xlab=NA,ylab=NA,asp=1,pch,...){
     if (shepard & !x$classical){
         if (missing(pch)) pch <- 21
         if (is.na(xlab)) xlab <- 'dissimilarities'
@@ -172,9 +242,9 @@ plot.MDS <- function(x,nnlines=FALSE,pos=NULL,shepard=FALSE,
         graphics::title(paste0("Stress = ",x$stress))
     } else {
         if (missing(pch)) pch <- NA
-        if (missing(xlab)) xlab <- ''
-        if (missing(ylab)) ylab <- ''
-        graphics::plot(x=x$points,type='n',asp=1,
+        if (is.na(xlab)) xlab <- 'Dim 1'
+        if (is.na(ylab)) ylab <- 'Dim 2'
+        graphics::plot(x=x$points,type='n',asp=asp,
                        xlab=xlab,ylab=ylab,...)
         if (nnlines) plotlines(x$points,x$diss)
         if (is.na(pch)) {
