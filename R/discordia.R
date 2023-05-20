@@ -156,7 +156,6 @@ intersection.misfit.ludwig <- function(t1,t2,disc.slope,d=diseq()){
 intersection.misfit.york <- function(tt,a,b,d=diseq()){
     D <- mclean(tt=tt,d=d)
     # misfit is based on difference in slope in TW space
-    #D$Pb207U235/U - a*D$Pb206U238 - b
     (D$Pb207Pb206-a)*D$Pb206U238 - b
 }
 
@@ -304,7 +303,7 @@ discordia.title <- function(fit,wetherill,sigdig=2,oerr=1,y0option=1,...){
         else ipar <- NULL
         fit <- getUPby0(fit,option=y0option)
         if (is.null(ipar)){
-            line2 <- maintit(x=fit$y0['y'],sx=fit$y0['s[y]'],ntit='',
+            line2 <- maintit(x=fit$y0[1],sx=fit$y0[-1],ntit='',
                              sigdig=sigdig,oerr=oerr,units='',df=fit$df,
                              prefix=fit$y0label)
         } else {
