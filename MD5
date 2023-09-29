@@ -1,6 +1,6 @@
-9dce90880d3c95ab933df93032e46874 *DESCRIPTION
+6af838cf575e8ef5f05d041adbf66760 *DESCRIPTION
 967870b02bf9f66c3870520b0e9552d7 *NAMESPACE
-7ec913ea18a5af5a6a910c6894e84f3d *NEWS.md
+4cbcce83fe2ec84b30c3c74471f25912 *NEWS.md
 8352dffdaf57def8bf7560987c17be32 *R/ArAr.R
 096d192fcc1c3011881847b69ac0a235 *R/IsoplotR.R
 d613ea50c75e96421f4d950181f17080 *R/KCa.R
@@ -26,7 +26,7 @@ a55295f06a0db609e6530a9601584624 *R/central.R
 ea35911a6a8fb6b95978d5f853b82e67 *R/commonPb.R
 15d748e714b3212124d78d8f07f0bb1b *R/concordia.R
 8dcd4e4c8b2121b3c7e6b46e8ffb61fe *R/constants.R
-6f9cfc275d1420f05dac55eac276d079 *R/discfilter.R
+76a1feee8815d8f06067c6861996fc71 *R/discfilter.R
 837de184dc34598a546c18ff1890a263 *R/discordia.R
 d81c6f6ca4c0327e5e95ccde03e111d8 *R/diseq.R
 f79250320dd506aaa0f01651d217dc72 *R/documentation.R
@@ -41,10 +41,10 @@ e90ae0f44d51ed9e1c7ab32f99232f77 *R/irr.R
 b7ed45bf9b07899141756a986061b400 *R/json.R
 e8a6578746df50136ffe74af6df7908a *R/kde.R
 d9e52da406662579ce02da72cbb45be6 *R/ludwig.R
-a26934ebcca35022f76a7f597c0150a9 *R/mds.R
+b877d647ae41f727f7b6a26864f97000 *R/mds.R
 9d1071e68bf1e4a303f1a4c3be6e2c3b *R/nearPD.R
 ab48459f2f7d8981905e928251508fa6 *R/ogls.R
-d9bf5ff54f9a20b5cd30d93c3045c1ae *R/peakfit.R
+5c2499f8c1f4dcaf10ae77b40635715b *R/peakfit.R
 e7ac40f713b8162059d925fa690f2ed3 *R/radialplot.R
 b18c66a1fa474ca5239f709883a2399d *R/regression.R
 8fe9747d0a2059a443ba82c25ea56f67 *R/titterington.R
@@ -122,7 +122,7 @@ b94e3fffe65bf874c57f951dd1e1f943 *man/cad.Rd
 87b696d7e10fecec4e83471fba1f5e3c *man/classes.Rd
 96dc837790452cffea501f823bb64672 *man/concordia.Rd
 1379ec8bb401e6080dab31dc42ed9ae3 *man/data2york.Rd
-8b56f1c4ad8de394cfb376c6f12f3aef *man/discfilter.Rd
+1f9f8f76bfad77277212ea6ca6100782 *man/discfilter.Rd
 d4cdddd262d74eabfe73695b2bc84841 *man/diseq.Rd
 0c5b028d9f4074a381e04a577a5b2ce9 *man/diss.Rd
 3b7fa3065fd2ee3680b16465a0c26db5 *man/ellipse.Rd
