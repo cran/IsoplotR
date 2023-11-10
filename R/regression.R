@@ -7,12 +7,6 @@ regression <- function(xyz,model=1,type='york',omit=NULL,wtype='a'){
     } else if (model==3){
         out <- model3regression(xyz2calc,type=type,wtype=wtype)
         out$wtype <- wtype
-    } else if (model==4 && identical(type,'york')){
-        out <- irr(xyz2calc)
-        out$wtype <- wtype
-    } else if (model==5 && identical(type,'york')){
-        out <- irr(xyz2calc,wtype=wtype)
-        out$wtype <- wtype
     } else {
         stop('invalid regression model')
     }
@@ -56,7 +50,6 @@ model2regression <- function(xyz,type='york'){
     out
 }
 
-# fixes signs and uses logs for numerical stability:
 model3regression <- function(xyz,type='york',model=3,wtype='a'){
     pilot <- model1regression(xyz,type=type)
     if (identical(type,'york')){
