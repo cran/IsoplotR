@@ -178,8 +178,8 @@ discordia.line <- function(fit,wetherill,d=diseq(),oerr=3){
             E11 <- fit$cov[1,1]
             E12 <- fit$cov[1,2]
             E22 <- fit$cov[2,2]
-            sy <- errorprop1x2(J1,J2,fit$cov[1,1],fit$cov[2,2],fit$cov[1,2])
-            ciy <- ci(x=y,sx=sy,oerr=oerr,absolute=TRUE)
+            vy <- errorprop1x2(J1,J2,fit$cov[1,1],fit$cov[2,2],fit$cov[1,2])
+            ciy <- ci(x=y,sx=sqrt(vy),oerr=oerr,absolute=TRUE)
             ul <- y + ciy
             ll <- y - ciy
             t75 <- get.Pb207U235.age(x,d=d)[,'t75']
@@ -210,8 +210,8 @@ discordia.line <- function(fit,wetherill,d=diseq(),oerr=3){
         dyldtl <- (d75dtl*r68 - r75*d68dtl)/(U*r68^2)
         J1 <- dyldtl*x*r68 + yl*x*d68dtl - y0*x*d68dtl # dy/dtl
         J2 <- 1 - x*r68                                # dy/dy0
-        sy <- errorprop1x2(J1,J2,fit2d$cov[1,1],fit2d$cov[2,2],fit2d$cov[1,2])
-        ciy <- ci(x=y,sx=sy,oerr=oerr,absolute=TRUE)
+        vy <- errorprop1x2(J1,J2,fit2d$cov[1,1],fit2d$cov[2,2],fit2d$cov[1,2])
+        ciy <- ci(x=y,sx=sqrt(vy),oerr=oerr,absolute=TRUE)
         ul <- y + ciy
         ll <- y - ciy
         yconc <- rep(0,nsteps)
@@ -253,7 +253,8 @@ tw3d2d <- function(fit){
 }
 
 # this would be much easier in unicode but that doesn't render in PDF:
-discordia.title <- function(fit,wetherill,sigdig=2,oerr=1,y0option=1,...){
+discordia.title <- function(fit,wetherill,sigdig=2,oerr=1,
+                            y0option=1,dispunits=' Ma',...){
     if (is.null(fit$posterior) || 't'%ni%names(fit$posterior)){
         line1 <- maintit(x=fit$par[1],sx=fit$err[,1],n=fit$n,df=fit$df,
                          sigdig=sigdig,oerr=oerr,prefix='lower intercept =')
@@ -303,7 +304,7 @@ discordia.title <- function(fit,wetherill,sigdig=2,oerr=1,y0option=1,...){
         line4 <- mswdtit(mswd=fit$mswd,p=fit$p.value,sigdig=sigdig)
     } else if (fit$model==3){
         line4 <- disptit(w=fit$disp['w'],sw=fit$disp['s[w]'],
-                         units=' Ma',sigdig=sigdig,oerr=oerr)
+                         units=dispunits,sigdig=sigdig,oerr=oerr)
     }
     extrarow <- fit$format>3 & !wetherill
     if (fit$model==1 & extrarow){

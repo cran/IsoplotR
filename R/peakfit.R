@@ -100,7 +100,7 @@
 #' attach(examples)
 #' peakfit(FT1,k=2)
 #'
-#' peakfit(LudwigMixture,k='min')
+#' peakfit(LudwigMixture$x,k='min')
 #' @references
 #' Galbraith, R.F. and Laslett, G.M., 1993. Statistical models for
 #' mixed fission track ages. Nuclear Tracks and Radiation
@@ -138,7 +138,7 @@ peakfit.default <- function(x,k='auto',sigdig=2,oerr=3,log=TRUE,np=3,...){
 }
 #' @rdname peakfit
 #' @export
-peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.fissiontracks <- function(x,k=1,exterr=FALSE,sigdig=2,
                                   log=TRUE,oerr=3,np=3,...){
     out <- NULL
     if (k == 0) return(out)
@@ -183,8 +183,8 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #' \code{PbPb} or \code{x} has class \code{UPb} and
 #' \code{3<x$format<7}); or
 #'
-#' \code{settings('iratio','Pb208Pb206')} and
-#' \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
+#' \code{settings('iratio','Pb206Pb208')} and
+#' \code{settings('iratio','Pb207Pb208')} (if \code{x} has class
 #' \code{UPb} and \code{x$format=7} or \code{8}).
 #'
 #' \code{2}: use the isochron intercept as the initial Pb-composition
@@ -196,7 +196,7 @@ peakfit.fissiontracks <- function(x,k=1,exterr=TRUE,sigdig=2,
 #' @export
 peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,
                         cutoff.disc=discfilter(),common.Pb=0,
-                        exterr=TRUE,sigdig=2,log=TRUE,oerr=3,np=3,...){
+                        exterr=FALSE,sigdig=2,log=TRUE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,type=type,cutoff.76=cutoff.76,
                    cutoff.disc=cutoff.disc,exterr=exterr,
                    sigdig=sigdig,log=log,oerr=oerr,
@@ -204,7 +204,7 @@ peakfit.UPb <- function(x,k=1,type=4,cutoff.76=1100,
 }
 #' @rdname peakfit
 #' @export
-peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.PbPb <- function(x,k=1,exterr=FALSE,sigdig=2,
                          log=TRUE,common.Pb=0,oerr=3,np=3,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,log=log,
                    common.Pb=common.Pb,oerr=oerr,np=np,...)
@@ -220,49 +220,49 @@ peakfit.PbPb <- function(x,k=1,exterr=TRUE,sigdig=2,
 #'     stored in \code{settings('iratio',...)}.
 #' @rdname peakfit
 #' @export
-peakfit.ArAr <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.ArAr <- function(x,k=1,exterr=FALSE,sigdig=2,
                          log=TRUE,i2i=FALSE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,i2i=i2i,oerr=oerr,np=np,...)
 }
 #' @rdname peakfit
 #' @export
-peakfit.ThPb <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.ThPb <- function(x,k=1,exterr=FALSE,sigdig=2,
                          log=TRUE,i2i=FALSE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,i2i=i2i,oerr=oerr,np=np,...)
 }
 #' @rdname peakfit
 #' @export
-peakfit.KCa <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.KCa <- function(x,k=1,exterr=FALSE,sigdig=2,
                         log=TRUE,i2i=FALSE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,i2i=i2i,oerr=oerr,np=np,...)
 }
 #' @rdname peakfit
 #' @export
-peakfit.ReOs <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.ReOs <- function(x,k=1,exterr=FALSE,sigdig=2,
                          log=TRUE,i2i=TRUE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,i2i=i2i,oerr=oerr,np=np,...)
 }
 #' @rdname peakfit
 #' @export
-peakfit.SmNd <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.SmNd <- function(x,k=1,exterr=FALSE,sigdig=2,
                          log=TRUE,i2i=TRUE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,i2i=i2i,oerr=oerr,np=np,...)
 }
 #' @rdname peakfit
 #' @export
-peakfit.RbSr <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.RbSr <- function(x,k=1,exterr=FALSE,sigdig=2,
                          log=TRUE,i2i=TRUE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,i2i=i2i,oerr=oerr,np=np,...)
 }
 #' @rdname peakfit
 #' @export
-peakfit.LuHf <- function(x,k=1,exterr=TRUE,sigdig=2,
+peakfit.LuHf <- function(x,k=1,exterr=FALSE,sigdig=2,
                          log=TRUE,i2i=TRUE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,exterr=exterr,sigdig=sigdig,
                    log=log,i2i=i2i,oerr=oerr,np=np,...)
@@ -298,7 +298,7 @@ peakfit.UThHe <- function(x,k=1,sigdig=2,log=TRUE,oerr=3,np=3,...){
     peakfit_helper(x,k=k,sigdig=sigdig,log=log,oerr=oerr,np=np,...)
 }
 peakfit_helper <- function(x,k=1,type=4,cutoff.76=1100,cutoff.disc=discfilter(),
-                           exterr=TRUE,sigdig=2,log=TRUE,i2i=FALSE,
+                           exterr=FALSE,sigdig=2,log=TRUE,i2i=FALSE,
                            common.Pb=0,oerr=3,Th0i=0,np=3,...){
     if (k<1) return(NULL)
     if (identical(k,'auto')){
@@ -443,7 +443,7 @@ get.L.normal.mixture <- function(lpfiu){
     sum(fu)
 }
 
-binomial.mixtures <- function(x,k,exterr=TRUE,...){
+binomial.mixtures <- function(x,k,exterr=FALSE,...){
     yu <- x$x[,'Ns']
     mu <- x$x[,'Ns'] + x$x[,'Ni']
     NsNi <- (x$x[,'Ns']+0.5)/(x$x[,'Ni']+0.5)
@@ -503,7 +503,7 @@ formatPeaks <- function(peaks,peaks.err,props,props.err,df){
     out
 }
 
-theta2age <- function(x,theta,beta.var,exterr=TRUE){
+theta2age <- function(x,theta,beta.var,exterr=FALSE){
     rhoD <- x$rhoD
     zeta <- x$zeta
     if (!exterr) {
@@ -592,20 +592,20 @@ min_age_model <- function(zs,np=3){
         out$peaks <- matrix(0,2,1)
         rownames(out$peaks) <- c('t','s[t]')
         out$peaks['t',] <- par[1]
-        out$peaks['s[t]',] <- if (E[1,1]<0) NA else sqrt(E[1,1])
+        out$peaks['s[t]',] <- ifelse(E[1,1]<0,NA,sqrt(E[1,1]))
         out$props <- matrix(0,2,1)
         rownames(out$props) <- c('p','s[p]')
         out$props['p',] <- par[2]
-        out$props['s[p]',] <- if (E[2,2]<0) NA else sqrt(E[2,2])
+        out$props['s[p]',] <- ifelse(E[2,2]<0,NA,sqrt(E[2,2]))
         out$disp <- matrix(0,2,1)
         rownames(out$disp) <- c('d','s[d]')
         out$disp['d',] <- par[3]
-        out$disp['s[d]',] <- if (E[3,3]<0) NA else sqrt(E[3,3])
+        out$disp['s[d]',] <- ifelse(E[3,3]<0,NA,sqrt(E[3,3]))
         if (np==4){
             out$mu <- matrix(0,2,1)
             rownames(out$mu) <- c('t','s[t]')
             out$mu['t',] <- par[4]
-            out$mu['s[t]',] <- if (E[4,4]<0) NA else sqrt(E[4,4])
+            out$mu['s[t]',] <- ifelse(E[4,4]<0,NA,sqrt(E[4,4]))
         }
     }
     out

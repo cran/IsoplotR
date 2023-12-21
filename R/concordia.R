@@ -162,6 +162,9 @@
 #' If \code{anchor[1]=2}: force the isochron line to intersect the
 #' concordia line at an age equal to \code{anchor[2]}.
 #'
+#' If \code{anchor[1]=3}: anchor the non-radiogenic component to the
+#' Stacey-Kramers mantle evolution model.
+#'
 #' @param ticks either a scalar indicating the desired number of age
 #'     ticks to be placed along the concordia line, OR a vector of
 #'     tick ages.
@@ -173,7 +176,7 @@
 #'     aliquots.
 #' @param omit.stroke stroke colour that should be used for the
 #'     omitted aliquots.
-#' @param ... optional arguments to the generic \code{plot} function
+#' @param ... optional arguments passed on to \code{\link{scatterplot}}
 #'
 #' @return
 #'
@@ -290,7 +293,7 @@ concordia_helper <- function(x=NULL,tlim=NULL,type=1,
                              exterr=FALSE,show.age=0,oerr=3,y0option=1,
                              sigdig=2,common.Pb=0,ticks=5,anchor=0,
                              hide=NULL,omit=NULL,omit.fill=NA,
-                             omit.stroke='grey',...){
+                             omit.stroke='grey',box=TRUE,...){
     if (is.null(x)){
         emptyconcordia(tlim=tlim,oerr=oerr,type=type,exterr=exterr,
                        concordia.col=concordia.col,ticks=ticks,...)
@@ -304,23 +307,24 @@ concordia_helper <- function(x=NULL,tlim=NULL,type=1,
     else X <- Pb0corr(x,option=common.Pb,omit4c=unique(c(hide,omit)))
     X2plot <- subset(X,subset=plotit)
     fit <- NULL
+    X2calc <- subset(X,subset=calcit)
     if (show.age==1){
-        X2calc <- subset(X,subset=calcit)
         fit <- concordia.age(X2calc,type=type,exterr=exterr)
     } else if (show.age>1){
-        lfit <- ludwig(x2calc,exterr=exterr,model=(show.age-1),anchor=anchor)
-        fit <- discordia(x2calc,fit=lfit,wetherill=(type==1))
+        lfit <- ludwig(X2calc,exterr=exterr,model=(show.age-1),anchor=anchor)
+        fit <- discordia(X2calc,fit=lfit,wetherill=(type==1))
     }
     fit$n <- length(x2calc)
     lims <- prepare.concordia.line(x=X2plot,tlim=tlim,type=type,...)
     if (show.age>1){
         discordia.line(fit,wetherill=(type==1),d=X2plot$d,oerr=oerr)
+        dispunits <- getDispUnits.UPb(x=x,joint=TRUE,anchor=anchor)
         graphics::title(discordia.title(fit,wetherill=(type==1),
-                                        y0option=y0option,
-                                        sigdig=sigdig,oerr=oerr,...))
+                                        y0option=y0option,sigdig=sigdig,
+                                        oerr=oerr,dispunits=dispunits,...))
     }
     plotConcordiaLine(X2plot,lims=lims,type=type,col=concordia.col,
-                      oerr=oerr,exterr=exterr,ticks=ticks)
+                      oerr=oerr,exterr=exterr,ticks=ticks,box=box)
     if (type==1) y <- data2york(X,option=1)
     else if (type==2) y <- data2york(X,option=2)
     else if (x$format%in%c(7,8) & type==3) y <- data2york(X,option=5)
@@ -330,7 +334,10 @@ concordia_helper <- function(x=NULL,tlim=NULL,type=1,
                 clabel=clabel,ellipse.fill=ellipse.fill,
                 ellipse.stroke=ellipse.stroke,add=TRUE,
                 hide=hide,omit=omit,omit.fill=omit.fill,
-                omit.stroke=omit.stroke,addcolourbar=FALSE,...)
+                omit.stroke=omit.stroke,addcolourbar=FALSE,box=box,...)
+    if (show.age==4){
+        showDispersion(fit,inverse=(type==2),wtype=anchor[1],type='TW')
+    }
     if (show.age==1){
         ell <- ellipse(fit$x[1],fit$x[2],fit$ccov)
         graphics::polygon(ell,col='white')
@@ -343,7 +350,7 @@ concordia_helper <- function(x=NULL,tlim=NULL,type=1,
 
 # helper function for plot.concordia
 plotConcordiaLine <- function(x,lims,type=1,col='darksalmon',
-                              oerr=3,exterr=TRUE,ticks=5){
+                              oerr=3,exterr=FALSE,ticks=5,box=TRUE){
     if (length(ticks)<2)
         ticks <- prettier(lims$t,type=type,n=ticks,
                           binary=measured.disequilibrium(x$d))
@@ -381,7 +388,7 @@ plotConcordiaLine <- function(x,lims,type=1,col='darksalmon',
         }
         graphics::text(xy$x[1],xy$x[2],as.character(ticks[i]),pos=pos)
     }
-    graphics::box()
+    if (box) graphics::box()
 }
 # helper function for plot.concordia
 prepare.concordia.line <- function(x,tlim,type=1,...){
@@ -629,7 +636,7 @@ concordia.title <- function(fit,sigdig=2,oerr=3,...){
     mymtext(line2,line=0,...)
 }
 
-concordia.age <- function(x,i=NULL,type=1,exterr=TRUE,...){
+concordia.age <- function(x,i=NULL,type=1,exterr=FALSE,...){
     if (is.null(i)){
         cc <- concordia.comp(x,type=type)
         if (type==3){
@@ -719,15 +726,15 @@ concordia.comp <- function(x,type=1){
     if (type==1){
         X <- data2york(x,option=1)
         colnames(X) <- c('Pb207U235','errPb207U235',
-                         'Pb206U238','errPb206U238','rhoXY')
+                         'Pb206U238','errPb206U238','rXY')
     } else if (type==2){
         X <- data2york(x,option=2)
         colnames(X) <- c('U238Pb206','errU238Pb206',
-                         'Pb207Pb206','errPb207Pb206','rhoXY')
+                         'Pb207Pb206','errPb207Pb206','rXY')
     } else if (type==3){
         X <- data2york(x,option=5)
         colnames(X) <- c('Pb206U238','errPb206U238',
-                         'Pb208Th232','errPb208Th232','rhoXY')
+                         'Pb208Th232','errPb208Th232','rXY')
     } else {
         stop('Incorrect concordia type.')
     }
@@ -739,22 +746,16 @@ concordia.comp <- function(x,type=1){
     out
 }
 
-mswd.concordia <- function(x,cc,type=1,pars,exterr=TRUE){
+mswd.concordia <- function(x,cc,type=1,pars,exterr=FALSE){
     SS.equivalence <- LL.concordia.comp(mu=cc$x,x=x,type=type,mswd=TRUE)
     SS.concordance <- LL.concordia.age(pars,cc=cc,type=type,exterr=exterr,
                                        d=mediand(x$d),mswd=TRUE)
-    df.equivalence <- 2*length(x)-2
-    df.concordance <- 1
-    mswd <- rep(0,3)
-    p.value <- rep(0,3)
-    df <- rep(0,3)
+    mswd <- p.value <- df <- rep(0,3)
     labels <- c('equivalence','concordance','combined')
-    names(mswd) <- labels
-    names(p.value) <- labels
-    names(df) <- labels
-    df['equivalence'] <- df.equivalence
-    df['concordance'] <- df.concordance
-    df['combined'] <- df.equivalence + df.concordance
+    names(mswd) <- names(p.value) <- names(df) <- labels
+    df['equivalence'] <- 2*length(x)-2
+    df['concordance'] <- 1
+    df['combined'] <- df['equivalence'] + df['concordance']
     mswdpequi <- getMSWD(SS.equivalence,df['equivalence'])
     mswdpconc <- getMSWD(SS.concordance,df['concordance'])
     mswdpcomb <- getMSWD(SS.equivalence+SS.concordance,df['combined'])
@@ -790,7 +791,7 @@ LL.concordia.comp <- function(mu,x,type=1,mswd=FALSE,...){
     out
 }
 
-LL.concordia.age <- function(pars,cc,type=1,exterr=TRUE,d=diseq(),mswd=FALSE){
+LL.concordia.age <- function(pars,cc,type=1,exterr=FALSE,d=diseq(),mswd=FALSE){
     out <- 0
     tt <- pars['t']
     pnames <- names(pars)
@@ -870,7 +871,7 @@ LL.concordia.age <- function(pars,cc,type=1,exterr=TRUE,d=diseq(),mswd=FALSE){
     out
 }
 
-emptyconcordia <- function(tlim=NULL,oerr=3,type=1,exterr=TRUE,
+emptyconcordia <- function(tlim=NULL,oerr=3,type=1,exterr=FALSE,
                            concordia.col='darksalmon',ticks=5,...){
     if (is.null(tlim)){
         if (type%in%c(1,3)) tlim <- c(1,4500)

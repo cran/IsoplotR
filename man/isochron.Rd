@@ -36,6 +36,8 @@ isochron(x, ...)
   plot = TRUE,
   title = TRUE,
   model = 1,
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -61,6 +63,9 @@ isochron(x, ...)
   plot = TRUE,
   title = TRUE,
   model = 1,
+  wtype = 1,
+  anchor = 0,
+  flippable = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -110,9 +115,10 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   growth = FALSE,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
@@ -136,9 +142,10 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -161,9 +168,10 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -186,9 +194,10 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -211,9 +220,10 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -236,9 +246,10 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -261,9 +272,10 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -286,9 +298,10 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 1 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -311,7 +324,8 @@ isochron(x, ...)
   lwd = 1,
   plot = TRUE,
   model = 1,
-  wtype = "intercept",
+  wtype = 1,
+  anchor = 0,
   show.ellipses = 2 * (model != 2),
   hide = NULL,
   omit = NULL,
@@ -334,7 +348,7 @@ isochron(x, ...)
   line.col = "black",
   lwd = 1,
   plot = TRUE,
-  exterr = TRUE,
+  exterr = FALSE,
   model = 1,
   wtype = "a",
   show.ellipses = 1 * (model != 2),
@@ -365,8 +379,7 @@ an object of class \code{ArAr}, \code{KCa}, \code{PbPb},
 \code{UPb}, \code{ThPb}, \code{ReOs}, \code{RbSr}, \code{SmNd},
 \code{LuHf}, \code{UThHe} or \code{ThU}.}
 
-\item{...}{optional arguments to be passed on to the generic plot
-function if \code{model=2}}
+\item{...}{optional arguments to be passed on to \code{\link{scatterplot}}}
 
 \item{oerr}{indicates whether the analytical uncertainties of the
     output are reported in the plot title as:
@@ -442,6 +455,48 @@ intercept and slope.}
 
 \code{3}: Error-weighted least squares with overdispersion term}
 
+\item{wtype}{controls the parameter responsible for the
+    overdispersion in model-3 regression.
+
+If \code{x} has class \code{PbPb}, \code{ArAr} or \code{PD},
+\code{wtype} can have one of two values:
+
+\itemize{
+\item \code{1}: attribute the overdispersion to variability in the
+non-radiogenic component, as controlled by \code{settings('iratio',...)}
+
+\item \code{2}: attribute the overdispersion to variability in the
+age, i.e. to diachronous closure of the isotope system.
+}
+
+otherwise, \code{wtype} can have one of four values:
+
+\itemize{
+\item \code{1}: attributes the overdispersion to the y-intercept of the isochron.
+
+\item \code{2}: attributes the overdispersion to the slope of the isochron.
+
+\item \code{'A'}: only available if \code{x} has class \code{ThU} and
+\code{x$format} is 1 or 2. Attributes the overdispersion to the
+authigenic \eqn{^{230}}Th/\eqn{^{238}}U-intercept of the isochron.
+
+\item \code{'B'}: only available if \code{x} has class \code{ThU} and
+\code{x$format} is 1 or 2. Attributes the overdispersion to the
+\eqn{^{230}}Th/\eqn{^{232}}Th-slope of the isochron.
+}}
+
+\item{anchor}{control parameters to fix the intercept age or common
+    Pb composition of the isochron fit. This can be a scalar or a
+    vector.
+
+If \code{anchor[1]=0}: do not anchor the isochron.
+
+If \code{anchor[1]=1}: fix the common Pb composition at the values
+stored in \code{settings('iratio',...)}.
+
+If \code{anchor[1]=2}: force the isochron line to intersect the
+concordia line at an age equal to \code{anchor[2]}.}
+
 \item{show.ellipses}{show the data as:
 
 \code{0}: points
@@ -461,6 +516,14 @@ aliquots.}
 
 \item{omit.stroke}{stroke colour that should be used for the
 omitted aliquots.}
+
+\item{flippable}{controls if generic data (where \code{x} has class
+\code{other} and \code{x$format} is either \code{4} or
+\code{5}) should be treated as inverse isochrons
+(\code{flippable=1}) or as conventional isochrons
+(\code{flippable=2}). If \code{flippable=0} (which is the
+default value), then the data are passed on to
+\code{isochron.default}.}
 
 \item{joint}{logical. Only applies to U-Pb data formats 4 and
 above. If \code{TRUE}, carries out three dimensional
@@ -506,18 +569,6 @@ vs. \eqn{^{238}}U/\eqn{^{232}}Th
 
 \item{exterr}{propagate external sources of uncertainty
 (J, decay constant)?}
-
-\item{anchor}{control parameters to fix the intercept age or common
-    Pb composition of the isochron fit. This can be a scalar or a
-    vector.
-
-If \code{anchor[1]=0}: do not anchor the isochron.
-
-If \code{anchor[1]=1}: fix the common Pb composition at the values
-stored in \code{settings('iratio',...)}.
-
-If \code{anchor[1]=2}: force the isochron line to intersect the
-concordia line at an age equal to \code{anchor[2]}.}
 
 \item{y0option}{controls the type of y-intercept or activity ratio
     that is reported along with the isochron age. Only relevant to
@@ -588,23 +639,6 @@ If \code{inverse=FALSE}, then \code{X} =
 \code{Y} = \eqn{{}^{176}}Hf/\eqn{{}^{177}}Hf (if \code{x} has class
 \code{LuHf}).}
 
-\item{wtype}{controls the parameter responsible for the
-    overdispersion in model-3 regression.
-
-\code{0}, \code{'a'} or \code{'intercept'}: attributes the
-overdispersion to the y-intercept of the isochron.
-
-\code{1}, \code{'b'} or \code{'slope'}: attributes the
-overdispersion to the slope of the isochron.
-
-\code{'A'}: only available if \code{x} has class \code{ThU} and
-\code{x$format} is 1 or 2. Attributes the overdispersion to the
-authigenic \eqn{^{230}}Th/\eqn{^{238}}U-intercept of the isochron.
-
-\code{'B'}: only available if \code{x} has class \code{ThU} and
-\code{x$format} is 1 or 2. Attributes the overdispersion to the
-\eqn{^{230}}Th/\eqn{^{232}}Th-slope of the isochron.}
-
 \item{growth}{add Stacey-Kramers Pb-evolution curve to the plot?}
 }
 \value{
@@ -622,7 +656,8 @@ error.}
 
 \item{cov.ab}{the covariance of the slope and intercept}
 
-\item{df}{the degrees of freedom of the linear fit (\eqn{df=n-2})}
+\item{df}{the degrees of freedom of the linear fit (\eqn{df=n-2}
+for non-anchored fits)}
 
 \item{y0}{a two- or three-element list containing:
 
@@ -657,7 +692,7 @@ ratio.
 (omitted if \code{model=2})}
 
 \item{w}{the overdispersion term, i.e. a two-element vector with
-the standard deviation of the (assumed) Normally distributed
+the standard deviation of the (assumed) normally distributed
 geological scatter that underlies the measurements, and its
 standard error (only returned if \code{model=3}).}
 
@@ -805,6 +840,20 @@ parameter \eqn{w}.}
 \item{ylab}{the y-label of the isochron plot}
 
 }
+
+OR, if \code{x} has class \code{other} and \code{x$format} is
+either \code{4} or \code{5} and \code{flippable} is not \code{0},
+returns
+
+\code{Dd}: the ratio of the inherited radiogenic daughter to its
+nonradiogenic sister isotope
+
+\code{DP}: the ratio fo the radiogic daughter to its radioactive parent
+
+\code{cov.DdDP}: the covariance between \code{Dd} and \code{DP}.
+
+In the remaining types of \code{other} data, the intercept \code{a}
+and \code{b} are returned along with their covariance.
 }
 \description{
 Plots cogenetic U-Pb, Ar-Ar, K-Ca, Pb-Pb, Th-Pb, Rb-Sr, Sm-Nd,

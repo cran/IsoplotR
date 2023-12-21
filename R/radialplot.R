@@ -194,7 +194,7 @@ radialplot.fissiontracks <- function(x,from=NA,to=NA,z0=NA,
                                      show.numbers=FALSE,pch=21,
                                      levels=NA,clabel="",bg=c("yellow","red"),
                                      col='black',markers=NULL,k=0,np=3,
-                                     exterr=TRUE,oerr=3,hide=NULL,
+                                     exterr=FALSE,oerr=3,hide=NULL,
                                      omit=NULL,omit.col=NA,...){
     ns <- length(x)
     calcit <- (1:ns)%ni%c(hide,omit)
@@ -204,7 +204,7 @@ radialplot.fissiontracks <- function(x,from=NA,to=NA,z0=NA,
     peaks <- peakfit(x2calc,k=k,np=np,exterr=exterr,sigdig=sigdig,oerr=oerr)
     markers <- c(markers,peaks$peaks['t',])
     X <- x2zs(x2plot,z0=z0,from=from,to=to,transformation=transformation)
-    pcol <- set.ellipse.colours(ns=ns,levels=levels[plotit],
+    pcol <- set.ellipse.colours(ns=ns,levels=levels,
                                 col=bg,hide=hide,omit=omit,
                                 omit.col=omit.col)
     tcol <- rep(col,ns)
@@ -249,8 +249,8 @@ radialplot.fissiontracks <- function(x,from=NA,to=NA,z0=NA,
 #' \code{PbPb} or \code{x} has class \code{UPb} and
 #' \code{3<x$format<7}); or
 #'
-#' \code{settings('iratio','Pb208Pb206')} and
-#' \code{settings('iratio','Pb208Pb207')} (if \code{x} has class
+#' \code{settings('iratio','Pb206Pb208')} and
+#' \code{settings('iratio','Pb207Pb208')} (if \code{x} has class
 #' \code{UPb} and \code{x$format=7} or \code{8}).
 #'
 #' \code{2}: remove the common Pb by projecting the data along an
@@ -270,7 +270,7 @@ radialplot.UPb <- function(x,from=NA,to=NA,z0=NA,
                            show.numbers=FALSE,pch=21,sigdig=2,
                            levels=NA,clabel="",bg=c("yellow","red"),
                            col='black',markers=NULL,k=0,np=3,
-                           exterr=TRUE,common.Pb=0,oerr=3,hide=NULL,
+                           exterr=FALSE,common.Pb=0,oerr=3,hide=NULL,
                            omit=NULL,omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
                transformation=transformation,type=type,
@@ -300,7 +300,7 @@ radialplot.PbPb <- function(x,from=NA,to=NA,z0=NA,sigdig=2,
                             transformation='log',show.numbers=FALSE,
                             pch=21,levels=NA,clabel="",bg=c("yellow","red"),
                             col='black',markers=NULL,k=0,np=3,
-                            exterr=TRUE,common.Pb=2,oerr=3,
+                            exterr=FALSE,common.Pb=2,oerr=3,
                             hide=NULL,omit=NULL,omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
                transformation=transformation,
@@ -315,7 +315,7 @@ radialplot.ArAr <- function(x,from=NA,to=NA,z0=NA,sigdig=2,
                             transformation='log',show.numbers=FALSE,
                             pch=21,levels=NA,clabel="",
                             bg=c("yellow","red"),col='black',
-                            markers=NULL,k=0,np=3,exterr=TRUE,i2i=FALSE,
+                            markers=NULL,k=0,np=3,exterr=FALSE,i2i=FALSE,
                             oerr=3,hide=NULL,omit=NULL,omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
                transformation=transformation,
@@ -330,7 +330,7 @@ radialplot.KCa <- function(x,from=NA,to=NA,z0=NA,sigdig=2,
                            transformation='log',show.numbers=FALSE,
                            pch=21,levels=NA,clabel="",
                            bg=c("yellow","red"),col='black',
-                           markers=NULL,k=0,np=3,exterr=TRUE,
+                           markers=NULL,k=0,np=3,exterr=FALSE,
                            i2i=FALSE,oerr=3,hide=NULL,omit=NULL,
                            omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
@@ -346,7 +346,7 @@ radialplot.ThPb <- function(x,from=NA,to=NA,z0=NA,sigdig=2,
                             transformation='log',show.numbers=FALSE,
                             pch=21,levels=NA,clabel="",
                             bg=c("yellow","red"),col='black',
-                            markers=NULL,k=0,np=3,exterr=TRUE,i2i=TRUE,
+                            markers=NULL,k=0,np=3,exterr=FALSE,i2i=TRUE,
                             oerr=3,hide=NULL,omit=NULL,omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
                transformation=transformation,
@@ -376,7 +376,7 @@ radialplot.ReOs <- function(x,from=NA,to=NA,z0=NA,sigdig=2,
                             transformation='log',show.numbers=FALSE,
                             pch=21,levels=NA,clabel="",
                             bg=c("yellow","red"),col='black',
-                            markers=NULL,k=0,np=3,exterr=TRUE,i2i=TRUE,
+                            markers=NULL,k=0,np=3,exterr=FALSE,i2i=TRUE,
                             oerr=3,hide=NULL,omit=NULL,omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
                transformation=transformation,
@@ -391,7 +391,7 @@ radialplot.SmNd <- function(x,from=NA,to=NA,z0=NA,sigdig=2,
                             transformation='log',show.numbers=FALSE,
                             pch=21,levels=NA,clabel="",
                             bg=c("yellow","red"),col='black',
-                            markers=NULL,k=0,np=3,exterr=TRUE,i2i=TRUE,
+                            markers=NULL,k=0,np=3,exterr=FALSE,i2i=TRUE,
                             oerr=3,hide=NULL,omit=NULL,omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
                transformation=transformation,
@@ -406,7 +406,7 @@ radialplot.RbSr <- function(x,from=NA,to=NA,z0=NA,sigdig=2,
                             transformation='log',show.numbers=FALSE,
                             pch=21,levels=NA,clabel="",
                             bg=c("yellow","red"),col='black',
-                            markers=NULL,k=0,np=3,exterr=TRUE,
+                            markers=NULL,k=0,np=3,exterr=FALSE,
                             i2i=TRUE,oerr=3,hide=NULL,omit=NULL,
                             omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
@@ -422,7 +422,7 @@ radialplot.LuHf <- function(x,from=NA,to=NA,z0=NA,sigdig=2,
                             transformation='log',show.numbers=FALSE,
                             pch=21,levels=NA,clabel="",
                             bg=c("yellow","red"),col='black',
-                            markers=NULL,k=0,np=3,exterr=TRUE,i2i=TRUE,
+                            markers=NULL,k=0,np=3,exterr=FALSE,i2i=TRUE,
                             oerr=3,hide=NULL,omit=NULL,omit.col=NA,...){
     age2radial(x,from=from,to=to,z0=z0,sigdig=sigdig,
                transformation=transformation,
@@ -466,7 +466,7 @@ age2radial <- function(x,from=NA,to=NA,z0=NA,transformation='log',type=4,
                        cutoff.76=1100,cutoff.disc=discfilter(),
                        show.numbers=FALSE,pch=21,levels=NA,sigdig=2,
                        clabel="",bg=c("yellow","red"),col='black',markers=NULL,
-                       k=0,np=3,exterr=TRUE,i2i=FALSE,Th0i=0,common.Pb=0,
+                       k=0,np=3,exterr=FALSE,i2i=FALSE,Th0i=0,common.Pb=0,
                        oerr=3,units=' Ma',hide=NULL,omit=NULL,omit.col=NA,...){
     x2calc <- clear(x,hide,omit)
     peaks <- peakfit(x2calc,k=k,np=np,exterr=exterr,sigdig=sigdig,
