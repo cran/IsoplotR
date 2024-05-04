@@ -476,7 +476,7 @@ the error propagation for the central age and mixture models?}
 \eqn{^{206}}Pb/\eqn{^{238}}U age (\code{type}=2), the
 \eqn{^{207}}Pb/\eqn{^{206}}Pb age (\code{type}=3), the
 \eqn{^{207}}Pb/\eqn{^{206}}Pb-\eqn{^{206}}Pb/\eqn{^{238}}U age
-(\code{type}=4), the concordia age (\code{type}=5), or the
+(\code{type}=4), the concordia_age (\code{type}=5), or the
 \eqn{^{208}}Pb/\eqn{^{232}}Th age (\code{type}=6).  Ignored if
 \code{x$format>8}.}
 
@@ -526,7 +526,7 @@ ratio from an isochron fit. Setting \code{i2i} to \code{FALSE} uses
 the default values stored in \code{settings('iratio',...)}.
 
 Note that choosing this option introduces a degree of circularity
-in the central age calculation. In this case the radial plot plot
+in the central age calculation. In this case the radial_plot plot
 just serves as a way to visualise the residuals of the data around
 the isochron, and one should be careful not to over-interpret the
 numerical output.}
