@@ -13,7 +13,10 @@ flipper <- function(x,inverse=FALSE,hide=NULL,omit=NULL,
         wtype <- 1 # override
         ifi <- get_ifi(wtype=wtype,type=type,inverse=inverse)
         d2calc <- flipinvert(yd=yd,ifi=ifi,type=type,hide=hide,omit=omit)
-        if (!is.null(y0rat)) anchor[2:3] <- iratio(y0rat)
+        if (!is.null(y0rat)){
+            anchor[2:3] <- iratio(y0rat)
+            if (inverse) anchor[2:3] <- c(1,anchor[3]/anchor[2])/anchor[2]
+        }
         if (model<2) fit <- anchoredYork(d2calc,y0=anchor[2],sy0=anchor[3])
         else fit <- MLyork(d2calc,anchor=anchor,model=model)
     } else if (anchor[1]==2){
@@ -64,7 +67,7 @@ flipper <- function(x,inverse=FALSE,hide=NULL,omit=NULL,
 # ifi = invert, flip, invert
 get_ifi <- function(wtype,type,inverse){
     if (wtype==1){
-        if (inverse){
+        if (type=='d' & inverse){
             out <- c(TRUE,FALSE,FALSE)
         } else {
             out <- c(FALSE,FALSE,FALSE)
@@ -86,7 +89,7 @@ get_ifi <- function(wtype,type,inverse){
             stop('Invalid type')
         }
     } else {
-        out <- rep(FALSE,3)
+        out <- c(FALSE,FALSE,FALSE)
     }
     out
 }
@@ -98,7 +101,7 @@ flipinvert <- function(yd,ifi=rep(FALSE,3),type='p',hide=NULL,omit=NULL){
     clear(yd,hide,omit)
 }
 
-# the purpose of flipping and inverting is always to use the intercept
+# the purpose of flipping and inverting is to always use the intercept
 # to improve the fit, therefore the inverse operations always attribute
 # any overdispersion to the incoming intercept
 unflipfit <- function(fit){
