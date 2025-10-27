@@ -1,7 +1,22 @@
-# helper function for isochron() that flips X- and Y- axis and back
-# if necessary to facilitate anchored regression and model-3 fits
+#' helper function for isochron() that flips X- and Y- axis and back
+#' if necessary to facilitate anchored regression and model-3 fits
+#' @param x an IsoplotR data object
+#' @param inverse toggles between normal and inverse isochrons
+#' @param hide vector with indices of aliquots that should be removed
+#'     from the plot.
+#' @param omit vector with indices of aliquots that should be plotted
+#'     but omitted from the isochron age calculation.
+#' @param model York (1), TLS (2) or ML with overdispersion (3)
+#' @param type either 'p' for 'parent-daughter isochron' or 'd' for
+#'     'daughter-daughter isochron' (i.e., Pb-Pb).
+#' @param wtype controls the parameter responsible for the
+#'     overdispersion in model-3 regression.
+#' @param anchor fix the non-radiogenic composition (1) or intercept
+#'     age (2).
+#' @param ... optional arguments
+#' @noRd
 flipper <- function(x,inverse=FALSE,hide=NULL,omit=NULL,
-                    model=1,wtype=0,anchor=0,type='p',...){
+                    model=1,type='p',wtype=0,anchor=0,...){
     y0rat <- gety0rat(x)
     DPrat <- getDPrat(x)
     yd <- data2york(x,inverse=inverse)
@@ -13,9 +28,23 @@ flipper <- function(x,inverse=FALSE,hide=NULL,omit=NULL,
         wtype <- 1 # override
         ifi <- get_ifi(wtype=wtype,type=type,inverse=inverse)
         d2calc <- flipinvert(yd=yd,ifi=ifi,type=type,hide=hide,omit=omit)
-        anchor[2:3] <- iratio(y0rat)
+        anchor[2:3] <- iratio(y0rat[1])
+        if (type=='d'){ # shift left by Pb206Pb204c
+            anchor[4:5] <- iratio(y0rat[2])
+            d2calc[,'X'] <- d2calc[,'X'] - anchor[4]
+        }
         if (model<2) fit <- anchoredYork(d2calc,y0=anchor[2],sy0=anchor[3])
         else fit <- MLyork(d2calc,anchor=anchor,model=model)
+        if (type=='d'){ # shift right by Pb206Pb204c
+            fit$a[1] <- fit$a[1] - fit$b[1]*anchor[4]
+            J <- rbind(c(1,-anchor[4]),c(0,1))
+            E <- rbind(c(fit$a[2]^2,fit$cov.ab),
+                       c(fit$cov.ab,fit$b[2]^2))
+            covmat <- J %*% E %*% t(J)
+            fit$a[2] <- sqrt(covmat[1,1])
+            fit$b[2] <- sqrt(covmat[2,2])
+            fit$cov.ab <- covmat[1,2]
+        }
     } else if (anchor[1]==2){
         wtype <- 2 # override
         ifi <- get_ifi(wtype=wtype,type=type,inverse=inverse)
@@ -162,6 +191,8 @@ anchoredYork <- function(x,y0=0,sy0=0){
 #' chronometer
 #' @param x an IsoplotR data object
 #' @param ... optional arguments
+#' @return a string, except if \code{x} has class \code{PbPb}, in
+#'     which case the function returns a vector of two strings
 #' @noRd
 gety0rat <- function(x,...){ UseMethod("gety0rat",x) }
 #' @noRd
@@ -169,9 +200,9 @@ gety0rat.default <- function(x,...){ NULL }
 #' @noRd
 gety0rat.ArAr <- function(x,...){ 'Ar40Ar36' }
 #' @noRd
-gety0rat.PbPb <- function(x,...){ 'Pb207Pb204' }
-#' @noRd
 gety0rat.ThPb <- function(x,...){ 'Pb208Pb204' }
+#' @noRd
+gety0rat.PbPb <- function(x,...){ c('Pb207Pb204','Pb206Pb204') }
 #' @noRd
 gety0rat.KCa <- function(x,...){ paste0('Ca40Ca',x$sister) }
 #' @noRd

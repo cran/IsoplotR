@@ -724,7 +724,8 @@ genericisochronplot <- function(x,fit,oerr=3,sigdig=2,show.numbers=FALSE,
 isochron.UPb <- function(x,oerr=3,sigdig=2,show.numbers=FALSE,
                          levels=NULL,clabel="",joint=TRUE,
                          ellipse.fill=c("#00FF0080","#FF000080"),
-                         ellipse.stroke='black',type=1,
+                         ellipse.stroke='black',
+                         type=ifelse(x$format<4,2,1),
                          ci.col='gray80',line.col='black',lwd=1,
                          plot=TRUE,title=TRUE,exterr=FALSE,model=1,
                          show.ellipses=1*(model!=2),anchor=0,
@@ -733,8 +734,8 @@ isochron.UPb <- function(x,oerr=3,sigdig=2,show.numbers=FALSE,
                          taxis=FALSE,nsteps=NULL,...){
     if (x$format<4){
         if (plot){
-            out <- concordia_helper(x,type=2,show.age=model+1,oerr=oerr,
-                                    sigdig=sigdig,show.numbers=show.numbers,
+            out <- concordia_helper(x,type=type,show.age=model+1,title=title,
+                                    oerr=oerr,sigdig=sigdig,show.numbers=show.numbers,
                                     levels=levels,clabel=clabel,
                                     ellipse.fill=ellipse.fill,
                                     ellipse.stroke=ellipse.stroke,exterr=exterr,
@@ -844,8 +845,8 @@ isochron.PbPb <- function(x,oerr=3,sigdig=2,show.numbers=FALSE,levels=NULL,
                           wtype=1,anchor=0,growth=FALSE,show.ellipses=1*(model!=2),
                           hide=NULL,omit=NULL,omit.fill=NA,omit.stroke='grey',...){
     wtype <- checkWtype(wtype=wtype,anchor=anchor,model=model)
-    fit <- flipper(x,inverse=inverse,model=model,wtype=wtype,
-                   anchor=anchor,hide=hide,omit=omit,type="d")
+    fit <- flipper(x,inverse=inverse,model=model,type='d',
+                   wtype=wtype,anchor=anchor,hide=hide,omit=omit)
     out <- ab2y0t(x=x,fit=fit,inverse=inverse,exterr=exterr,wtype=wtype)
     dispunits <- getDispUnits(model=model,wtype=wtype,anchor=anchor)
     if (plot) {
@@ -926,8 +927,7 @@ isochron.ArAr <- function(x,oerr=3,sigdig=2,show.numbers=FALSE,
     taxis <- taxis & inverse
     wtype <- checkWtype(wtype=wtype,anchor=anchor,model=model)
     fit <- flipper(x,inverse=inverse,model=model,wtype=wtype,
-                   anchor=anchor,hide=hide,omit=omit,type="p",
-                   J=x$J[1],sJ=x$J[2])
+                   anchor=anchor,hide=hide,omit=omit,J=x$J[1],sJ=x$J[2])
     out <- ab2y0t(x=x,fit=fit,inverse=inverse,exterr=exterr,wtype=wtype)
     dispunits <- getDispUnits(model=model,wtype=wtype,anchor=anchor)
     if (plot) {
@@ -1285,7 +1285,7 @@ isochron_PD <- function(x,oerr=3,sigdig=2,show.numbers=FALSE,levels=NULL,
     taxis <- taxis & inverse
     wtype <- checkWtype(wtype=wtype,anchor=anchor,model=model)
     fit <- flipper(x,inverse=inverse,model=model,wtype=wtype,
-                   anchor=anchor,hide=hide,omit=omit,type="p")
+                   anchor=anchor,hide=hide,omit=omit)
     out <- ab2y0t(x=x,fit=fit,inverse=inverse,wtype=wtype,
                   exterr=exterr,bratio=bratio)
     dispunits <- getDispUnits(model=model,wtype=wtype,anchor=anchor)
@@ -1376,6 +1376,10 @@ isochrontitle <- function(fit,oerr=3,sigdig=2,type=NULL,
                                      ntit='',sigdig=sigdig,oerr=oerr,units='',
                                      prefix=fit$y0label)
         }
+    } else if (type=='Pb-Pb'){
+        content[[1]] <- maintit(x=fit$age[1],sx=fit$age[-1],n=fit$n,
+                                units=units,sigdig=sigdig,
+                                oerr=oerr,df=fit$df)
     } else {
         content[[1]] <- maintit(x=fit$age[1],sx=fit$age[-1],n=fit$n,
                                 units=units,sigdig=sigdig,
@@ -1384,13 +1388,15 @@ isochrontitle <- function(fit,oerr=3,sigdig=2,type=NULL,
                                 units='',prefix=fit$y0label,
                                 sigdig=sigdig,oerr=oerr,df=fit$df)
     }
-    if (fit$model==1){
-        content[[3]] <- mswdtit(mswd=fit$mswd,p=fit$p.value,sigdig=sigdig)
-    } else if (fit$model%in%c(3,5)){
-        content[[3]] <- disptit(w=fit$disp[1],sw=fit$disp[2],sigdig=sigdig,
-                                oerr=oerr,prefix=displabel,units=dispunits)
-    }
     nl <- length(content)
+    if (fit$model==1){
+        nl <- nl+1
+        content[[nl]] <- mswdtit(mswd=fit$mswd,p=fit$p.value,sigdig=sigdig)
+    } else if (fit$model%in%c(3,5)){
+        nl <- nl+1
+        content[[nl]] <- disptit(w=fit$disp[1],sw=fit$disp[2],sigdig=sigdig,
+                                       oerr=oerr,prefix=displabel,units=dispunits)
+    }
     if (!is.null(ski)){
         growthline <- paste0('intercepts growth curve at ',
                              roundit(ski[1],sigdig=sigdig,text=TRUE))
