@@ -38,6 +38,10 @@
 #' @param x an object of class \code{UPb}
 #' 
 #' @param tlim age limits of the concordia line
+#'
+#' @param xlim x axis limits
+#'
+#' @param ylim y axis limits
 #' 
 #' @param oerr indicates whether the analytical uncertainties of the
 #'     output are reported in the plot title as:
@@ -57,6 +61,16 @@
 #' \code{6}: relative (1-\eqn{\alpha})\% confidence intervals, where
 #' \eqn{\alpha} equales the value that is stored in
 #' \code{settings('alpha')}.
+#'
+#' @param show.ellipses show the data as:
+#' 
+#' \code{0}: points
+#' 
+#' \code{1}: error ellipses
+#' 
+#' \code{2}: error crosses
+#'
+#' any other value results in a blank plot
 #'
 #' @param type one of
 #'
@@ -175,6 +189,12 @@
 #' @param ticks either a scalar indicating the desired number of age
 #'     ticks to be placed along the concordia line, OR a vector of
 #'     tick ages.
+#' @param pos the position of the concordia age labels relative to the
+#'     concordia ticks. If \code{NA}, places the labels automatically.
+#'     Values of \code{1}, \code{2}, \code{3} and \code{4},
+#'     respectively indicate positions below, to the left of, above
+#'     and to the right of the ticks. A \code{NULL} value places the
+#'     labels on top of the ticsk.
 #' @param hide vector with indices of aliquots that should be removed
 #'     from the concordia diagram
 #' @param omit vector with indices of aliquots that should be plotted
@@ -183,7 +203,8 @@
 #'     aliquots.
 #' @param omit.stroke stroke colour that should be used for the
 #'     omitted aliquots.
-#' @param ... optional arguments passed on to \code{\link{scatterplot}}
+#' @param ... optional arguments passed on to
+#'     \code{\link{scatterplot}}
 #'
 #' @return
 #'
@@ -273,40 +294,46 @@
 #'     uranium-lead ages. Geochimica et Cosmochimica Acta, 62(4),
 #'     pp.665-676.
 #' @export
-concordia <- function(x=NULL,tlim=NULL,type=1,
+concordia <- function(x=NULL,tlim=NULL,xlim=NULL,ylim=NULL,type=1,
                       show.numbers=FALSE,levels=NULL,clabel="",
                       ellipse.fill=c("#00FF0080","#FF000080"),
                       ellipse.stroke='black',concordia.col='darksalmon',
                       exterr=FALSE,show.age=0,title=TRUE,oerr=3,
-                      sigdig=2,common.Pb=0,ticks=5,anchor=0,
+                      show.ellipses=1*(show.age!=3),
+                      sigdig=2,common.Pb=0,ticks=5,pos=NA,anchor=0,
                       cutoff.disc=discfilter(),hide=NULL,
                       omit=NULL,omit.fill=NA,omit.stroke='grey',...){
-    concordia_helper(x=x,tlim=tlim,type=type,show.numbers=show.numbers,
+    concordia_helper(x=x,tlim=tlim,xlim=xlim,ylim=ylim,
+                     type=type,show.numbers=show.numbers,
                      levels=levels,clabel=clabel,
                      ellipse.fill=ellipse.fill,
                      ellipse.stroke=ellipse.stroke,
                      concordia.col=concordia.col,exterr=exterr,
                      show.age=show.age,title=title,oerr=oerr,
+                     show.ellipses=show.ellipses,
                      sigdig=sigdig,common.Pb=common.Pb,ticks=ticks,
-                     anchor=anchor,cutoff.disc=cutoff.disc,
+                     pos=pos,anchor=anchor,cutoff.disc=cutoff.disc,
                      hide=hide,omit=omit,omit.fill=omit.fill,
                      omit.stroke=omit.stroke,...)
 }
 
 # the only difference between concordia and concordia_helper
 # is the y0option argument, which is used by isochron.UPb
-concordia_helper <- function(x=NULL,tlim=NULL,type=1,
+concordia_helper <- function(x=NULL,tlim=NULL,xlim=NULL,ylim=NULL,type=1,
                              show.numbers=FALSE,levels=NULL,clabel="",
                              ellipse.fill=c("#00FF0080","#FF000080"),
                              ellipse.stroke='black',concordia.col='darksalmon',
                              exterr=FALSE,show.age=0,title=TRUE,
+                             show.ellipses=1*(show.age!=3),
                              oerr=3,y0option=1,sigdig=2,common.Pb=0,
-                             ticks=5,anchor=0,cutoff.disc=discfilter(),
+                             ticks=5,pos=NA,anchor=0,cutoff.disc=discfilter(),
                              hide=NULL,omit=NULL,omit.fill=NA,
                              omit.stroke='grey',box=TRUE,...){
     if (is.null(x)){
-        emptyconcordia(tlim=tlim,oerr=oerr,type=type,exterr=exterr,
-                       concordia.col=concordia.col,ticks=ticks,...)
+        emptyconcordia(tlim=tlim,xlim=xlim,ylim=ylim,
+                       type=type,oerr=oerr,exterr=exterr,
+                       concordia.col=concordia.col,
+                       ticks=ticks,pos=pos,...)
         return(invisible(NULL))
     }
     if (common.Pb>0){
@@ -337,28 +364,30 @@ concordia_helper <- function(x=NULL,tlim=NULL,type=1,
         fit <- discordia(X2calc,fit=lfit,wetherill=(type==1))
     }
     fit$n <- length(X2calc)
-    lims <- prepare_concordia_line(x=X2plot,tlim=tlim,type=type,...)
+    lims <- prepare_concordia_line(x=X2plot,tlim=tlim,
+                                   xlim=xlim,ylim=ylim,type=type)
     if (show.age>1){
-        discordia_line(fit,wetherill=(type==1),d=X2plot$d,oerr=oerr)
+        discordia_line(x=X2calc,fit=fit,wetherill=(type==1),oerr=oerr)
         if (title){
             dispunits <- getDispUnits_UPb(x=x,joint=TRUE,anchor=anchor)
-            graphics::title(discordia_title(fit,wetherill=(type==1),
-                                            y0option=y0option,sigdig=sigdig,
-                                            oerr=oerr,dispunits=dispunits,...))
+            disctit <- discordia_title(fit,wetherill=(type==1),
+                                       y0option=y0option,sigdig=sigdig,
+                                       oerr=oerr,dispunits=dispunits)
+            graphics::title(disctit)
         }
     }
-    plotConcordiaLine(X2plot,lims=lims,type=type,col=concordia.col,
+    plotConcordiaLine(X2plot,lims=lims,pos=pos,type=type,col=concordia.col,
                       oerr=oerr,exterr=exterr,ticks=ticks,box=box)
     if (type==1) y <- data2york(X,option=1)
     else if (type==2) y <- data2york(X,option=2)
     else if (x$format%in%c(7,8) & type==3) y <- data2york(X,option=5)
     else stop('Concordia type incompatible with this input format.')
     scatterplot(y,oerr=oerr,show.numbers=show.numbers,
-                show.ellipses=1*(show.age!=3),levels=levels,
+                show.ellipses=show.ellipses,levels=levels,
                 clabel=clabel,ellipse.fill=ellipse.fill,
                 ellipse.stroke=ellipse.stroke,add=TRUE,
                 hide=hide,omit=omit,omit.fill=omit.fill,
-                omit.stroke=omit.stroke,addcolourbar=FALSE,box=box,...)
+                omit.stroke=omit.stroke,box=box,...)
     if (show.age==4){
         showDispersion(fit,inverse=(type==2),wtype=anchor[1],type='TW')
     }
@@ -369,13 +398,11 @@ concordia_helper <- function(x=NULL,tlim=NULL,type=1,
             graphics::title(concordia_title(fit,sigdig=sigdig,oerr=oerr))
         }
     }
-    colourbar(z=levels[calcit],fill=ellipse.fill,
-              stroke=ellipse.stroke,clabel=clabel)
     invisible(fit)
 }
 
 # helper function for plot.concordia
-plotConcordiaLine <- function(x,lims,type=1,col='darksalmon',
+plotConcordiaLine <- function(x,lims,pos=NA,type=1,col='darksalmon',
                               oerr=3,exterr=FALSE,ticks=5,box=TRUE){
     if (length(ticks)<2) ticks <- prettier(lims$t,type=type,n=ticks)
     m <- min(lims$t[1],ticks[1])
@@ -399,10 +426,8 @@ plotConcordiaLine <- function(x,lims,type=1,col='darksalmon',
         conc[i,] <- xy$x
     }
     graphics::lines(conc[,'x'],conc[,'y'],col=col,lwd=2)
-    dx <- diff(graphics::par('usr')[1:2])
-    if (exterr & ((type==1 & dx<0.03) | (type==2 & dx<3) | (type==3 & dx<0.005)))
-    { pos <- NULL } else { pos <- 2 }
-    for (i in 1:length(ticks)){
+    poslist <- get_poslist(pos=pos,ticks=ticks,type=type,d=md,exterr=exterr)
+    for (i in seq_along(ticks)){
         xy <- age_to_concordia_ratios(ticks[i],type=type,exterr=exterr,d=md)
         if (exterr){ # show ticks as ellipse
             ell <- ellipse(xy$x[1],xy$x[2],xy$cov,alpha=oerr2alpha(oerr))
@@ -410,13 +435,73 @@ plotConcordiaLine <- function(x,lims,type=1,col='darksalmon',
         } else {
             graphics::points(xy$x[1],xy$x[2],pch=21,bg='white')
         }
-        graphics::text(xy$x[1],xy$x[2],as.character(ticks[i]),pos=pos)
+        graphics::text(xy$x[1],xy$x[2],as.character(ticks[i]),pos=poslist[[i]])
     }
     if (box) graphics::box()
 }
+get_poslist <- function(pos,ticks,type,d=diseq(),exterr=FALSE){
+    if (is.null(pos) || length(pos)>1 || !is.na(pos)){
+        return(pos)
+    }
+    usr <- graphics::par('usr')
+    dx <- usr[2]-usr[1]
+    dy <- usr[4]-usr[3]
+    out <- rep(list(NULL),length(ticks))
+    for (i in seq_along(ticks)){
+        tick <- ticks[i]
+        McL <- mclean(tick,d=d)
+        if (type==1){
+            concordia_slope <- McL$dPb206U238dt/McL$dPb207U235dt
+        } else if (type==2){
+            dU238dPb206dt = -McL$dPb206U238dt/McL$Pb206U238^2
+            concordia_slope <- McL$dPb207Pb206dt/dU238dPb206dt
+        } else if (type==3){
+            concordia_slope <- McL$dPb208Th232dt/McL$dPb206U238dt
+        } else {
+            stop('Invalid concordia type')
+        }
+        plot_slope <- concordia_slope*dx/dy
+        if (type==2 & plot_slope > -1){
+            out[i] <- 1
+        } else if ((type%in%c(1,3) & plot_slope > 1) |
+                   (type==2 & plot_slope <= -1)){
+            out[i] <- 2
+        } else if (type%in%c(1,3) & plot_slope <= 1){
+            out[i] <- 3
+        } else {
+            out[i] <- list(NULL)
+        }
+        if (exterr){
+            if (type==1){
+                x_ratio <- 'Pb207U235'
+                y_ratio <- 'Pb206U238'
+            } else if (type==2){
+                x_ratio <- 'U238Pb206'
+                y_ratio <- 'Pb207Pb206'
+            } else { # type 3
+                x_ratio <- 'Pb206U238'
+                y_ratio <- 'Pb208Th232'
+            }
+            sx <- age2ratio(tt=tick,ratio=x_ratio,exterr=TRUE)[2]
+            sy <- age2ratio(tt=tick,ratio=y_ratio,exterr=TRUE)[2]
+            if (sx/dx > 0.01 & sy/dy > 0.01){
+                out[i] <- list(NULL)
+            } else if (sx/dx > 0.01){
+                out[i] <- ifelse(type==2,1,2)
+            } else if (sy/dy > 0.01){
+                out[i] <- 2
+            } else {
+                # keep same as for exterr = FALSE
+            }
+        }
+    }
+    out
+}
 # helper function for plot.concordia
-prepare_concordia_line <- function(x,tlim,type=1,...){
-    out <- get_concordia_limits(x,tlim=tlim,type=type,...)
+prepare_concordia_line <- function(x,tlim,xlim=NULL,ylim=NULL,
+                                   type=1,add=FALSE,...){
+    out <- get_concordia_limits(x,tlim=tlim,xlim=xlim,
+                                ylim=ylim,type=type,...)
     if (type==1){
         y.lab <- expression(paste(""^"206","Pb/"^"238","U"))
         x.lab <- expression(paste(""^"207","Pb/"^"235","U"))
@@ -429,7 +514,10 @@ prepare_concordia_line <- function(x,tlim,type=1,...){
     } else {
         stop('Incorrect input format.')
     }
-    graphics::plot(out$x,out$y,type='n',xlab=x.lab,ylab=y.lab,bty='n',...)
+    if (!add){
+        graphics::plot(out$x,out$y,type='n',
+                       xlab=x.lab,ylab=y.lab,bty='n',...)
+    }
     out
 }
 # concordia sequence
@@ -479,18 +567,18 @@ age_to_concordia_ratios <- function(tt,type=1,exterr=FALSE,d=diseq()){
     else
         stop('Invalid concordia type.')
 }
-get_concordia_limits <- function(x,tlim=NULL,type=1,xlim,ylim,...){
+get_concordia_limits <- function(x,tlim=NULL,xlim=NULL,ylim=NULL,type=1,...){
     out <- list()
-    if (missing(xlim)) {
+    if (is.null(xlim)) {
         xset <- FALSE
         out$x <- c(NA,NA)
     } else {
         xset <- TRUE
         out$x <- xlim
         minx <- xlim[1]
-        maxx <- xlim[2]        
+        maxx <- xlim[2]
     }
-    if (missing(ylim)) {
+    if (is.null(ylim)) {
         yset <- FALSE
         out$y <- c(NA,NA)
     } else {
@@ -530,8 +618,10 @@ get_concordia_limits <- function(x,tlim=NULL,type=1,xlim,ylim,...){
                 minx <- min(U8Pb6[,1]-nse*U8Pb6[,2],U8Pb6t,na.rm=TRUE)
                 maxx <- max(U8Pb6[,1]+nse*U8Pb6[,2],U8Pb6t,na.rm=TRUE)
             }
-            if (is.null(tlim) & maxx>U8Pb6t[1])
+            if (xset || is.null(tlim) & maxx>U8Pb6t[1])
                 out$t[1] <- get_Pb206U238_age(1/maxx,d=md)[1]
+            if (is.null(tlim) & minx>U8Pb6t[2])
+                out$t[2] <- get_Pb206U238_age(1/minx,d=md)[1]
             Pb76 <- get_Pb207Pb206_ratios(x)
             if (!yset){
                 Pb76t <- age_to_Pb207Pb206_ratio(out$t,d=x$d)[,'76']
@@ -609,7 +699,10 @@ get_concordia_limits <- function(x,tlim=NULL,type=1,xlim,ylim,...){
                 maxy <- max(Pb207Pb206[,1]+nse*Pb207Pb206[,2],na.rm=TRUE)
             }
             out$t[1] <- get_Pb206U238_age(1/maxx,d=md)[1]
-            out$t[2] <- get_Pb207Pb206_age(maxy,d=md,interval=c(out$t[1],10000))[1]
+            if (is.null(xlim) | minx==0)
+                out$t[2] <- get_Pb207Pb206_age(maxy,d=md,interval=c(out$t[1],10000))[1]
+            else
+                out$t[2] <- get_Pb206U238_age(1/minx,d=md)[1]
             if (!xset)
                 minx <- min(minx,age_to_U238Pb206_ratio(out$t[2],d=md)[,'86'])
             if (!yset)
@@ -739,9 +832,9 @@ concordia_age_helper <- function(cc,d=diseq(),type=1,exterr=FALSE,...){
         lower['t'] <- tt[i-1]
         upper['t'] <- tt[i]
         init['t'] <- (lower['t'] + upper['t'])/2
-        fit <- stats::optim(init,LL_concordia_age,method='L-BFGS-B',
-                            lower=lower,upper=upper,exterr=exterr,
-                            cc=cc,type=type,d=d,hessian=TRUE)
+        fit <- contingencyfit(par=init,fn=LL_concordia_age,
+                              lower=lower,upper=upper,hessian=TRUE,
+                              exterr=exterr,cc=cc,type=type,d=d)
         if (is.finite(fit$value) && fit$value<out$value){
             out <- fit
         }
@@ -900,37 +993,92 @@ LL_concordia_age <- function(pars,cc,type=1,exterr=FALSE,d=diseq(),mswd=FALSE){
     out
 }
 
-emptyconcordia <- function(tlim=NULL,oerr=3,type=1,exterr=FALSE,
-                           concordia.col='darksalmon',ticks=5,...){
-    if (is.null(tlim)){
-        if (type%in%c(1,3)) tlim <- c(1,4500)
-        else tlim <- c(100,4500)
-    } 
+emptyconcordia <- function(tlim=NULL,xlim=NULL,ylim=NULL,pos=NA,
+                           type=1,oerr=3,exterr=FALSE,
+                           concordia.col='darksalmon',
+                           ticks=5,d=diseq(),add=FALSE,...){
+    if (add){
+        usr <- graphics::par('usr')
+        xlim <- usr[1:2]
+        ylim <- usr[3:4]
+        tlim <- NULL
+    }
     dat <- list()
     class(dat) <- 'UPb'
-    dat$d <- diseq()
+    md <- mediand(d)
+    if (is.null(tlim)){
+        mint <- ifelse(type==2,100,1)
+        maxt <- concordia_end(md)
+        if (!is.null(xlim)){
+            if (type==1){
+                maxx <- age_to_Pb207U235_ratio(maxt,d=md)[1]
+                if (xlim[1]<maxx) mint <- min(mint,get_Pb207U235_age(x=xlim[1],d=md)[1])
+                if (xlim[2]<maxx) maxt <- get_Pb207U235_age(x=xlim[2],d=md)[1]
+            } else if (type==2){
+                minx <- age_to_U238Pb206_ratio(maxt,d=md)[1]
+                if (xlim[2]>minx) mint <- min(mint,get_Pb206U238_age(x=1/xlim[2],d=md)[1])
+                if (xlim[1]>minx) maxt <- get_Pb206U238_age(x=1/xlim[1],d=md)[1]
+            } else if (type==3){
+                maxx <- age_to_Pb206U238_ratio(maxt,d=md)[1]
+                if (xlim[1]<maxx) mint <- min(mint,get_Pb206U238_age(x=xlim[1],d=md)[1])
+                if (xlim[2]<maxx) maxt <- get_Pb206U238_age(x=xlim[2],d=md)[1]
+            } else {
+                stop("Invalid type for emptyconcordia.")
+            }
+        } else if (!is.null(ylim)){
+            if (type==1){
+                maxy <- age_to_Pb206U238_ratio(maxt,d=md)[1]
+                if (ylim[1]<maxy) mint <- min(mint,get_Pb206U238_age(x=ylim[1],d=md)[1])
+                if (ylim[2]<maxy) maxt <- get_Pb206U238_age(x=ylim[2],d=md)[1]
+            } else if (type==2){
+                maxy <- age_to_Pb207Pb206_ratio(maxt,d=md)[1]
+                if (ylim[1]<maxy) mint <- min(mint,get_Pb207Pb206_age(x=ylim[1],d=md)[1])
+                if (ylim[2]<maxy) maxt <- get_Pb207Pb206_age(x=ylim[2],d=md)[1]
+            } else if (type==3){
+                maxy <- age_to_Pb208Th232_ratio(maxt)[1]
+                if (ylim[1]<maxy) mint <- min(mint,get_Pb208Th232_age(x=ylim[1])[1])
+                if (ylim[2]<maxy) maxt <- get_Pb208Th232_age(x=ylim[2])[1]
+            } else {
+                stop("Invalid type for emptyconcordia.")
+            }
+        }
+        tlim <- c(mint,maxt)
+    }
+    dat$d <- md
     if (type==1){
-        dat$x <- rbind(c(age_to_Pb207U235_ratio(tlim[1]),0,
-                         age_to_Pb206U238_ratio(tlim[1]),0,0),
-                       c(age_to_Pb207U235_ratio(tlim[2]),0,
-                         age_to_Pb206U238_ratio(tlim[2]),0,0))
+        dat$x <- cbind(Pb207U235=c(age_to_Pb207U235_ratio(tlim[1],d=md)[1],
+                                   age_to_Pb207U235_ratio(tlim[2])[1]),
+                       errPb207U235=c(0,0),
+                       Pb206U238=c(age_to_Pb206U238_ratio(tlim[1],d=md)[1],
+                                   age_to_Pb206U238_ratio(tlim[2])[1]),
+                       errPb206U238=c(0,0))
         dat$format <- 1
     } else if (type==2){
-        dat$x <- rbind(c(age_to_U238Pb206_ratio(tlim[1]),0,
-                         age_to_Pb207Pb206_ratio(tlim[1]),0,0),
-                       c(age_to_U238Pb206_ratio(tlim[2]),0,
-                         age_to_Pb207Pb206_ratio(tlim[2]),0,0))
+        dat$x <- cbind(U238Pb206=c(age_to_U238Pb206_ratio(tlim[1],d=md)[1],
+                                   age_to_U238Pb206_ratio(tlim[2])[1]),
+                       errU238Pb206=c(0,0),
+                       Pb207Pb206=c(age_to_Pb207Pb206_ratio(tlim[1],d=md)[1],
+                                    age_to_Pb207Pb206_ratio(tlim[2])[1]),
+                       errPb207Pb206=c(0,0))
         dat$format <- 2
     } else if (type==3){
-        dat$x <- rbind(c(0,0,age_to_Pb206U238_ratio(tlim[1]),0,
-                         age_to_Pb208Th232_ratio(tlim[1]),0,rep(0,8)),
-                       c(0,0,age_to_Pb206U238_ratio(tlim[2]),0,
-                         age_to_Pb208Th232_ratio(tlim[2]),0,rep(0,8)))
+        dat$x <- cbind(Pb207U235=c(0,0),errPb207U235=c(0,0),
+                       Pb206U238=c(age_to_Pb206U238_ratio(tlim[1],d=md)[1],
+                                   age_to_Pb206U238_ratio(tlim[2])[1]),
+                       errPb206U238=c(0,0),
+                       Pb208Th232=c(age_to_Pb208Th232_ratio(tlim[1])[1],
+                                    age_to_Pb208Th232_ratio(tlim[2])[1]),
+                       errPb208Th232=c(0,0),
+                       Th232U238=c(0,0),errTh232U238=c(0,0),
+                       rXY=c(0,0),rXZ=c(0,0),rXW=c(0,0),
+                       rYZ=c(0,0),rYW=c(0,0),rZW=c(0,0))
         dat$format <- 7
     } else {
         stop('Invalid concordia type.')
     }
-    lims <- prepare_concordia_line(x=dat,tlim=tlim,type=type,...)
-    plotConcordiaLine(x=dat,lims=lims,type=type,col=concordia.col,
-                      oerr=oerr,exterr=exterr,ticks=ticks)
+    lims <- prepare_concordia_line(x=dat,tlim=tlim,xlim=xlim,
+                                   ylim=ylim,type=type,add=add,...)
+    plotConcordiaLine(x=dat,lims=lims,pos=pos,type=type,
+                      col=concordia.col,oerr=oerr,
+                      exterr=exterr,ticks=ticks)
 }

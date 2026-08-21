@@ -280,6 +280,7 @@ validLevels <- function(levels){
 
 colourbar <- function(z=c(0,1),fill=c("#00FF0080","#FF000080"),
                       stroke='black',strip.width=0.02,clabel=""){
+    op <- graphics::par(no.readonly = TRUE)
     if (!validLevels(z)) return()
     if (all(is.na(fill)) | length(unique(fill))==1) col <- stroke
     else col <- fill
@@ -304,6 +305,7 @@ colourbar <- function(z=c(0,1),fill=c("#00FF0080","#FF000080"),
                    axes=FALSE,xlab=NA,ylab=NA,xaxs='i')
     graphics::axis(side=4)
     mymtext(text=clabel,side=3,adj=1)
+    graphics::par(op)
 }
 
 plot_points <- function(x,y,bg='yellow',pch=21,cex=1.5,pos,col,
@@ -454,11 +456,14 @@ log_sum_exp <- function(u,v){
 }
 
 contingencyfit <- function(par,fn,lower,upper,hessian=TRUE,control=NULL,...){
-    fit <- stats::optim(par=par,fn=fn,method='L-BFGS-B',lower=lower,
-                        upper=upper,hessian=hessian,control=control,...)
-    failed <- fit$convergence>0 | (hessian & !invertible(fit$hessian)) |
-        any((fit$par-lower)==0) | any((upper-fit$par)==0)
-    if (failed){
+    if (all(lower<upper)){
+        fit <- stats::optim(par=par,fn=fn,method='L-BFGS-B',lower=lower,
+                            upper=upper,hessian=hessian,control=control,...)
+    } else {
+        fit <- stats::optim(par=par,fn=fn,method="BFGS",
+                            hessian=hessian,control=control,...)
+    }
+    if (fit$convergence>0 | (hessian & !invertible(fit$hessian))){
         NMfit <- stats::optim(par=par,fn=fn,hessian=hessian,control=control,...)
         if (NMfit$convergence>0){
             warning('Optimisation did not converge.')

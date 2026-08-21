@@ -371,6 +371,7 @@ isochron(x, ...)
   title = TRUE,
   exterr = FALSE,
   model = 1,
+  anchor = 0,
   wtype = "a",
   show.ellipses = 1 * (model != 2),
   hide = NULL,
@@ -474,7 +475,10 @@ intercept and slope.}
 
 \code{2}: Total least squares regression
 
-\code{3}: Error-weighted least squares with overdispersion term}
+\code{3}: Error-weighted least squares with overdispersion term
+
+\code{4}: If \code{x} has class \code{PbPb} or \code{ThU}, calculate
+the leftmost or rightmost isochron, respectively}
 
 \item{wtype}{controls the parameter responsible for the
     overdispersion in model-3 regression.
@@ -527,7 +531,9 @@ concordia line at an age equal to \code{anchor[2]}.}
 
 \code{1}: error ellipses
 
-\code{2}: error crosses}
+\code{2}: error crosses
+
+any other value results in a blank plot}
 
 \item{hide}{vector with indices of aliquots that should be removed
 from the plot.}
@@ -699,8 +705,8 @@ for non-anchored fits)}
 \code{y}: the atmospheric \eqn{^{40}}Ar/\eqn{^{36}}Ar or initial
 \eqn{^{40}}Ca/\eqn{^{44}}Ca, \eqn{^{187}}Os/\eqn{^{188}}Os,
 \eqn{^{87}}Sr/\eqn{^{87}}Rb, \eqn{^{143}}Nd/\eqn{^{144}}Nd,
-\eqn{^{176}}Hf/\eqn{^{177}}Hf or \eqn{^{208}}Pb/\eqn{^{204}}Pb
-ratio.
+\eqn{^{176}}Hf/\eqn{^{177}}Hf, \eqn{^{208}}Pb/\eqn{^{204}}Pb
+or \eqn{^{230}}Th/\eqn{^{232}}Th ratio.
 
 \code{s[y]}: the standard error of \code{y}
 
