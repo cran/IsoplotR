@@ -408,8 +408,7 @@ get_UPb_isochron_ratios_208 <- function(x,i=NULL,tt=0){
         U85 <- iratio('U238U235')[1]
         tw <- tera_wasserburg(x,i) # 38/06, 07/06, 08/06, 32/38
         U8Pb6 <- tw$x['U238Pb206']
-        Pb8c6 <- tw$x['Pb208Pb206'] -
-            tw$x['Th232U238']*tw$x['U238Pb206']*McL$Pb208Th232
+        Pb8c6 <- tw$x['Pb208Pb206'] - McL$Pb208Th232*tw$x['Th232U238']*tw$x['U238Pb206']
         U5Pb7 <- tw$x['U238Pb206']/(U85*tw$x['Pb207Pb206'])
         Pb8c7 <- Pb8c6/tw$x['Pb207Pb206']
         Th2Pb8 <- tw$x['Th232U238']*tw$x['U238Pb206']/tw$x['Pb208Pb206']
@@ -417,25 +416,25 @@ get_UPb_isochron_ratios_208 <- function(x,i=NULL,tt=0){
         Pb7c8 <- tw$x['Pb207Pb206']/tw$x['Pb208Pb206'] -
             McL$Pb207U235*tw$x['U238Pb206']/(U85*tw$x['Pb208Pb206'])
         J <- matrix(0,8,4)
-        J[1,1] <- 1
-        J[2,1] <- -tw$x['Th232U238']*(exp(l2*tt)-1)
-        J[2,3] <- 1
-        J[2,4] <- -tw$x['U238Pb206']*(exp(l2*tt)-1)
-        J[3,1] <- 1/(U85*tw$x['Pb207Pb206'])
-        J[3,2] <- -U5Pb7/tw$x['Pb207Pb206']
-        J[4,1] <- J[2,1]/tw$x['Pb207Pb206']
-        J[4,2] <- -Pb8c7/tw$x['Pb207Pb206']
-        J[4,3] <- J[2,3]/tw$x['Pb207Pb206']
-        J[4,4] <- J[2,4]/tw$x['Pb207Pb206']
-        J[5,4] <- 1
-        J[6,1] <- tw$x['Th232U238']/tw$x['Pb208Pb206']
-        J[6,3] <- -Th2Pb8/tw$x['Pb208Pb206']
-        J[6,4] <- tw$x['U238Pb206']/tw$x['Pb208Pb206']
-        J[7,1] <- -McL$Pb206U238/tw$x['Pb208Pb206']
-        J[7,3] <- -Pb6c8/tw$x['Pb208Pb206']
-        J[8,1] <- -McL$Pb207U235/(U85*tw$x['Pb208Pb206'])
-        J[8,2] <- 1/tw$x['Pb208Pb206']
-        J[8,3] <- -Pb7c8/tw$x['Pb208Pb206']
+        J[1,1] <- 1                                        # dU8Pb6_dU8Pb6
+        J[2,1] <- -McL$Pb208Th232*tw$x['Th232U238']        # dPb8c6_dU8Pb6
+        J[2,3] <- 1                                        # dPb8c6_dPb86
+        J[2,4] <- -McL$Pb208Th232*tw$x['U238Pb206']        # dPb8c6_dThU
+        J[3,1] <- 1/(U85*tw$x['Pb207Pb206'])               # dU5Pb7_dU8Pb6
+        J[3,2] <- -U5Pb7/tw$x['Pb207Pb206']                # dU5Pb7_dPb76
+        J[4,1] <- J[2,1]/tw$x['Pb207Pb206']                # dPb8c7_dU8Pb6
+        J[4,2] <- -Pb8c7/tw$x['Pb207Pb206']                # dPb8c7_dPb76
+        J[4,3] <- J[2,3]/tw$x['Pb207Pb206']                # dPb8c7_dPb86
+        J[4,4] <- J[2,4]/tw$x['Pb207Pb206']                # dPb8c7_dThU
+        J[5,4] <- 1                                        # dThU_dThU
+        J[6,1] <- tw$x['Th232U238']/tw$x['Pb208Pb206']     # dTh2Pb8_dU8Pb6
+        J[6,3] <- -Th2Pb8/tw$x['Pb208Pb206']               # dTh2Pb8_dPb86
+        J[6,4] <- tw$x['U238Pb206']/tw$x['Pb208Pb206']     # dTh2Pb8_dThU
+        J[7,1] <- -McL$Pb206U238/tw$x['Pb208Pb206']        # dPb6c8_dU8Pb6
+        J[7,3] <- -Pb6c8/tw$x['Pb208Pb206']                # dPb6c8_dPb86
+        J[8,1] <- -McL$Pb207U235/(U85*tw$x['Pb208Pb206'])  # dPb7c8_dU8Pb6
+        J[8,2] <- 1/tw$x['Pb208Pb206']                     # dPb7c8_dPb76
+        J[8,3] <- -Pb7c8/tw$x['Pb208Pb206']                # dPb7c8_dPb86
         out <- list()
         out$x <- c(U8Pb6,Pb8c6,U5Pb7,Pb8c7,
                    tw$x['Th232U238'],Th2Pb8,Pb6c8,Pb7c8)
@@ -1384,32 +1383,27 @@ get_Pb208Th232_age.UPb <- function(x,i=NULL,exterr=FALSE,...){
 # and concordia_ages and their uncertainties.
 UPb_age <- function(x,exterr=FALSE,i=NULL,conc=TRUE,omit4c=NULL,
                     discordance=discfilter(),common.Pb=0,...){
-    if (discordance$option==0 | discordance$before) xd <- x
-    else xd <- Pb0corr(x,option=common.Pb,omit4c=omit4c)
-    if (common.Pb==0) X <- x
-    else X <- Pb0corr(x,option=common.Pb,omit4c=omit4c)
-    if (!is.null(i)){
-        out <- UPb_age_helper(x=x,X=X,xd=xd,i=i,exterr=exterr,
-                              conc=conc,discordance=discordance)
-    } else {
-        nn <- length(x)
+    X <- Pb0corr(x,option=common.Pb,omit4c=omit4c)
+    if (is.null(i)){
         out <- NULL
-        for (i in 1:nn){
-            ti <- UPb_age_helper(x=x,X=X,xd=xd,i=i,exterr=exterr,
+        for (i in 1:length(x)){
+            ti <- UPb_age_helper(x=x,X=X,i=i,exterr=exterr,
                                  conc=conc,discordance=discordance)
-            out <- rbind(out,ti)
+            out <- rbind(out,ti,deparse.level=0)
         }
+    } else {
+        out <- UPb_age_helper(x=x,X=X,i=i,exterr=exterr,
+                              conc=conc,discordance=discordance)
     }
     out
 }
 
 # x = raw data
-# X = common Pb corrected data (if common.Pb>0)
-# xd = data to be used for concordia_age calculation 
-#      (raw if before==TRUE, common Pb corrected if before==FALSE)
-UPb_age_helper <- function(x,X,xd,i=1,exterr=FALSE,
+# X = common Pb corrected data
+UPb_age_helper <- function(x,X=x,i=1,exterr=FALSE,
                            conc=TRUE,discordance=discfilter(),...){
-    Xi <- subset(X,subset=((1:length(X))%in%i))
+    ns <- length(x)
+    Xi <- subset(X,subset=(1:ns)%in%i)
     do68 <- do75 <- do76 <- do82 <- FALSE 
     if (x$format<7 || x$format==85){
         do68 <- do75 <- do76 <- TRUE
@@ -1450,23 +1444,23 @@ UPb_age_helper <- function(x,X,xd,i=1,exterr=FALSE,
     if (x$format<9 || x$format==85){
         if (conc){
             labels <- c(labels,'t.conc','s[t.conc]')
-            t.conc <- tryCatch({
-                concordia_age(x=Xi,i=1,exterr=exterr)$age
+            tc <- tryCatch({
+                concordia_age(x=Xi,exterr=exterr)
             }, error = function(e){
-                c(NA,NA)
+                list(age=c(NA,NA),
+                     p.value=c('concordance'=NA))
             })
+            t.conc <- tc$age[1:2]
+            pval <- tc$p.value['concordance']
         }
         if (discordance$option%in%c(1,'t',2,'r',3,'sk',4,'a',5,'c')){
             labels <- c(labels,'disc')
-            dif <- discordance(x=x,xd=xd,i=i,option=discordance$option)
-        } else if (discordance$option%in%c(6,'p')){
-            labels <- c(labels,'p[conc]')
-            SS.concordance <-
-                LL_concordia_age(pars=t.conc[1],
-                                 cc=wetherill(xd,i=i),
-                                 mswd=TRUE,exterr=exterr,d=xd$d)
-            pval <- 1-stats::pchisq(SS.concordance,1)
+            xi <- subset(x,subset=(1:ns)%in%i)
+            dc <- discordance(x=xi,X=Xi,discordance=discordance)
+            dif <- dc$dif
+            pval <- dc$pval
         }
+        if (!is.null(pval)) labels <- c(labels,'p[conc]')
     }
     out <- c(t.75,t.68,t.76,t.82,t.conc,dif,pval)
     names(out) <- labels

@@ -164,8 +164,8 @@
 #'
 #' \code{3}: Error-weighted least squares with overdispersion term
 #'
-#' \code{4}: If \code{x} has class \code{PbPb} or \code{ThU}, calculate
-#' the leftmost or rightmost isochron, respectively
+#' \code{4}: If \code{x} has class \code{ThU}, calculate the rightmost
+#' isochron.
 #'
 #' @param wtype controls the parameter responsible for the
 #'     overdispersion in model-3 regression.
@@ -742,13 +742,14 @@ isochron.UPb <- function(x,oerr=3,sigdig=2,show.numbers=FALSE,
     if (x$format<4){
         if (plot){
             out <- concordia_helper(x,type=type,show.age=model+1,title=title,
-                                    oerr=oerr,sigdig=sigdig,show.numbers=show.numbers,
+                                    oerr=oerr,sigdig=sigdig,
+                                    show.numbers=show.numbers,
                                     levels=levels,clabel=clabel,
                                     ellipse.fill=ellipse.fill,
                                     ellipse.stroke=ellipse.stroke,exterr=exterr,
                                     anchor=anchor,hide=hide,omit=omit,
                                     y0option=y0option,omit.fill=omit.fill,
-                                    omit.stroke=omit.stroke,...)
+                                    omit.stroke=omit.stroke,nsteps=nsteps,...)
         } else {
             out <- ludwig(x,exterr=exterr,model=model,anchor=anchor,nsteps=nsteps)
         }
@@ -854,14 +855,9 @@ isochron.PbPb <- function(x,oerr=3,sigdig=2,show.numbers=FALSE,levels=NULL,
                           wtype=1,anchor=0,growth=FALSE,
                           show.ellipses=1*(model!=2),
                           hide=NULL,omit=NULL,omit.fill=NA,omit.stroke='grey',...){
-    if (model==4){
-        fit <- LRisochron(x,inverse=inverse,anchor=anchor,
-                          model=model,hide=hide,omit=omit)
-    } else {
-        wtype <- checkWtype(wtype=wtype,anchor=anchor,model=model)
-        fit <- flipper(x,inverse=inverse,model=model,type='d',
-                       wtype=wtype,anchor=anchor,hide=hide,omit=omit)
-    }
+    wtype <- checkWtype(wtype=wtype,anchor=anchor,model=model)
+    fit <- flipper(x,inverse=inverse,model=model,type='d',
+                   wtype=wtype,anchor=anchor,hide=hide,omit=omit)
     out <- ab2y0t(x=x,fit=fit,inverse=inverse,exterr=exterr,wtype=wtype)
     dispunits <- getDispUnits(model=model,wtype=wtype,anchor=anchor)
     if (plot) {
